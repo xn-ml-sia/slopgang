@@ -1,9 +1,6 @@
 🧬 Slop Gang
 *Mapping the Aesthetic of the Average*
 
-![License: MIT (https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![Status: Experimental (https://img.shields.io/badge/Status-Experimental-blueviolet)](#)
-
 Slop Gang is a forensic exploration into the "aesthetic of the average" within generative AI. While the mainstream focuses on the emergent intelligence and infinite expansion of large models, we focus on the statistical centroid: the high-density mass of the bell curve where bias, homogenization, and model collapse converge.
 
 ---
