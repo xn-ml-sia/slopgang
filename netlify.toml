@@ -1,0 +1,27 @@
+# File-based config for https://slopgang.org — overrides Netlify UI build settings.
+# After merge, trigger a production redeploy if Git auto-deploys are paused.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Same /api/* paths the Vite middleware uses in `npm run dev` / `npm run preview`.
+# force=true so the SPA fallback below cannot swallow these routes.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
+
+# History API / SPA fallback. Not forced, so hashed /assets/* files in dist still win.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
