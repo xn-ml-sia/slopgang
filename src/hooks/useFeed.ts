@@ -77,8 +77,7 @@ export function useFeed() {
             if (source.id === 'reddit') setRedditCursor(page.nextCursor)
             patchStatus(source.id, {
               health: 'live',
-              count: page.items.length,
-              label: page.items[0]?.sourceLabel ?? source.label,
+              label: source.id === 'rss' ? (page.items[0]?.sourceLabel ?? source.label) : source.label,
             })
           } catch (err) {
             if (cancelled) return
@@ -156,22 +155,39 @@ export function useFeed() {
 
   const liveCount = items.length
   const allFailed = !initializing && liveCount === 0 && statuses.every((row) => row.health !== 'loading')
+  const statusesWithCounts = useMemo(
+    () =>
+      statuses.map((row) => ({
+        ...row,
+        count: items.filter((item) => item.source === row.id).length,
+      })),
+    [items, statuses],
+  )
 
   return {
     initializing,
     allFailed,
-    statuses,
+    statuses: statusesWithCounts,
     shown,
     filteredCount: filtered.length,
     liveCount,
     hasMore: hasLocalMore || canFetchReddit,
     loadingMore,
     sort,
-    setSort,
+    setSort: (mode: SortMode) => {
+      setSort(mode)
+      setVisible(PAGE)
+    },
     sourceFilter,
-    setSourceFilter,
+    setSourceFilter: (id: SourceFilter) => {
+      setSourceFilter(id)
+      setVisible(PAGE)
+    },
     tagFilter,
-    setTagFilter,
+    setTagFilter: (id: TagFilter) => {
+      setTagFilter(id)
+      setVisible(PAGE)
+    },
     loadMore,
   }
 }

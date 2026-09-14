@@ -86,7 +86,7 @@ export function Feed() {
           void loadMore()
         }
       },
-      { rootMargin: '480px 0px' },
+      { rootMargin: '80px 0px' },
     )
     observer.observe(node)
     return () => observer.disconnect()

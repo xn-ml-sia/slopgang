@@ -73,7 +73,7 @@ function toItem(post: RedditPost): FeedItem | null {
 
 export const redditAdapter: SourceAdapter = {
   id: 'reddit',
-  label: `r/${config.reddit.subreddit}`,
+  label: 'Reddit',
   async fetch(cursor?: string): Promise<SourcePage> {
     const params = new URLSearchParams({
       subreddit: config.reddit.subreddit,
