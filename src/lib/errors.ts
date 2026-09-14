@@ -1,11 +1,22 @@
-export class SourceFetchError extends Error {
-  readonly sourceId: 'reddit' | 'rss'
-  readonly kind: 'blocked' | 'network' | 'parse'
+import type { SourceHealth, SourceId } from '../types/feed.ts'
 
-  constructor(sourceId: 'reddit' | 'rss', message: string, kind: 'blocked' | 'network' | 'parse') {
+export type SourceErrorKind = 'blocked' | 'network' | 'parse' | 'unconfigured'
+
+export class SourceFetchError extends Error {
+  readonly sourceId: SourceId
+  readonly kind: SourceErrorKind
+
+  constructor(sourceId: SourceId, message: string, kind: SourceErrorKind) {
     super(message)
     this.name = 'SourceFetchError'
     this.sourceId = sourceId
     this.kind = kind
   }
+}
+
+export function healthFromError(err: unknown): SourceHealth {
+  if (err instanceof SourceFetchError && (err.kind === 'blocked' || err.kind === 'unconfigured')) {
+    return err.kind
+  }
+  return 'error'
 }

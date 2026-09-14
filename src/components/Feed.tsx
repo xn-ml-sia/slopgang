@@ -8,6 +8,8 @@ const SOURCE_OPTIONS: { id: SourceFilter; label: string }[] = [
   { id: 'archive', label: 'Archive' },
   { id: 'reddit', label: 'Reddit' },
   { id: 'rss', label: 'RSS' },
+  { id: 'x', label: 'X' },
+  { id: 'instagram', label: 'Instagram' },
 ]
 
 const TAG_OPTIONS: { id: TagFilter; label: string }[] = [
@@ -20,6 +22,7 @@ const TAG_OPTIONS: { id: TagFilter; label: string }[] = [
 function healthWord(health: SourceHealth): string {
   if (health === 'live') return 'live'
   if (health === 'blocked') return 'blocked'
+  if (health === 'unconfigured') return 'unconfigured'
   if (health === 'loading') return 'collecting'
   if (health === 'idle') return 'idle'
   return 'error'
@@ -92,12 +95,9 @@ export function Feed() {
     return () => observer.disconnect()
   }, [hasMore, initializing, loadMore, loadingMore])
 
-  const redditOn = feed.statuses.some((row) => row.id === 'reddit')
-  const rssOn = feed.statuses.some((row) => row.id === 'rss')
   const sourceOptions = SOURCE_OPTIONS.filter((option) => {
-    if (option.id === 'reddit') return redditOn
-    if (option.id === 'rss') return rssOn
-    return true
+    if (option.id === 'all' || option.id === 'archive') return true
+    return feed.statuses.some((row) => row.id === option.id)
   })
 
   return (

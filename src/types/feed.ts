@@ -1,4 +1,4 @@
-export type SourceId = 'archive' | 'reddit' | 'rss'
+export type SourceId = 'archive' | 'reddit' | 'rss' | 'x' | 'instagram'
 
 export type SlopTag = 'visual-slop' | 'textual-slop' | 'counter-slop'
 
@@ -30,7 +30,7 @@ export interface SourcePage {
   nextCursor?: string
 }
 
-export type SourceHealth = 'idle' | 'loading' | 'live' | 'blocked' | 'error'
+export type SourceHealth = 'idle' | 'loading' | 'live' | 'blocked' | 'unconfigured' | 'error'
 
 export interface SourceStatus {
   id: SourceId

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { SourceFetchError } from '../lib/errors.ts'
+import { healthFromError } from '../lib/errors.ts'
 import { sources } from '../sources/registry.ts'
-import type { FeedItem, SlopTag, SourceHealth, SourceId, SourceStatus } from '../types/feed.ts'
+import type { FeedItem, SlopTag, SourceId, SourceStatus } from '../types/feed.ts'
 import { compareNewest } from '../lib/time.ts'
 
 export type SortMode = 'newest' | 'mixed'
@@ -82,10 +82,8 @@ export function useFeed() {
             })
           } catch (err) {
             if (cancelled) return
-            const kind: SourceHealth =
-              err instanceof SourceFetchError && err.kind === 'blocked' ? 'blocked' : 'error'
             patchStatus(source.id, {
-              health: kind,
+              health: healthFromError(err),
               count: 0,
               detail: err instanceof Error ? err.message : 'failed',
             })
@@ -146,7 +144,7 @@ export function useFeed() {
       setVisible((n) => n + PAGE)
     } catch (err) {
       patchStatus('reddit', {
-        health: err instanceof SourceFetchError && err.kind === 'blocked' ? 'blocked' : 'error',
+        health: healthFromError(err),
         detail: err instanceof Error ? err.message : 'failed',
       })
     } finally {

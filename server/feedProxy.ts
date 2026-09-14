@@ -169,7 +169,171 @@ async function handleRss(url: URL, res: ServerResponse) {
   }
 }
 
-function attach(middlewares: Connect.Server) {
+type Env = Record<string, string | undefined>
+
+function pickToken(env: Env, ...keys: string[]): string {
+  for (const key of keys) {
+    const value = env[key]?.trim()
+    if (value) return value
+  }
+  return ''
+}
+
+const TWEET_FIELDS = {
+  'tweet.fields': 'created_at,author_id,entities',
+  expansions: 'attachments.media_keys,author_id',
+  'media.fields': 'url,preview_image_url,width,height,type',
+  'user.fields': 'username,name',
+  max_results: '10',
+}
+
+async function twitterGet(target: URL, bearer: string): Promise<Response> {
+  if (target.protocol !== 'https:' || target.hostname !== 'api.twitter.com') {
+    throw new Error('refusing non-twitter host')
+  }
+  return fetch(target, {
+    headers: {
+      Authorization: `Bearer ${bearer}`,
+      'User-Agent': REDDIT_UA,
+      Accept: 'application/json',
+    },
+    redirect: 'follow',
+    signal: AbortSignal.timeout(FETCH_MS),
+  })
+}
+
+// Official X API v2 only (api.twitter.com). No HTML scraping of x.com.
+async function handleX(url: URL, res: ServerResponse, env: Env) {
+  const bearer = pickToken(env, 'X_BEARER_TOKEN', 'TWITTER_BEARER_TOKEN')
+  if (!bearer) {
+    sendJson(res, 200, { unconfigured: true, items: [] })
+    return
+  }
+
+  const handle = (url.searchParams.get('handle') ?? '').trim()
+  const query = (url.searchParams.get('query') ?? '').trim()
+  const after = (url.searchParams.get('after') ?? '').trim()
+  if (handle && !/^[A-Za-z0-9_]{1,15}$/.test(handle)) {
+    sendJson(res, 400, { error: 'invalid_handle' })
+    return
+  }
+  if (query.length > 512) {
+    sendJson(res, 400, { error: 'invalid_query' })
+    return
+  }
+  if (after && !/^[A-Za-z0-9_-]+$/.test(after)) {
+    sendJson(res, 400, { error: 'invalid_after' })
+    return
+  }
+
+  try {
+    let target: URL
+    if (handle && !query) {
+      const userUrl = new URL(`https://api.twitter.com/2/users/by/username/${handle}`)
+      const userRes = await twitterGet(userUrl, bearer)
+      const userBody = (await userRes.json()) as { data?: { id?: string }; status?: number; title?: string }
+      if (!userRes.ok || !userBody.data?.id) {
+        sendJson(res, 200, {
+          blocked: userRes.status === 401 || userRes.status === 403 || userRes.status === 429,
+          error: 'upstream',
+          status: userRes.status,
+          message: userBody.title ?? 'X user lookup failed',
+        })
+        return
+      }
+      if (!/^\d+$/.test(userBody.data.id)) {
+        sendJson(res, 200, { error: 'invalid_user_id' })
+        return
+      }
+      target = new URL(`https://api.twitter.com/2/users/${userBody.data.id}/tweets`)
+    } else {
+      target = new URL('https://api.twitter.com/2/tweets/search/recent')
+      const q = query || (handle ? `from:${handle}` : 'slop -is:retweet')
+      target.searchParams.set('query', q)
+    }
+
+    for (const [key, value] of Object.entries(TWEET_FIELDS)) {
+      target.searchParams.set(key, value)
+    }
+    if (after) target.searchParams.set('pagination_token', after)
+
+    const upstream = await twitterGet(target, bearer)
+    const { text } = await readLimited(upstream)
+    if (!upstream.ok) {
+      sendJson(res, 200, {
+        blocked: upstream.status === 401 || upstream.status === 403 || upstream.status === 429,
+        error: 'upstream',
+        status: upstream.status,
+        items: [],
+      })
+      return
+    }
+    sendText(res, 200, text, 'application/json; charset=utf-8')
+  } catch (err) {
+    sendJson(res, 200, {
+      blocked: false,
+      error: 'network',
+      message: err instanceof Error ? err.message : 'fetch failed',
+      items: [],
+    })
+  }
+}
+
+// Instagram Graph /me/media only. No HTML scraping of instagram.com.
+async function handleInstagram(url: URL, res: ServerResponse, env: Env) {
+  const token = pickToken(env, 'INSTAGRAM_ACCESS_TOKEN', 'IG_ACCESS_TOKEN')
+  if (!token) {
+    sendJson(res, 200, { unconfigured: true, items: [] })
+    return
+  }
+
+  const after = (url.searchParams.get('after') ?? '').trim()
+  if (after && !/^[A-Za-z0-9_-]+$/.test(after)) {
+    sendJson(res, 400, { error: 'invalid_after' })
+    return
+  }
+
+  const target = new URL('https://graph.instagram.com/me/media')
+  target.searchParams.set(
+    'fields',
+    'id,caption,media_type,media_url,permalink,timestamp,username,thumbnail_url',
+  )
+  target.searchParams.set('limit', '12')
+  target.searchParams.set('access_token', token)
+  if (after) target.searchParams.set('after', after)
+
+  try {
+    const upstream = await fetch(target, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'User-Agent': REDDIT_UA,
+        Accept: 'application/json',
+      },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(FETCH_MS),
+    })
+    const { text } = await readLimited(upstream)
+    if (!upstream.ok) {
+      sendJson(res, 200, {
+        blocked: upstream.status === 401 || upstream.status === 403 || upstream.status === 429,
+        error: 'upstream',
+        status: upstream.status,
+        items: [],
+      })
+      return
+    }
+    sendText(res, 200, text, 'application/json; charset=utf-8')
+  } catch (err) {
+    sendJson(res, 200, {
+      blocked: false,
+      error: 'network',
+      message: err instanceof Error ? err.message : 'fetch failed',
+      items: [],
+    })
+  }
+}
+
+function attach(middlewares: Connect.Server, env: Env) {
   middlewares.use((req: IncomingMessage, res: ServerResponse, next: Connect.NextFunction) => {
     const url = requestUrl(req)
     if (req.method !== 'GET') {
@@ -184,18 +348,27 @@ function attach(middlewares: Connect.Server) {
       void handleRss(url, res)
       return
     }
+    if (url.pathname === '/api/x') {
+      void handleX(url, res, env)
+      return
+    }
+    if (url.pathname === '/api/instagram') {
+      void handleInstagram(url, res, env)
+      return
+    }
     next()
   })
 }
 
-export function feedProxyPlugin(): Plugin {
+export function feedProxyPlugin(fileEnv: Record<string, string> = {}): Plugin {
+  const env: Env = { ...fileEnv, ...process.env }
   return {
     name: 'slopgang-feed-proxy',
     configureServer(server) {
-      attach(server.middlewares)
+      attach(server.middlewares, env)
     },
     configurePreviewServer(server) {
-      attach(server.middlewares)
+      attach(server.middlewares, env)
     },
   }
 }
