@@ -1,0 +1,87 @@
+[
+  {
+    "id": "archive:sg-01",
+    "title": "Specimen 01 — Hyper-Plastic Portrait",
+    "caption": "Poreless skin, volumetric bloom, rim-light from nowhere.",
+    "body": "The face is a mean of faces. Specularity sits on the cheek like a product shot. Hair is a field of identical filaments. Shadow refuses to pool. This is not a person; it is the centroid of 'portrait' as a training label.",
+    "palette": ["#ff7a3c", "#2ec8c8", "#f4e6d0", "#1a0a08"],
+    "url": "https://github.com/xn-ml-sia/slopgang",
+    "timestamp": "2026-09-11T14:20:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-02",
+    "title": "Specimen 02 — The Nuance Loop",
+    "caption": "A paragraph that takes every stance and therefore none.",
+    "body": "It's important to note that while some argue X, others contend Y, and the reality is likely a tapestry of both. We must delve into the nuances. There are no easy answers. At the end of the day, it depends. The syntax is a metronome: hedge, restate, hedge. Rhythmic monotony as a political technology.",
+    "url": "https://github.com/xn-ml-sia/slopgang",
+    "timestamp": "2026-09-10T09:04:00.000Z",
+    "tags": ["textual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-03",
+    "title": "Specimen 03 — The Mask (VHS as alibi)",
+    "caption": "Analog grit applied after the fact, to launder smoothness.",
+    "body": "Chromatic aberration on a render that never passed through glass. Gate weave on a timeline that never touched a gate. The machine does not remember dust; it samples the look of remembering. Counter-slop as costume: the human reaction, already absorbed.",
+    "palette": ["#2a241c", "#6e5a3a", "#c4b89a", "#8f2d1f"],
+    "url": "https://github.com/xn-ml-sia/slopgang",
+    "timestamp": "2026-09-08T18:41:00.000Z",
+    "tags": ["counter-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-04",
+    "title": "Specimen 04 — Mathematical Landscape",
+    "caption": "Bilateral symmetry, golden-hour LUT, a path that leads nowhere.",
+    "body": "Mountains cloned across the midline. Fog as a depth cue, not weather. The path is a composition rule. Vegetation is a scatter function with a seed. This is 'landscape' as a high-probability token, not a place.",
+    "palette": ["#f2c14e", "#d4552a", "#3d6b8a", "#0e1c24"],
+    "url": "https://github.com/xn-ml-sia/slopgang",
+    "timestamp": "2026-09-06T11:12:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-05",
+    "title": "Specimen 05 — Delve / Tapestry / Landscape",
+    "caption": "Lexical attractors. The bell curve of English under RLHF.",
+    "body": "Count them in the wild: delve, tapestry, landscape (metaphorical), embark, nestled, crucial, vibrant, testament. They are not errors. They are the shortest path through the loss landscape of 'helpful assistant.' Textual slop is a style guide nobody voted for.",
+    "url": "https://github.com/xn-ml-sia/slopgang",
+    "timestamp": "2026-09-04T16:33:00.000Z",
+    "tags": ["textual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-06",
+    "title": "Specimen 06 — Artificial Grit",
+    "caption": "When the model simulates imperfection without a cause.",
+    "body": "Noise overlaid on a denoised image. Film grain as a layer, not an emulsion. Collapse engineering predicts this: once smoothness is identified as the tell, the mean will drift toward fake damage. The Mask becomes training data. The center of gravity moves.",
+    "palette": ["#111111", "#4a4a4a", "#9a9a9a", "#e8e4da"],
+    "url": "https://github.com/xn-ml-sia/slopgang",
+    "timestamp": "2026-09-02T08:15:00.000Z",
+    "tags": ["counter-slop", "visual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-07",
+    "title": "Specimen 07 — LinkedIn Cadence",
+    "caption": "The professional register of the average.",
+    "body": "I used to think success was about hustle. Then I sat with a janitor / intern / dying relative. Here's what they taught me about leadership: 1. Listen. 2. Be kind. 3. Ship. If this resonates, follow for more. The line breaks are a drum machine. Sentiment is a product surface.",
+    "url": "https://github.com/xn-ml-sia/slopgang",
+    "timestamp": "2026-08-29T13:50:00.000Z",
+    "tags": ["textual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-08",
+    "title": "Specimen 08 — Drift Note: lo-fi as the new mean",
+    "caption": "When the centroid moves, the old slop becomes vintage.",
+    "body": "Yesterday's hyper-smooth is today's embarrassment. The feed fills with 'raw' webcam light, on-purpose JPEG, misfocus. Trend detection: slop is a sensor. If the average now wants dirt, the dirt will be manufactured at scale. We log the shift; we do not celebrate it.",
+    "palette": ["#3f5d4e", "#c7b39a", "#1f1d1a", "#d8c7a2"],
+    "url": "https://github.com/xn-ml-sia/slopgang",
+    "timestamp": "2026-08-22T20:05:00.000Z",
+    "tags": ["counter-slop"],
+    "author": "lab"
+  }
+]
