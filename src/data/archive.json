@@ -204,5 +204,75 @@
     "timestamp": "2026-09-14T18:10:00.000Z",
     "tags": ["textual-slop"],
     "author": "lab"
+  },
+  {
+    "id": "archive:sg-21",
+    "title": "Specimen 21 — Pelican Budget Exhausted",
+    "caption": "Lord of the Rings in, one million tokens, a render out.",
+    "body": "@karpathy: leaving the SVG-pelican-on-a-bicycle test era — feed the first paragraph of LOTR, a 1M token budget, ask for a render. Autonomous LLM world-building as the new eval: procedural code, animation, deliberately rough emergence.",
+    "url": "https://x.com/karpathy/status/2083749667410727319",
+    "timestamp": "2026-09-14T18:20:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-22",
+    "title": "Specimen 22 — Marigold V2",
+    "caption": "Depth estimation as vivid moving media.",
+    "body": "@_akhaliq: “Marigold V2 — Revisiting Diffusion Transformers for Monocular Depth Estimation.” A model drop delivered as visual spectacle — research becoming the feed’s texture.",
+    "url": "https://x.com/_akhaliq/status/2097726716861186348",
+    "timestamp": "2026-09-14T18:22:00.000Z",
+    "tags": ["textual-slop", "visual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-23",
+    "title": "Specimen 23 — Digital Petri Dish",
+    "caption": "Neural cells fighting for a browser tab.",
+    "body": "@hardmaru: make neural network cells inside a “Digital Petri Dish” fight for control in a web tab. Biomorphic competitive emergence — artificial life as a playable mean.",
+    "url": "https://x.com/hardmaru/status/2045698772613951687",
+    "timestamp": "2026-09-14T18:24:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-24",
+    "title": "Specimen 24 — Screenplay to Blender",
+    "caption": "Shots, angles, cuts — determined in the DCC.",
+    "body": "@rainisto: v0.003 Blender system — screenplay → auto Blender animation → video; determine shots, camera angles, cuts. AI production workflow as the new craft mean: rough pre-vis reclaiming cinematic control.",
+    "url": "https://x.com/rainisto/status/2097534642781884825",
+    "timestamp": "2026-09-14T18:26:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-25",
+    "title": "Specimen 25 — Code at M+",
+    "caption": "Computational form, in person.",
+    "body": "@zachlieberman: work finally seen in person at M+ museum. Code-native moving image enters the physical room — saturated procedural forms as lived culture, not only feed texture.",
+    "url": "https://x.com/zachlieberman/status/2098547851479367701",
+    "timestamp": "2026-09-14T18:28:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-26",
+    "title": "Specimen 26 — Seedance on Hedra",
+    "caption": "Prompt guides and an agent that knows the model.",
+    "body": "@hedra_labs: Seedance 2.5 live on Hedra API and Create — prompt guides, Hedra Agent with encyclopedic knowledge of the model. Generative video productized: API + guides + agent layer.",
+    "url": "https://x.com/hedra_labs/status/2085806660589932593",
+    "timestamp": "2026-09-14T18:30:00.000Z",
+    "tags": ["textual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-27",
+    "title": "Specimen 27 — Prime Agent Swarm",
+    "caption": "Twenty thousand stars, one vivid identity.",
+    "body": "@PrimeIntellect: Prime Agent hits 20k GitHub stars. Self-improving agent tooling marketed through swarm aesthetics — community, capability, and visual identity collapse into one product mean.",
+    "url": "https://x.com/PrimeIntellect/status/2097188160103182368",
+    "timestamp": "2026-09-14T18:32:00.000Z",
+    "tags": ["textual-slop"],
+    "author": "lab"
   }
 ]
