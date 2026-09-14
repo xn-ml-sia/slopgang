@@ -426,12 +426,16 @@ summary {
 
 .course {
   display: grid;
-  grid-template-columns: 4.75rem minmax(0, 1fr) 7.5rem;
+  grid-template-columns: 4.75rem minmax(0, 1fr);
   gap: 28px 36px;
   align-items: start;
-  padding: 48px 0;
+  padding: 56px 0;
   border-bottom: 1px solid var(--rule);
   background: transparent;
+}
+
+.course.has-swatch {
+  grid-template-columns: 4.75rem minmax(0, 1fr) 7.5rem;
 }
 
 .course-no {
@@ -513,11 +517,18 @@ summary {
   overflow: hidden;
 }
 
+.course-plate.is-image {
+  width: min(100%, 42rem);
+  aspect-ratio: 3 / 2;
+  margin-top: 22px;
+}
+
 .course-plate img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   filter: contrast(1.03) saturate(0.88);
+  object-position: center;
 }
 
 .plate-swatch,
@@ -539,7 +550,7 @@ summary {
 }
 
 .skeleton {
-  min-height: 168px;
+  min-height: 240px;
   background: linear-gradient(90deg, var(--ivory) 0%, var(--bone) 48%, var(--ivory) 100%);
   background-size: 200% 100%;
 }
@@ -728,15 +739,21 @@ summary {
 }
 
 @media (max-width: 720px) {
-  .course {
+  .course,
+  .course.has-swatch {
     grid-template-columns: 3.2rem minmax(0, 1fr);
     gap: 12px 18px;
     padding: 36px 0;
   }
 
-  .course-plate {
+  .course-plate:not(.is-image) {
     grid-column: 2;
     width: 6.5rem;
+  }
+
+  .course-plate.is-image {
+    width: 100%;
+    max-width: none;
   }
 
   .wordmark-aside {

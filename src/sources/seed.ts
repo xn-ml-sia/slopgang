@@ -1,5 +1,6 @@
-import type { FeedItem, SourceAdapter } from '../types/feed.ts'
+import type { FeedItem, FeedMedia, SourceAdapter } from '../types/feed.ts'
 import type { SlopTag } from '../types/feed.ts'
+import { normalizeMediaUrl } from '../lib/text.ts'
 import raw from '../data/archive.json'
 
 interface SeedRecord {
@@ -8,6 +9,7 @@ interface SeedRecord {
   caption?: string
   body?: string
   palette?: string[]
+  media?: Partial<FeedMedia> | null
   url: string
   timestamp: string
   tags: SlopTag[]
@@ -15,6 +17,19 @@ interface SeedRecord {
 }
 
 const records = raw as SeedRecord[]
+
+function seedMedia(record: SeedRecord): FeedMedia | undefined {
+  const url = normalizeMediaUrl(record.media?.url)
+  if (!url) return undefined
+  if (record.media?.type && record.media.type !== 'image') return undefined
+  return {
+    type: 'image',
+    url,
+    alt: record.media?.alt ?? record.title,
+    width: record.media?.width,
+    height: record.media?.height,
+  }
+}
 
 function toItem(record: SeedRecord): FeedItem {
   return {
@@ -24,6 +39,7 @@ function toItem(record: SeedRecord): FeedItem {
     title: record.title,
     caption: record.caption,
     body: record.body,
+    media: seedMedia(record),
     palette: record.palette,
     url: record.url,
     timestamp: record.timestamp,
