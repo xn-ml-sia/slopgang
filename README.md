@@ -146,6 +146,31 @@ Remaining dashboard clicks after this file lands: ensure the site is **linked to
 
 Seed-only additions: append objects to `src/data/archive.json`. No proxy required.
 
+### Archive media (weekly curation)
+
+`FeedCard` already renders `item.media` in the tasting-menu plate. The seed adapter must copy that field from JSON (it used to drop it). Prefer **in-repo stills** so slopgang.org does not depend on X CDN / auth.
+
+When appending a week's specimens:
+
+1. If the post is an X/Twitter status, capture a **public** still: photo, video poster/frame, or the tweet's link card. Same for articles with a usable `og:image`. Public oEmbed / Open Graph / in-browser media URLs only — no API tokens, no logged-in-only assets.
+2. Save a compressed still at `public/archive/sg-XX.webp` (match the specimen id). One frame, not the video file. Keep each file under ~400KB.
+3. On the JSON object, set:
+
+```json
+"media": {
+  "type": "image",
+  "url": "/archive/sg-XX.webp",
+  "alt": "One-line description of the still",
+  "width": 960,
+  "height": 540
+}
+```
+
+4. Text-only lab notes (or posts with no useful still) can keep `palette` or omit `media` — the plate falls back to a swatch / typographic grid. Visual-slop and posts that clearly have media should get a real preview.
+5. Convert with ffmpeg, e.g. `ffmpeg -i still.jpg -vf "scale='min(960,iw)':'min(960,ih)':force_original_aspect_ratio=decrease" -c:v libwebp -quality 78 public/archive/sg-XX.webp`.
+
+Fair-use archival stills for the research archive. Do not check in full videos.
+
 Next hooks that fit this shape without new product chrome: Mastodon/Bluesky public JSON, or an uploads folder.
 
 ---

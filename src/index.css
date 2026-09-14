@@ -523,12 +523,17 @@ summary {
   margin-top: 22px;
 }
 
+a.course-plate {
+  text-decoration: none;
+  background: var(--ink);
+}
+
 .course-plate img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: contrast(1.03) saturate(0.88);
   object-position: center;
+  filter: contrast(1.03) saturate(0.88);
 }
 
 .plate-swatch,
