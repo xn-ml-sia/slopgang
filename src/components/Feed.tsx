@@ -105,7 +105,7 @@ export function Feed() {
       <div className="wrap">
         <div className="archive-head">
           <div>
-            <p className="overline">The sitting</p>
+            <p className="overline">The archive</p>
             <h2 className="archive-title">Specimens</h2>
             <p className="archive-count">
               {feed.initializing
@@ -139,6 +139,10 @@ export function Feed() {
             onChange={feed.setSort}
           />
         </div>
+
+        <p className="menu-note">
+          <span className="star">*</span> marks counter-slop — the mask, not the mean
+        </p>
 
         {feed.allFailed ? (
           <div className="state state-error">

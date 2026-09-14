@@ -292,6 +292,7 @@ summary {
   width: 7px;
   height: 7px;
   display: inline-block;
+  border-radius: 50%;
 }
 
 .key-dot-ivory {
@@ -407,6 +408,17 @@ summary {
   color: var(--ink);
 }
 
+.menu-note {
+  margin: 0;
+  padding: 22px 0 8px;
+  color: var(--smoke);
+  font-family: var(--serif);
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 300;
+  letter-spacing: 0;
+}
+
 .menu {
   display: flex;
   flex-direction: column;
@@ -428,6 +440,12 @@ summary {
   display: flex;
   align-items: baseline;
   gap: 6px;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
 }
 
 .course-title {
@@ -503,8 +521,7 @@ summary {
 
 .plate-swatch,
 .plate-text {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .plate-text span:nth-child(1) {
@@ -593,19 +610,14 @@ summary {
   line-height: 1.65;
 }
 
-.study-rule {
-  height: 1px;
-  background: color-mix(in srgb, var(--ivory-soft) 28%, transparent);
-  margin: 56px 0;
-}
-
 .notes {
   list-style: none;
-  margin: 0;
+  margin: 56px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 0;
+  border-top: 1px solid color-mix(in srgb, var(--ivory-soft) 28%, transparent);
 }
 
 .note {
@@ -613,6 +625,9 @@ summary {
   grid-template-columns: minmax(8rem, 1fr) 2fr;
   gap: 24px 40px;
   padding: 28px 0;
+}
+
+.note + .note {
   border-top: 1px solid color-mix(in srgb, var(--ivory-soft) 28%, transparent);
 }
 

@@ -26,7 +26,6 @@ export function Manifesto() {
           just noise; it is a mirror of collective bias. The archive is the sitting: each specimen a course in the
           aesthetic of the mean.
         </p>
-        <div className="study-rule" />
         <ol className="notes">
           {NOTES.map((note) => (
             <li key={note.title} className="note">
