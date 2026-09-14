@@ -28,12 +28,12 @@ function healthWord(health: SourceHealth): string {
   return 'error'
 }
 
-function SourceLeds({ statuses }: { statuses: SourceStatus[] }) {
+function SourceLedger({ statuses }: { statuses: SourceStatus[] }) {
   return (
-    <ul className="leds">
+    <ul className="ledger" id="sources">
       {statuses.map((row) => (
-        <li key={row.id} className={`led led-${row.health}`} title={row.detail}>
-          <span className="led-dot" />
+        <li key={row.id} className={`ledger-item is-${row.health}`} title={row.detail}>
+          {row.health === 'live' ? <span className="star">*</span> : null}
           <span>
             {row.label}
             {row.health === 'live' ? ` · ${row.count}` : ` · ${healthWord(row.health)}`}
@@ -101,68 +101,73 @@ export function Feed() {
   })
 
   return (
-    <main id="feed" className="feed-wrap">
-      <div className="toolbar">
-        <div className="toolbar-lead">
-          <h2 className="toolbar-title">Evidence of slop</h2>
-          <p className="toolbar-count">
-            {feed.initializing ? 'Collecting specimens…' : `${feed.filteredCount} in view · ${feed.liveCount} captured`}
-          </p>
+    <main id="archive" className="archive">
+      <div className="wrap">
+        <div className="archive-head">
+          <div>
+            <p className="overline">The sitting</p>
+            <h2 className="archive-title">Specimens</h2>
+            <p className="archive-count">
+              {feed.initializing
+                ? 'Collecting the list…'
+                : `${feed.filteredCount} in view · ${feed.liveCount} captured`}
+            </p>
+          </div>
+          <SourceLedger statuses={feed.statuses} />
         </div>
-        <SourceLeds statuses={feed.statuses} />
-      </div>
 
-      <div className="filters">
-        <ToggleRow<SourceFilter>
-          legend="Source"
-          value={feed.sourceFilter}
-          options={sourceOptions}
-          onChange={feed.setSourceFilter}
-        />
-        <ToggleRow<TagFilter>
-          legend="Taxonomy"
-          value={feed.tagFilter}
-          options={TAG_OPTIONS}
-          onChange={feed.setTagFilter}
-        />
-        <ToggleRow<SortMode>
-          legend="Order"
-          value={feed.sort}
-          options={[
-            { id: 'newest', label: 'Chronological' },
-            { id: 'mixed', label: 'Mixed' },
-          ]}
-          onChange={feed.setSort}
-        />
-      </div>
-
-      {feed.allFailed ? (
-        <div className="state state-error">
-          <p>No specimens could be collected. The archive seed should load without a network; check the console.</p>
+        <div className="filters">
+          <ToggleRow<SourceFilter>
+            legend="Source"
+            value={feed.sourceFilter}
+            options={sourceOptions}
+            onChange={feed.setSourceFilter}
+          />
+          <ToggleRow<TagFilter>
+            legend="Taxonomy"
+            value={feed.tagFilter}
+            options={TAG_OPTIONS}
+            onChange={feed.setTagFilter}
+          />
+          <ToggleRow<SortMode>
+            legend="Order"
+            value={feed.sort}
+            options={[
+              { id: 'newest', label: 'Chronological' },
+              { id: 'mixed', label: 'Mixed' },
+            ]}
+            onChange={feed.setSort}
+          />
         </div>
-      ) : null}
 
-      {!feed.initializing && feed.filteredCount === 0 && !feed.allFailed ? (
-        <div className="state">
-          <p>No items in this slice. Relax a filter, or wait for a blocked source to come back.</p>
-        </div>
-      ) : null}
-
-      <section className="grid" aria-live="polite">
-        {feed.initializing && feed.shown.length === 0
-          ? Array.from({ length: 6 }, (_, i) => <div key={i} className="card skeleton" />)
-          : feed.shown.map((item) => <FeedCard key={item.id} item={item} />)}
-      </section>
-
-      <div className="more">
-        {feed.hasMore ? (
-          <button type="button" className="load-more" onClick={() => void feed.loadMore()} disabled={feed.loadingMore}>
-            {feed.loadingMore ? 'Developing…' : 'Load more specimens'}
-          </button>
-        ) : !feed.initializing && feed.filteredCount > 0 ? (
-          <p className="end-rule">End of current capture.</p>
+        {feed.allFailed ? (
+          <div className="state state-error">
+            <p>No specimens could be collected. The archive seed should load without a network; check the console.</p>
+          </div>
         ) : null}
-        <div ref={sentinel} className="sentinel" />
+
+        {!feed.initializing && feed.filteredCount === 0 && !feed.allFailed ? (
+          <div className="state">
+            <p>No items in this slice. Relax a filter, or wait for a blocked source to come back.</p>
+          </div>
+        ) : null}
+
+        <section className="menu" aria-live="polite">
+          {feed.initializing && feed.shown.length === 0
+            ? Array.from({ length: 6 }, (_, i) => <div key={i} className="course skeleton" />)
+            : feed.shown.map((item, index) => <FeedCard key={item.id} item={item} index={index} />)}
+        </section>
+
+        <div className="more">
+          {feed.hasMore ? (
+            <button type="button" className="btn-ghost" onClick={() => void feed.loadMore()} disabled={feed.loadingMore}>
+              {feed.loadingMore ? 'Collecting…' : 'Further specimens'}
+            </button>
+          ) : !feed.initializing && feed.filteredCount > 0 ? (
+            <p className="end-rule">The list ends here, for now.</p>
+          ) : null}
+          <div ref={sentinel} className="sentinel" />
+        </div>
       </div>
     </main>
   )
