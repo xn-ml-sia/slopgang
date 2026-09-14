@@ -51,8 +51,8 @@ The home route is a chronological (or mixed) feed of **Evidence of Slop** / **Co
 | Adapter | What it pulls | Demo path |
 | --- | --- | --- |
 | `archive` | Curated seed JSON in `src/data/archive.json` | Always on; no keys |
-| `reddit` | Public JSON for a configurable subreddit (or search) | Proxied in Vite; **degrades** if Reddit returns 403 |
-| `rss` | RSS/Atom for a configurable feed URL | Proxied in Vite; default is [404 Media](https://www.404media.co/) |
+| `reddit` | Public JSON for a configurable subreddit (or search) | Proxied in Vite and on Netlify; **degrades** if Reddit returns 403 |
+| `rss` | RSS/Atom for a configurable feed URL | Proxied in Vite and on Netlify; default is [404 Media](https://www.404media.co/) |
 | `x` | X.com / Twitter (official API v2 or optional RSS bridge) | **Unconfigured** without a bearer token or `VITE_X_RSS_URL` |
 | `instagram` | Instagram (Graph `/me/media` or optional RSS bridge) | **Unconfigured** without an access token or `VITE_INSTAGRAM_RSS_URL` |
 
@@ -96,30 +96,57 @@ Copy `.env.example` to `.env.local` only if you want to override defaults.
 | `VITE_INSTAGRAM_RSS_URL` | _(empty)_ | Optional RSS/Atom bridge. Placeholders: `{username}`, `{hashtag}` |
 | `INSTAGRAM_ACCESS_TOKEN` | _(empty)_ | **Server-only.** Instagram Graph token. Do not prefix `VITE_` |
 
-Reddit’s public JSON is often **blocked from datacenter IPs** (HTTP 403). The adapter stays wired; the UI marks the source `blocked` and the archive + RSS streams still render. Try the same `npm run dev` on a residential network to see live `r/midjourney` (or whatever you configure).
+Reddit’s public JSON is often **blocked from datacenter IPs** (HTTP 403), including Netlify. The adapter stays wired; the UI marks the source `blocked` and the archive + RSS streams still render. Try the same `npm run dev` on a residential network to see live `r/midjourney` (or whatever you configure).
 
 **X and Instagram do not work on the zero-key demo path.** Official APIs require credentials (paid/restricted). This repo does **not** scrape x.com or instagram.com HTML. With no token and no bridge URL, the adapters register, the filter chips appear, and the LED reads `unconfigured`. Seed archive + RSS still load.
 
-To go live:
+To go live locally:
 
 1. **Official:** put `X_BEARER_TOKEN` and/or `INSTAGRAM_ACCESS_TOKEN` in `.env.local` (never commit it). Restart `npm run dev`. X uses API v2 recent search or a user timeline; Instagram uses Graph `GET /me/media` (the authenticated account, not an arbitrary public profile).
 2. **Bridge:** set `VITE_X_RSS_URL` / `VITE_INSTAGRAM_RSS_URL` to a public RSS/Atom URL you control or a documented third-party bridge (a Nitter instance’s `/user/rss`, RSSHub `instagram/user/{username}`, etc.). If the official call is unconfigured or blocked, the adapter falls back to that feed. Instances die; pick one you can replace.
 
 Aliases: `TWITTER_BEARER_TOKEN`, `IG_ACCESS_TOKEN`.
 
-Third-party fetches go through a Vite middleware proxy (`/api/reddit`, `/api/rss`, `/api/x`, `/api/instagram`) so the browser does not hit CORS and tokens never enter `import.meta.env`. The same plugin is attached to `vite preview`. A static host without that middleware will still show the seed archive; remote adapters need the proxy or a later serverless route.
+Third-party fetches go through `/api/reddit`, `/api/rss`, `/api/x`, `/api/instagram` so the browser does not hit CORS and tokens never enter `import.meta.env`. In `vite` / `vite preview` those routes are Vite middleware (`server/feedProxy.ts`). In production they are Netlify Functions that reuse `server/feedHandlers.ts` (same SSRF checks and unconfigured/blocked JSON).
+
+### Production (Netlify)
+
+[`netlify.toml`](netlify.toml) is the source of truth once the GitHub repo is linked. You do **not** need to re-enter the build command or publish directory in the Netlify UI.
+
+| Setting | Value |
+| --- | --- |
+| Build command | `npm run build` (Netlify installs from `package-lock.json` first) |
+| Publish directory | `dist` |
+| Node | `22` |
+| Functions | `netlify/functions` |
+| SPA fallback | `/*` → `/index.html` (`200`) |
+| API | `/api/*` → `/.netlify/functions/:splat` (`200`, forced) |
+
+`npm run build` emits hashed `/assets/*.js` (not `/src/main.tsx`). Serving the git tree as static files is what made production look unbundled; this config stops that.
+
+**Environment variables** (Site configuration → Environment variables). Scopes: `VITE_*` need **Builds**; tokens need **Functions** / runtime (or both). Then trigger a redeploy so a new bundle and new function env are published.
+
+| Variable | Required for demo? | Where it applies |
+| --- | --- | --- |
+| `VITE_ENABLE_*`, `VITE_REDDIT_*`, `VITE_RSS_FEED_URL`, `VITE_X_*`, `VITE_INSTAGRAM_*` | No (defaults match `.env.example`) | Build-time client bundle |
+| `X_BEARER_TOKEN` / `TWITTER_BEARER_TOKEN` | No | Function runtime. Without it, X is `unconfigured` unless you also baked in `VITE_X_RSS_URL` |
+| `INSTAGRAM_ACCESS_TOKEN` / `IG_ACCESS_TOKEN` | No | Function runtime. Without it, Instagram is `unconfigured` unless you also baked in `VITE_INSTAGRAM_RSS_URL` |
+
+Zero secrets: seed archive still renders. RSS uses the public default feed. X and Instagram chips stay `unconfigured`. Reddit may `blocked` from Netlify IPs.
+
+Remaining dashboard clicks after this file lands: ensure the site is **linked to this repo** (not a drag-and-drop publish of the git root), merge/redeploy, and paste tokens only if you want live X/IG.
 
 ### Adding a source
 
 1. Implement `SourceAdapter` from `src/types/feed.ts` (`id`, `label`, `fetch(cursor?)` → `{ items, nextCursor? }`).
 2. Map the upstream payload onto `FeedItem` (reuse `src/lib/tags.ts` / `src/lib/time.ts` if useful).
 3. Register the adapter in `src/sources/registry.ts`.
-4. If the origin has CORS or needs a User-Agent, add a route in `server/feedProxy.ts` (keep SSRF checks: https only, no loopback/private IPs, size + time limits).
+4. If the origin has CORS or needs a User-Agent, add a handler in `server/feedHandlers.ts` and a thin file in `netlify/functions/` (keep SSRF checks: https only, no loopback/private IPs, size + time limits). The Vite plugin picks up `/api/<name>` automatically.
 5. Optional: a `VITE_*` flag in `src/config.ts` and `.env.example`.
 
 Seed-only additions: append objects to `src/data/archive.json`. No proxy required.
 
-Next hooks that fit this shape without new product chrome: Mastodon/Bluesky public JSON, an uploads folder, or a small `/api` worker for production deploys.
+Next hooks that fit this shape without new product chrome: Mastodon/Bluesky public JSON, or an uploads folder.
 
 ---
 
