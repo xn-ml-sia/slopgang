@@ -1,0 +1,34 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/reddit"
+  to = "/.netlify/functions/reddit"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/rss"
+  to = "/.netlify/functions/rss"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/x"
+  to = "/.netlify/functions/x"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/instagram"
+  to = "/.netlify/functions/instagram"
+  status = 200
+  force = true

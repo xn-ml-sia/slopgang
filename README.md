@@ -107,19 +107,34 @@ To go live:
 
 Aliases: `TWITTER_BEARER_TOKEN`, `IG_ACCESS_TOKEN`.
 
-Third-party fetches go through a Vite middleware proxy (`/api/reddit`, `/api/rss`, `/api/x`, `/api/instagram`) so the browser does not hit CORS and tokens never enter `import.meta.env`. The same plugin is attached to `vite preview`. A static host without that middleware will still show the seed archive; remote adapters need the proxy or a later serverless route.
+Third-party fetches go through `/api/reddit`, `/api/rss`, `/api/x`, and `/api/instagram`. In `npm run dev` / `vite preview` that is a Vite middleware. On [slopgang.org](https://slopgang.org) (Netlify) the same handlers run as serverless functions.
+
+### Deploy (slopgang.org)
+
+The domain is a **Netlify** site. It must **build** the Vite app (`npm run build` → `dist/`). Publishing the Git repo root serves `index.html` with `/src/main.tsx`, which browsers refuse (wrong MIME / not bundled). That is why the live site was a blank page.
+
+`netlify.toml` in this repo sets:
+
+- build command: `npm run build`
+- publish directory: `dist`
+- Node 22
+- `/api/*` → Netlify functions that reuse `server/handlers.ts`
+
+After this lands on `main`, Netlify should rebuild automatically if the site is linked to GitHub. If the site was a manual “publish the repo folder” setup, change **Build command** to `npm run build` and **Publish directory** to `dist` in Site configuration → Build & deploy, then trigger a deploy.
+
+Production env vars (Site configuration → Environment variables): same names as `.env.example`. `VITE_*` are baked in at build time; `X_BEARER_TOKEN` / `INSTAGRAM_ACCESS_TOKEN` are read only by functions at request time.
 
 ### Adding a source
 
 1. Implement `SourceAdapter` from `src/types/feed.ts` (`id`, `label`, `fetch(cursor?)` → `{ items, nextCursor? }`).
 2. Map the upstream payload onto `FeedItem` (reuse `src/lib/tags.ts` / `src/lib/time.ts` if useful).
 3. Register the adapter in `src/sources/registry.ts`.
-4. If the origin has CORS or needs a User-Agent, add a route in `server/feedProxy.ts` (keep SSRF checks: https only, no loopback/private IPs, size + time limits).
+4. If the origin has CORS or needs a User-Agent, add a handler in `server/handlers.ts` and a Netlify function under `netlify/functions/` (keep SSRF checks: https only, no loopback/private IPs, size + time limits).
 5. Optional: a `VITE_*` flag in `src/config.ts` and `.env.example`.
 
 Seed-only additions: append objects to `src/data/archive.json`. No proxy required.
 
-Next hooks that fit this shape without new product chrome: Mastodon/Bluesky public JSON, an uploads folder, or a small `/api` worker for production deploys.
+Next hooks that fit this shape without new product chrome: Mastodon/Bluesky public JSON, or an uploads folder.
 
 ---
 
