@@ -83,5 +83,66 @@
     "timestamp": "2026-08-22T20:05:00.000Z",
     "tags": ["counter-slop"],
     "author": "lab"
+  },
+  {
+    "id": "archive:sg-09",
+    "title": "Specimen 09 — Glossy Convergence",
+    "caption": "Saturated, symmetrical, poreless. The default look of generative design in 2026.",
+    "body": "Guides now name it outright: glossy, oversaturated, hyper-smooth. Audiences pattern-match in a glance and scroll. Design fixation closes the loop — creators absorb AI output as 'what good looks like,' then prompt for more of the same. Visual homogenization is not a bug in one model; it is the shared mean of the tools.",
+    "palette": ["#ff6b4a", "#f2c14e", "#e85d8c", "#14080c"],
+    "url": "https://kompozy.io/guides/the-ai-design-aesthetic",
+    "timestamp": "2026-09-14T12:00:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-10",
+    "title": "Specimen 10 — The Hero Attractor",
+    "caption": "flex, text-5xl, indigo gradient. Highest-probability website.",
+    "body": "Next-token prediction does not choose beauty; it chooses the densest path through training. Ask for a hero and the tokens cluster on Tailwind SaaS defaults — Inter/Poppins ghosts, blue-to-indigo buttons, centered stacks. No model voted for this aesthetic. The loss landscape did.",
+    "url": "https://sailop.com/blog/ai-slop-definitive-guide-2026",
+    "timestamp": "2026-09-14T12:05:00.000Z",
+    "tags": ["visual-slop", "textual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-11",
+    "title": "Specimen 11 — Anti-Slop as Style Guide",
+    "caption": "Homespun, janky, conspicuously handmade — the backlash already has a name.",
+    "body": "Where AI slop is slick and uncanny, artists reach for the imperfect: grain, gate weave, visible hands. The Guardian logs the turn as 'anti-slop.' Useful as counter-evidence — and dangerous as soon as the mean learns to wear dirt as costume.",
+    "url": "https://www.theguardian.com/technology/2026/jun/08/anti-slop-ai-art",
+    "timestamp": "2026-09-14T12:10:00.000Z",
+    "tags": ["counter-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-12",
+    "title": "Specimen 12 — Rebellion, Preemptively Catalogued",
+    "caption": "Friction, grain, glitch, nostalgia — already a forecasting column.",
+    "body": "Trend reports list the words of resistance beside swatches and adoption windows. Anti-slop is indexed while still emerging. Platforms ship grain controls and 'raw' modes. The latency between gesture and capture has gone negative: the Mask is versioned before it finishes being a protest.",
+    "url": "https://log.fakewhale.xyz/style-as-trend-report-anti-slop-and-the-preemptive-capture-of-rebellion/",
+    "timestamp": "2026-09-14T12:15:00.000Z",
+    "tags": ["counter-slop", "visual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-13",
+    "title": "Specimen 13 — Hollow Expertise",
+    "caption": "Technically complete, intellectually empty. Structure without stance.",
+    "body": "Anti-slop writers describe the textual mean: answers without insight, page-length without judgment, the mimic of expertise anyone's identical prompt would produce. The tell is not that AI touched the draft — it is that no human layer corrected accuracy, relevance, or tone before publish.",
+    "url": "https://nexusexplore.com/anti-slop-content-movement-2026/",
+    "timestamp": "2026-09-14T12:20:00.000Z",
+    "tags": ["textual-slop"],
+    "author": "lab"
+  },
+  {
+    "id": "archive:sg-14",
+    "title": "Specimen 14 — Weekly Average: AI Doom Register",
+    "caption": "A genre of certainty about endings, optimized for share.",
+    "body": "404 Media's newsroom notes how 'AI doom' talk circulates — emotional, absolute, ready-made. Not a judgment on the risk; a texture note on the discourse itself. When catastrophe becomes a content cadence, the centroid of the feed learns another fluent monotony.",
+    "url": "https://www.404media.co/behind-the-blog-how-to-talk-about-ai-doom/",
+    "timestamp": "2026-09-14T12:25:00.000Z",
+    "tags": ["textual-slop"],
+    "author": "lab"
   }
 ]
