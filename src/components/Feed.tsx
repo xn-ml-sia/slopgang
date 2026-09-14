@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react'
 import { useFeed, type SortMode, type SourceFilter, type TagFilter } from '../hooks/useFeed.ts'
 import type { SourceHealth, SourceStatus } from '../types/feed.ts'
 import { FeedCard } from './FeedCard.tsx'
@@ -74,24 +73,6 @@ function ToggleRow<T extends string>({
 
 export function Feed() {
   const feed = useFeed()
-  const sentinel = useRef<HTMLDivElement>(null)
-  const { hasMore, loadingMore, initializing, loadMore } = feed
-
-  useEffect(() => {
-    const node = sentinel.current
-    if (!node) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting) && hasMore && !loadingMore && !initializing) {
-          void loadMore()
-        }
-      },
-      { rootMargin: '80px 0px' },
-    )
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [hasMore, initializing, loadMore, loadingMore])
-
   const redditOn = feed.statuses.some((row) => row.id === 'reddit')
   const rssOn = feed.statuses.some((row) => row.id === 'rss')
   const sourceOptions = SOURCE_OPTIONS.filter((option) => {
@@ -106,7 +87,9 @@ export function Feed() {
         <div className="toolbar-lead">
           <h2 className="toolbar-title">Evidence of slop</h2>
           <p className="toolbar-count">
-            {feed.initializing ? 'Collecting specimens…' : `${feed.filteredCount} in view · ${feed.liveCount} captured`}
+            {feed.initializing
+              ? 'Collecting specimens…'
+              : `${feed.shown.length} showing · ${feed.filteredCount} in slice · ${feed.liveCount} captured`}
           </p>
         </div>
         <SourceLeds statuses={feed.statuses} />
@@ -162,7 +145,6 @@ export function Feed() {
         ) : !feed.initializing && feed.filteredCount > 0 ? (
           <p className="end-rule">End of current capture.</p>
         ) : null}
-        <div ref={sentinel} className="sentinel" />
       </div>
     </main>
   )
