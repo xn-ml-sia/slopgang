@@ -252,6 +252,10 @@ summary {
   background: var(--signal);
 }
 
+.led-unconfigured .led-dot {
+  background: var(--ink-soft);
+}
+
 .led-loading .led-dot {
   background: var(--visual);
 }
@@ -398,6 +402,14 @@ summary {
 
 .card.source-reddit .card-kicker {
   color: var(--counter);
+}
+
+.card.source-x .card-kicker {
+  color: var(--ink);
+}
+
+.card.source-instagram .card-kicker {
+  color: var(--signal);
 }
 
 .card-title {
