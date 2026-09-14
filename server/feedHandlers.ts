@@ -355,10 +355,3 @@ export function netlifyFeedFunction(route: keyof typeof HANDLERS) {
     return handle(new URL(req.url), process.env)
   }
 }
-
-export function netlifyFeedConfig(route: keyof typeof HANDLERS) {
-  return {
-    method: ['GET'],
-    path: [`/api/${route}`, `/.netlify/functions/${route}`],
-  }
-}

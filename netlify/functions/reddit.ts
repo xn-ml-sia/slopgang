@@ -1,4 +1,8 @@
-import { netlifyFeedConfig, netlifyFeedFunction } from '../../server/feedHandlers.ts'
+import { netlifyFeedFunction } from '../../server/feedHandlers.ts'
 
 export default netlifyFeedFunction('reddit')
-export const config = netlifyFeedConfig('reddit')
+
+export const config = {
+  method: ['GET'],
+  path: ['/api/reddit', '/.netlify/functions/reddit'],
+}
