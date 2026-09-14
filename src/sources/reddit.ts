@@ -1,7 +1,7 @@
 import { config } from '../config.ts'
 import { SourceFetchError } from '../lib/errors.ts'
 import { inferTags } from '../lib/tags.ts'
-import { clip, stripHtml } from '../lib/text.ts'
+import { clip, normalizeMediaUrl, stripHtml } from '../lib/text.ts'
 import { toIso } from '../lib/time.ts'
 import type { FeedItem, SourceAdapter, SourcePage } from '../types/feed.ts'
 
@@ -43,9 +43,10 @@ interface RedditListing {
 
 function previewUrl(post: RedditPost): string | undefined {
   const source = post.preview?.images?.[0]?.source
-  if (source?.url) return source.url
+  const fromPreview = normalizeMediaUrl(source?.url)
+  if (fromPreview) return fromPreview
   const url = post.url ?? ''
-  if (/\.(png|jpe?g|gif|webp)$/i.test(url)) return url
+  if (/\.(png|jpe?g|gif|webp)$/i.test(url)) return normalizeMediaUrl(url)
   return undefined
 }
 

@@ -59,11 +59,8 @@ export function CentroidDiagram() {
         <text x="336" y="128">
           RARE
         </text>
-        <text x="336" y="386">
+        <text x="352" y="398">
           MEAN
-        </text>
-        <text x="48" y="724">
-          THE CENTROID · NOT THE OUTLIER
         </text>
       </g>
     </svg>

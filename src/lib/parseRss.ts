@@ -1,4 +1,4 @@
-import { attr, clip, firstImageSrc, innerXml, splitBlocks, stripHtml } from './text.ts'
+import { attr, clip, firstImageSrc, innerXml, normalizeMediaUrl, splitBlocks, stripHtml } from './text.ts'
 import { inferTags } from './tags.ts'
 import { toIso } from './time.ts'
 import type { FeedItem } from '../types/feed.ts'
@@ -35,7 +35,7 @@ function itemFromBlock(block: string, index: number): FeedItem | null {
     innerXml(block, 'description') ??
     ''
   const body = clip(stripHtml(html))
-  const image = mediaUrl(block)
+  const image = normalizeMediaUrl(mediaUrl(block))
   const author =
     stripHtml(innerXml(block, 'dc:creator') ?? innerXml(block, 'name') ?? innerXml(block, 'author') ?? '') || undefined
   const timestamp = toIso(

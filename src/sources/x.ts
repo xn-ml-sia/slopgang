@@ -2,7 +2,7 @@ import { config } from '../config.ts'
 import { SourceFetchError, type SourceErrorKind } from '../lib/errors.ts'
 import { fillTemplate, relabelSource } from '../lib/relabel.ts'
 import { inferTags } from '../lib/tags.ts'
-import { clip } from '../lib/text.ts'
+import { clip, normalizeMediaUrl } from '../lib/text.ts'
 import { toIso } from '../lib/time.ts'
 import type { FeedItem, SourceAdapter, SourcePage } from '../types/feed.ts'
 import { loadRssFeed } from './rss.ts'
@@ -58,7 +58,7 @@ function mapTweets(payload: XPayload): FeedItem[] {
       const handle = author?.username ?? config.x.handle ?? 'x'
       const key = tweet.attachments?.media_keys?.[0]
       const shot = key ? media.get(key) : undefined
-      const imageUrl = shot?.url ?? shot?.preview_image_url
+      const imageUrl = normalizeMediaUrl(shot?.url ?? shot?.preview_image_url)
       const title = clip(tweet.text.replace(/\s+/g, ' '), 140)
       const body = clip(tweet.text)
 

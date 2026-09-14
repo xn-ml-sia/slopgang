@@ -23,10 +23,9 @@ export function Manifesto() {
         </h2>
         <p className="study-lede">
           We believe that “slop”—the predictable, high-probability, hyper-smoothed output of large-scale models—is not
-          just noise; it is a mirror of collective bias. The archive is the sitting: each specimen a course in the
+          just noise; it is a mirror of collective bias. The archive is the list; each specimen a course in the
           aesthetic of the mean.
         </p>
-        <div className="study-rule" />
         <ol className="notes">
           {NOTES.map((note) => (
             <li key={note.title} className="note">
