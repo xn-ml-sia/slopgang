@@ -1,4 +1,5 @@
 import { CentroidDiagram } from './CentroidDiagram.tsx'
+import { SiteNav } from './SiteNav.tsx'
 
 function dateline(d = new Date()): string {
   return d.toLocaleDateString('en-GB', {
@@ -11,36 +12,21 @@ function dateline(d = new Date()): string {
 export function SiteHeader() {
   return (
     <header className="site-head">
-      <nav className="nav" aria-label="Primary">
-        <a className="nav-mark" href="#top">
-          slopgang
-        </a>
-        <ul className="nav-links">
-          <li>
-            <a href="#archive">Archive</a>
-          </li>
-          <li>
-            <a href="#study">The study</a>
-          </li>
-          <li>
-            <a href="#sources">Sources</a>
-          </li>
-        </ul>
-      </nav>
+      <SiteNav current="home" />
 
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero-copy">
-          <p className="overline">The archive · {dateline()}</p>
+          <p className="overline">The study · {dateline()}</p>
           <h1 id="hero-title" className="wordmark">
             slopgang
           </h1>
           <p className="wordmark-aside">Mapping the aesthetic of the average.</p>
           <p className="lede">
-            A forensic feed of the statistical centroid: hyper-smoothed images, high-probability prose, and the analog
+            A forensic reading of the statistical centroid: hyper-smoothed images, high-probability prose, and the analog
             masks used to hide them. We do not hunt outliers. We log the mean.
           </p>
-          <a className="btn-ink" href="#archive">
-            Read the archive
+          <a className="btn-ink" href="/about">
+            Read the manifesto
           </a>
         </div>
         <div className="hero-panel">

@@ -18,9 +18,9 @@ export function Manifesto() {
     <section id="study" className="study" aria-labelledby="study-title">
       <div className="wrap study-inner">
         <p className="study-label">[ the study ]</p>
-        <h2 id="study-title" className="study-title">
+        <h1 id="study-title" className="study-title">
           A manifesto for the average
-        </h2>
+        </h1>
         <p className="study-lede">
           We believe that “slop”—the predictable, high-probability, hyper-smoothed output of large-scale models—is not
           just noise; it is a mirror of collective bias. The archive is the list; each specimen a course in the

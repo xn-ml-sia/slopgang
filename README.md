@@ -40,13 +40,15 @@ Slop Gang utilizes a multi-platform approach to data collection and curation:
 * [Web/Curation]: A digital gallery documenting the "Weekly Average"—the most representative samples of current model biases.
 * [Automated Detection]: (In Development) Algorithms designed to detect "Slop Drift" by measuring the entropy and saturation levels of model outputs over time.
 
-This repository is the Phase 1 archive: a homepage feed that normalizes those streams into one specimen list.
+This repository still contains the Phase 1 source adapters. The public site no longer renders that feed.
 
 ---
 
-🖥 The Archive (this app)
+🖥 The site (this app)
 
-The home route is a chronological (or mixed) feed of **Evidence of Slop** / **Counter-Slop**, aggregated from pluggable source adapters:
+`/` is the tasting-menu hero only: brand `slopgang`, split ivory/ink centroid fold, and a link to the manifesto. `/about` is the manifesto. Source adapters, proxies, and `archive.json` remain in the repo but are unused by the homepage.
+
+Pluggable adapters (not shown in the UI):
 
 | Adapter | What it pulls | Demo path |
 | --- | --- | --- |
@@ -96,9 +98,9 @@ Copy `.env.example` to `.env.local` only if you want to override defaults.
 | `VITE_INSTAGRAM_RSS_URL` | _(empty)_ | Optional RSS/Atom bridge. Placeholders: `{username}`, `{hashtag}` |
 | `INSTAGRAM_ACCESS_TOKEN` | _(empty)_ | **Server-only.** Instagram Graph token. Do not prefix `VITE_` |
 
-Reddit’s public JSON is often **blocked from datacenter IPs** (HTTP 403), including Netlify. The adapter stays wired; the UI marks the source `blocked` and the archive + RSS streams still render. Try the same `npm run dev` on a residential network to see live `r/midjourney` (or whatever you configure).
+Reddit’s public JSON is often **blocked from datacenter IPs** (HTTP 403), including Netlify. The adapter stays wired in the proxy; the public site does not render source status.
 
-**X and Instagram do not work on the zero-key demo path.** Official APIs require credentials (paid/restricted). This repo does **not** scrape x.com or instagram.com HTML. With no token and no bridge URL, the adapters register, the filter chips appear, and the LED reads `unconfigured`. Seed archive + RSS still load.
+**X and Instagram do not work on the zero-key demo path.** Official APIs require credentials (paid/restricted). This repo does **not** scrape x.com or instagram.com HTML. With no token and no bridge URL, the adapters register as `unconfigured`. They are unused by the homepage.
 
 To go live locally:
 
@@ -132,9 +134,9 @@ Third-party fetches go through `/api/reddit`, `/api/rss`, `/api/x`, `/api/instag
 | `X_BEARER_TOKEN` / `TWITTER_BEARER_TOKEN` | No | Function runtime. Without it, X is `unconfigured` unless you also baked in `VITE_X_RSS_URL` |
 | `INSTAGRAM_ACCESS_TOKEN` / `IG_ACCESS_TOKEN` | No | Function runtime. Without it, Instagram is `unconfigured` unless you also baked in `VITE_INSTAGRAM_RSS_URL` |
 
-Zero secrets: seed archive still renders. RSS uses the public default feed. X and Instagram chips stay `unconfigured`. Reddit may `blocked` from Netlify IPs.
+Zero secrets: the public site is the hero + manifesto. Adapter proxies still deploy; they are unused by the homepage.
 
-Remaining dashboard clicks after this file lands: ensure the site is **linked to this repo** (not a drag-and-drop publish of the git root), merge/redeploy, and paste tokens only if you want live X/IG.
+Remaining dashboard clicks after this file lands: ensure the site is **linked to this repo** (not a drag-and-drop publish of the git root), then merge/redeploy.
 
 ### Adding a source
 
@@ -146,38 +148,13 @@ Remaining dashboard clicks after this file lands: ensure the site is **linked to
 
 Seed-only additions: append objects to `src/data/archive.json`. No proxy required.
 
-### Archive media (weekly curation)
-
-`FeedCard` already renders `item.media` in the tasting-menu plate. The seed adapter must copy that field from JSON (it used to drop it). Prefer **in-repo stills** so slopgang.org does not depend on X CDN / auth.
-
-When appending a week's specimens:
-
-1. If the post is an X/Twitter status, capture a **public** still: photo, video poster/frame, or the tweet's link card. Same for articles with a usable `og:image`. Public oEmbed / Open Graph / in-browser media URLs only — no API tokens, no logged-in-only assets.
-2. Save a compressed still at `public/archive/sg-XX.webp` (match the specimen id). One frame, not the video file. Keep each file under ~400KB.
-3. On the JSON object, set:
-
-```json
-"media": {
-  "type": "image",
-  "url": "/archive/sg-XX.webp",
-  "alt": "One-line description of the still",
-  "width": 960,
-  "height": 540
-}
-```
-
-4. Text-only lab notes (or posts with no useful still) can keep `palette` or omit `media` — the plate falls back to a swatch / typographic grid. Visual-slop and posts that clearly have media should get a real preview.
-5. Convert with ffmpeg, e.g. `ffmpeg -i still.jpg -vf "scale='min(960,iw)':'min(960,ih)':force_original_aspect_ratio=decrease" -c:v libwebp -quality 78 public/archive/sg-XX.webp`.
-
-Fair-use archival stills for the research archive. Do not check in full videos.
-
-Next hooks that fit this shape without new product chrome: Mastodon/Bluesky public JSON, or an uploads folder.
+Seed JSON and stills in `src/data/archive.json` / `public/archive/` remain in the tree for later use. The homepage does not load them.
 
 ---
 
 🚀 Roadmap
 
-- [x] Phase 1: The Archive. Public feed + source adapters (seed, Reddit, RSS, X, Instagram). Community submission hub still open.
+- [x] Phase 1: Public site (hero + manifesto) with unused source adapters still in-repo (seed, Reddit, RSS, X, Instagram).
 - [ ] Phase 2: The Slop Index. Build a searchable database of aesthetic archetypes (e.g., The Hyper-Plastic, The Nuance Loop).
 - [ ] Phase 3: Drift Analysis. Develop tools to quantify the movement of the statistical centroid in real-time.
 
