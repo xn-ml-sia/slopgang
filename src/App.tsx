@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
-import { Manifesto } from './components/Manifesto.tsx'
-import { SiteHeader } from './components/SiteHeader.tsx'
+import { SiteFooter } from './components/SiteFooter.tsx'
 import { SiteNav } from './components/SiteNav.tsx'
+import { About } from './pages/About.tsx'
+import { Home } from './pages/Home.tsx'
 
 function isAboutPath(pathname = window.location.pathname): boolean {
   return pathname.replace(/\/+$/, '') === '/about'
@@ -11,7 +12,7 @@ export default function App() {
   const about = isAboutPath()
 
   useEffect(() => {
-    document.title = about ? 'slopgang — about' : 'slopgang'
+    document.title = about ? 'slopgang — manifesto' : 'slopgang — specimens of the mean'
   }, [about])
 
   if (about) {
@@ -21,19 +22,19 @@ export default function App() {
           Skip to manifesto
         </a>
         <SiteNav current="about" />
-        <main>
-          <Manifesto />
-        </main>
+        <About />
+        <SiteFooter />
       </div>
     )
   }
 
   return (
     <div className="site" id="top">
-      <a className="skip" href="/about">
-        Skip to manifesto
+      <a className="skip" href="#catalogue">
+        Skip to catalogue
       </a>
-      <SiteHeader />
+      <Home />
+      <SiteFooter />
     </div>
   )
 }
