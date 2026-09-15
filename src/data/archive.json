@@ -1,492 +1,325 @@
 [
   {
     "id": "archive:sg-01",
-    "title": "Specimen 01 — Hyper-Plastic Portrait",
-    "caption": "Poreless skin, volumetric bloom, rim-light from nowhere.",
-    "body": "The face is a mean of faces. Specularity sits on the cheek like a product shot. Hair is a field of identical filaments. Shadow refuses to pool. This is not a person; it is the centroid of 'portrait' as a training label.",
-    "palette": [
-      "#ff7a3c",
-      "#2ec8c8",
-      "#f4e6d0",
-      "#1a0a08"
-    ],
-    "url": "https://github.com/xn-ml-sia/slopgang",
-    "timestamp": "2026-09-11T14:20:00.000Z",
-    "tags": [
-      "visual-slop"
-    ],
-    "author": "lab"
+    "title": "Specimen 01 — The GAN Face",
+    "caption": "StyleGAN2, 2020. Poreless before diffusion learned bloom.",
+    "body": "Sampled from thispersondoesnotexist. Skin is a texture field. Eyes agree with each other more than any pair of eyes. This is not a person; it is the centroid of 'face' as a training label. Before Midjourney, the mean already knew smoothness.",
+    "url": "https://thispersondoesnotexist.com/",
+    "timestamp": "2020-04-30T00:00:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab",
+    "media": {
+      "type": "image",
+      "url": "/archive/sg-01.webp",
+      "alt": "StyleGAN2 face from This Person Does Not Exist — a photoreal man who is no one",
+      "width": 654,
+      "height": 652
+    }
   },
   {
     "id": "archive:sg-02",
-    "title": "Specimen 02 — The Nuance Loop",
-    "caption": "A paragraph that takes every stance and therefore none.",
-    "body": "It's important to note that while some argue X, others contend Y, and the reality is likely a tapestry of both. We must delve into the nuances. There are no easy answers. At the end of the day, it depends. The syntax is a metronome: hedge, restate, hedge. Rhythmic monotony as a political technology.",
-    "url": "https://github.com/xn-ml-sia/slopgang",
-    "timestamp": "2026-09-10T09:04:00.000Z",
-    "tags": [
-      "textual-slop"
-    ],
-    "author": "lab"
+    "title": "Specimen 02 — A Robot Wrote This",
+    "caption": "GPT-3, September 2020. Peace as a completion.",
+    "body": "The Guardian asked the model to convince us we have nothing to fear. Eight drafts; editors chose the smoothest. I am not a human. I am Artificial Intelligence. The cadence of reassurance is already the product. Early textual slop does not hedge yet — it sermonizes.",
+    "url": "https://www.theguardian.com/commentisfree/2020/sep/08/robot-wrote-this-article-gpt-3",
+    "timestamp": "2020-09-08T08:45:00.000Z",
+    "tags": ["textual-slop"],
+    "author": "lab",
+    "media": {
+      "type": "image",
+      "url": "/archive/sg-02.webp",
+      "alt": "Guardian illustration for the GPT-3 op-ed: green falling code on black",
+      "width": 960,
+      "height": 576
+    }
   },
   {
     "id": "archive:sg-03",
-    "title": "Specimen 03 — The Mask (VHS as alibi)",
-    "caption": "Analog grit applied after the fact, to launder smoothness.",
-    "body": "Chromatic aberration on a render that never passed through glass. Gate weave on a timeline that never touched a gate. The machine does not remember dust; it samples the look of remembering. Counter-slop as costume: the human reaction, already absorbed.",
-    "palette": [
-      "#2a241c",
-      "#6e5a3a",
-      "#c4b89a",
-      "#8f2d1f"
-    ],
-    "url": "https://github.com/xn-ml-sia/slopgang",
-    "timestamp": "2026-09-08T18:41:00.000Z",
-    "tags": [
-      "counter-slop"
-    ],
-    "author": "lab"
+    "title": "Specimen 03 — Avocado Armchair",
+    "caption": "DALL·E, January 2021. 256×256. Product design as a pun.",
+    "body": "An armchair in the shape of an avocado. The object is a joke the model can finish. Early visual slop is not photoreal; it is a children's encyclopedia of concepts, rendered in plastic, no shadow, no room. The mean of 'chair' plus the mean of 'fruit'.",
+    "url": "https://web.archive.org/web/20210331060542/https://openai.com/blog/dall-e/",
+    "timestamp": "2021-01-05T00:00:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab",
+    "media": {
+      "type": "image",
+      "url": "/archive/sg-03.webp",
+      "alt": "Original DALL·E sample: an armchair in the shape of an avocado, 256 pixels square",
+      "width": 256,
+      "height": 256
+    }
   },
   {
     "id": "archive:sg-04",
-    "title": "Specimen 04 — Mathematical Landscape",
-    "caption": "Bilateral symmetry, golden-hour LUT, a path that leads nowhere.",
-    "body": "Mountains cloned across the midline. Fog as a depth cue, not weather. The path is a composition rule. Vegetation is a scatter function with a seed. This is 'landscape' as a high-probability token, not a place.",
-    "palette": [
-      "#f2c14e",
-      "#d4552a",
-      "#3d6b8a",
-      "#0e1c24"
-    ],
-    "url": "https://github.com/xn-ml-sia/slopgang",
-    "timestamp": "2026-09-06T11:12:00.000Z",
-    "tags": [
-      "visual-slop"
-    ],
-    "author": "lab"
+    "title": "Specimen 04 — Melted Intelligence",
+    "caption": "DALL·E mini, June 2022. The prompt was 'artificial intelligence'.",
+    "body": "Before Craiyon had a name, the public mean was a chrome brain that forgot it was a brain. Low-resolution attractor: gloss, bloom, no edges. Hugging Face as a carnival booth. The joke and the product were the same picture.",
+    "url": "https://huggingface.co/spaces/dalle-mini/dalle-mini",
+    "timestamp": "2022-06-04T00:00:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab",
+    "media": {
+      "type": "image",
+      "url": "/archive/sg-04.webp",
+      "alt": "DALL·E mini completion for the prompt artificial intelligence: a melted chrome brain",
+      "width": 960,
+      "height": 960
+    }
   },
   {
     "id": "archive:sg-05",
-    "title": "Specimen 05 — Delve / Tapestry / Landscape",
-    "caption": "Lexical attractors. The bell curve of English under RLHF.",
-    "body": "Count them in the wild: delve, tapestry, landscape (metaphorical), embark, nestled, crucial, vibrant, testament. They are not errors. They are the shortest path through the loss landscape of 'helpful assistant.' Textual slop is a style guide nobody voted for.",
-    "url": "https://github.com/xn-ml-sia/slopgang",
-    "timestamp": "2026-09-04T16:33:00.000Z",
-    "tags": [
-      "textual-slop"
-    ],
-    "author": "lab"
+    "title": "Specimen 05 — Théâtre D'opéra Spatial",
+    "caption": "Midjourney, Colorado State Fair, 5 September 2022. The salon mean wins a ribbon.",
+    "body": "Jason Allen, 624 prompts, Photoshop as alibi. Women in opera gowns facing a portal of light. A year later the US Copyright Office called it insufficiently human. The look had already gone to press. This is 'epic' as a high-probability token.",
+    "url": "https://en.wikipedia.org/wiki/Th%C3%A9%C3%A2tre_D%27op%C3%A9ra_Spatial",
+    "timestamp": "2022-09-05T00:00:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab",
+    "media": {
+      "type": "image",
+      "url": "/archive/sg-05.webp",
+      "alt": "Théâtre D'opéra Spatial — Midjourney image that won the 2022 Colorado State Fair",
+      "width": 960,
+      "height": 640
+    }
   },
   {
     "id": "archive:sg-06",
-    "title": "Specimen 06 — Artificial Grit",
-    "caption": "When the model simulates imperfection without a cause.",
-    "body": "Noise overlaid on a denoised image. Film grain as a layer, not an emulsion. Collapse engineering predicts this: once smoothness is identified as the tell, the mean will drift toward fake damage. The Mask becomes training data. The center of gravity moves.",
-    "palette": [
-      "#111111",
-      "#4a4a4a",
-      "#9a9a9a",
-      "#e8e4da"
-    ],
-    "url": "https://github.com/xn-ml-sia/slopgang",
-    "timestamp": "2026-09-02T08:15:00.000Z",
-    "tags": [
-      "counter-slop",
-      "visual-slop"
-    ],
-    "author": "lab"
+    "title": "Specimen 06 — Rain on the Moon",
+    "caption": "DALL·E 2, September 2022. Style transfer as weather.",
+    "body": "A soaking wet astronaut, white umbrella, pouring rain, lunar surface, 19th century painting. The prompt is a pile of high-probability tokens. The void visor is the tell: a face the model declined to invent. DALL·E 2's public mean — not the horse yet, the costume drama.",
+    "url": "https://commons.wikimedia.org/wiki/File:A_soaking_wet_astronaut_holding_a_white_umbrella_walks_in_the_pouring_rain_on_surface_of_the_moon.png",
+    "timestamp": "2022-09-11T00:00:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab",
+    "media": {
+      "type": "image",
+      "url": "/archive/sg-06.webp",
+      "alt": "DALL·E 2: soaking wet astronaut with a white umbrella in rain on the moon",
+      "width": 814,
+      "height": 960
+    }
   },
   {
     "id": "archive:sg-07",
-    "title": "Specimen 07 — LinkedIn Cadence",
-    "caption": "The professional register of the average.",
-    "body": "I used to think success was about hustle. Then I sat with a janitor / intern / dying relative. Here's what they taught me about leadership: 1. Listen. 2. Be kind. 3. Ship. If this resonates, follow for more. The line breaks are a drum machine. Sentiment is a product surface.",
-    "url": "https://github.com/xn-ml-sia/slopgang",
-    "timestamp": "2026-08-29T13:50:00.000Z",
-    "tags": [
-      "textual-slop"
-    ],
-    "author": "lab"
+    "title": "Specimen 07 — Artgerm / WLOP / Intricate",
+    "caption": "Stable Diffusion 1.4, October 2022. The prompt as a style guide.",
+    "body": "Negative: mutated hands, poorly drawn face, ugly. Positive: Artgerm, WLOP, intricate, realistic eyes. AUTOMATIC1111 as ritual. This is the portrait mean of the first open weights — poreless line, coiffed hair, a castle that is only the word castle.",
+    "url": "https://commons.wikimedia.org/wiki/File:Algorithmically-generated_black_and_white_portrait_art_of_a_young_Japanese_woman_in_the_snow.png",
+    "timestamp": "2022-10-07T00:00:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab",
+    "media": {
+      "type": "image",
+      "url": "/archive/sg-07.webp",
+      "alt": "Stable Diffusion 1.4 portrait: hyper-smooth monochrome woman before a snowed castle",
+      "width": 480,
+      "height": 960
+    }
   },
   {
     "id": "archive:sg-08",
-    "title": "Specimen 08 — Drift Note: lo-fi as the new mean",
-    "caption": "When the centroid moves, the old slop becomes vintage.",
-    "body": "Yesterday's hyper-smooth is today's embarrassment. The feed fills with 'raw' webcam light, on-purpose JPEG, misfocus. Trend detection: slop is a sensor. If the average now wants dirt, the dirt will be manufactured at scale. We log the shift; we do not celebrate it.",
-    "palette": [
-      "#3f5d4e",
-      "#c7b39a",
-      "#1f1d1a",
-      "#d8c7a2"
-    ],
-    "url": "https://github.com/xn-ml-sia/slopgang",
-    "timestamp": "2026-08-22T20:05:00.000Z",
-    "tags": [
-      "counter-slop"
-    ],
-    "author": "lab"
+    "title": "Specimen 08 — As an AI Language Model",
+    "caption": "30 November 2022. The helpful assistant is born.",
+    "body": "RLHF as a house style. It will refuse, hedge, list, and thank you for your patience. The launch still is a gradient of bars; the text is a metronome. We log the voice, not the product shot. Every later delve starts here.",
+    "url": "https://web.archive.org/web/20230316001700/https://openai.com/blog/chatgpt/",
+    "timestamp": "2022-11-30T00:00:00.000Z",
+    "tags": ["textual-slop"],
+    "author": "lab",
+    "media": {
+      "type": "image",
+      "url": "/archive/sg-08.webp",
+      "alt": "OpenAI ChatGPT launch still, November 2022: magenta-to-green bars",
+      "width": 960,
+      "height": 960
+    }
   },
   {
     "id": "archive:sg-09",
-    "title": "Specimen 09 — Glossy Convergence",
-    "caption": "Saturated, symmetrical, poreless. The default look of generative design in 2026.",
-    "body": "Guides now name it outright: glossy, oversaturated, hyper-smooth. Audiences pattern-match in a glance and scroll. Design fixation closes the loop — creators absorb AI output as 'what good looks like,' then prompt for more of the same. Visual homogenization is not a bug in one model; it is the shared mean of the tools.",
-    "palette": [
-      "#ff6b4a",
-      "#f2c14e",
-      "#e85d8c",
-      "#14080c"
-    ],
-    "url": "https://kompozy.io/guides/the-ai-design-aesthetic",
-    "timestamp": "2026-09-14T12:00:00.000Z",
-    "tags": [
-      "visual-slop"
-    ],
-    "author": "lab"
+    "title": "Specimen 09 — Magic Avatar",
+    "caption": "Lensa, December 2022. Your face, as the fantasy mean.",
+    "body": "Upload selfies, receive a queen. Iridescent collar, poreless three-quarter, hair like a product render. The app made the hyper-plastic portrait a social object. Consent was a terms checkbox. For two weeks every feed was the same woman.",
+    "url": "https://techcrunch.com/2022/12/01/lensa-ai-climbs-the-app-store-charts-as-its-magic-avatars-go-viral/",
+    "timestamp": "2022-12-01T00:00:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab",
+    "media": {
+      "type": "image",
+      "url": "/archive/sg-09.webp",
+      "alt": "Lensa Magic Avatar: iridescent fantasy portrait, the December 2022 selfie mean",
+      "width": 960,
+      "height": 584
+    }
   },
   {
     "id": "archive:sg-10",
-    "title": "Specimen 10 — The Hero Attractor",
-    "caption": "flex, text-5xl, indigo gradient. Highest-probability website.",
-    "body": "Next-token prediction does not choose beauty; it chooses the densest path through training. Ask for a hero and the tokens cluster on Tailwind SaaS defaults — Inter/Poppins ghosts, blue-to-indigo buttons, centered stacks. No model voted for this aesthetic. The loss landscape did.",
+    "title": "Specimen 10 — No to AI Generated Images",
+    "caption": "ArtStation, December 2022. Counter-slop as a homepage flood.",
+    "body": "Artists filled the trending page with the same red circle. Trending on ArtStation had already been a prompt token. The protest is a still the models will later learn to draw. Costume, then training data — the mask arriving on schedule.",
+    "url": "https://arstechnica.com/information-technology/2022/12/artstation-artists-stage-mass-protest-against-ai-generated-artwork/",
+    "timestamp": "2022-12-15T00:00:00.000Z",
+    "tags": ["counter-slop"],
+    "author": "lab",
     "media": {
       "type": "image",
       "url": "/archive/sg-10.webp",
-      "alt": "Sailop article card: AI Slop, The Definitive 2026 Guide",
-      "width": 960,
-      "height": 504
-    },
-    "url": "https://sailop.com/blog/ai-slop-definitive-guide-2026",
-    "timestamp": "2026-09-14T12:05:00.000Z",
-    "tags": [
-      "visual-slop",
-      "textual-slop"
-    ],
-    "author": "lab"
+      "alt": "ArtStation protest graphic: AI in a red prohibition circle, No to AI generated images",
+      "width": 910,
+      "height": 960
+    }
   },
   {
     "id": "archive:sg-11",
-    "title": "Specimen 11 — Anti-Slop as Style Guide",
-    "caption": "Homespun, janky, conspicuously handmade — the backlash already has a name.",
-    "body": "Where AI slop is slick and uncanny, artists reach for the imperfect: grain, gate weave, visible hands. The Guardian logs the turn as 'anti-slop.' Useful as counter-evidence — and dangerous as soon as the mean learns to wear dirt as costume.",
+    "title": "Specimen 11 — The Hand Problem",
+    "caption": "January 2023. Anatomy as a failed prior.",
+    "body": "Diffusion can finish a face. It cannot count. Fingers bloom, a wrist tattoos itself with roses that are also meat. For a year this was the public tell — until the mean learned hands, and the tell moved to something smoother.",
+    "url": "https://commons.wikimedia.org/wiki/File:AI_generated_hand.png",
+    "timestamp": "2023-01-12T00:00:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab",
     "media": {
       "type": "image",
       "url": "/archive/sg-11.webp",
-      "alt": "Glossy 3D footballer figures in a capture window, from Guardian anti-slop coverage",
-      "width": 960,
-      "height": 504
-    },
-    "url": "https://www.theguardian.com/technology/2026/jun/08/anti-slop-ai-art",
-    "timestamp": "2026-09-14T12:10:00.000Z",
-    "tags": [
-      "counter-slop"
-    ],
-    "author": "lab"
+      "alt": "AI-generated hand, January 2023: warped fingers, a tattoo that is also flesh",
+      "width": 512,
+      "height": 704
+    }
   },
   {
     "id": "archive:sg-12",
-    "title": "Specimen 12 — Rebellion, Preemptively Catalogued",
-    "caption": "Friction, grain, glitch, nostalgia — already a forecasting column.",
-    "body": "Trend reports list the words of resistance beside swatches and adoption windows. Anti-slop is indexed while still emerging. Platforms ship grain controls and 'raw' modes. The latency between gesture and capture has gone negative: the Mask is versioned before it finishes being a protest.",
+    "title": "Specimen 12 — 8k / DeviantArt / Enscape",
+    "caption": "VQGAN+CLIP grammar, still in the wild in March 2023.",
+    "body": "Afternoon valley, pine, river, Carr Clifton, Galen Rowell, 16K, 8k, Shishkin, Flickr. The landscape is a scatter of tokens from 2021. Fog as a depth cue, not weather. A path that leads to more path. Disco Diffusion's mean, after the Discord closed.",
+    "url": "https://commons.wikimedia.org/wiki/File:Scenic_Valley_in_the_Afternoon_Artistic_(VQGAN%2BCLIP).jpg",
+    "timestamp": "2023-03-01T00:00:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab",
     "media": {
       "type": "image",
       "url": "/archive/sg-12.webp",
-      "alt": "Person holding an ANTI SLOP sign with AI SLOP struck through, against a white-cube collage",
+      "alt": "VQGAN+CLIP scenic valley: painterly pines, river, mountains, the 8k landscape mean",
       "width": 960,
-      "height": 540
-    },
-    "url": "https://log.fakewhale.xyz/style-as-trend-report-anti-slop-and-the-preemptive-capture-of-rebellion/",
-    "timestamp": "2026-09-14T12:15:00.000Z",
-    "tags": [
-      "counter-slop",
-      "visual-slop"
-    ],
-    "author": "lab"
+      "height": 526
+    }
   },
   {
     "id": "archive:sg-13",
-    "title": "Specimen 13 — Hollow Expertise",
-    "caption": "Technically complete, intellectually empty. Structure without stance.",
-    "body": "Anti-slop writers describe the textual mean: answers without insight, page-length without judgment, the mimic of expertise anyone's identical prompt would produce. The tell is not that AI touched the draft — it is that no human layer corrected accuracy, relevance, or tone before publish.",
+    "title": "Specimen 13 — The Puffer",
+    "caption": "Midjourney, March 2023. Photoreal enough to share.",
+    "body": "Pope Francis in a white Balenciaga puffer. Crucifix melted, hand wrong, jacket a sculpture of warmth. The first mass-circulation fake that did not look like a fake. Reuters had to say it: this is generated. The mean had crossed a threshold.",
+    "url": "https://www.reuters.com/article/fact-check/image-of-pope-francis-wearing-oversized-white-puffer-coat-is-ai-generated-idUSL1N36120G/",
+    "timestamp": "2023-03-27T00:00:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab",
     "media": {
       "type": "image",
       "url": "/archive/sg-13.webp",
-      "alt": "Neutral desk still life used as the anti-slop content movement article card",
-      "width": 960,
-      "height": 504
-    },
-    "url": "https://nexusexplore.com/anti-slop-content-movement-2026/",
-    "timestamp": "2026-09-14T12:20:00.000Z",
-    "tags": [
-      "textual-slop"
-    ],
-    "author": "lab"
+      "alt": "Viral Midjourney still: Pope Francis in an oversized white puffer jacket",
+      "width": 784,
+      "height": 960
+    }
   },
   {
     "id": "archive:sg-14",
-    "title": "Specimen 14 — Weekly Average: AI Doom Register",
-    "caption": "A genre of certainty about endings, optimized for share.",
-    "body": "404 Media's newsroom notes how 'AI doom' talk circulates — emotional, absolute, ready-made. Not a judgment on the risk; a texture note on the discourse itself. When catastrophe becomes a content cadence, the centroid of the feed learns another fluent monotony.",
+    "title": "Specimen 14 — Generation 10",
+    "caption": "Shumailov et al., May 2023. The digits forget they were digits.",
+    "body": "Train on the output, repeat. Tails of the distribution disappear. The paper names it model collapse. These MNIST ghosts are the bell curve narrowing until only the average of the average remains. Counter-slop as a warning figure.",
+    "url": "https://arxiv.org/abs/2305.17493",
+    "timestamp": "2023-05-27T00:00:00.000Z",
+    "tags": ["counter-slop"],
+    "author": "lab",
     "media": {
       "type": "image",
       "url": "/archive/sg-14.webp",
-      "alt": "Repeated masked figure on acid green — 404 Media on the AI doom register",
-      "width": 960,
-      "height": 540
-    },
-    "url": "https://www.404media.co/behind-the-blog-how-to-talk-about-ai-doom/",
-    "timestamp": "2026-09-14T12:25:00.000Z",
-    "tags": [
-      "textual-slop"
-    ],
-    "author": "lab"
+      "alt": "VAE samples after ten generations of recursive training — digits collapsing into haze",
+      "width": 600,
+      "height": 600
+    }
   },
   {
     "id": "archive:sg-15",
-    "title": "Specimen 15 — Angrier Sliders",
-    "caption": "Mood as a control surface.",
-    "body": "@ggsimm: “angrier sliders.” Emotion becomes a filter-product — generative behavior exposed as a configurable dial. The mean is not the image; it is the interface that makes affect adjustable.",
+    "title": "Specimen 15 — Astronaut Riding a Horse",
+    "caption": "SDXL, August 2023. The eval prompt as photoreal mean.",
+    "body": "DALL·E 2 made the phrase famous. A year later every open model can finish it in NASA chrome. The horse is plausible. The moon is a studio. This is the shared test set becoming a style — the highest-probability photograph of a sentence.",
+    "url": "https://commons.wikimedia.org/wiki/File:Astronaut_Riding_a_Horse_(SDXL).jpg",
+    "timestamp": "2023-08-17T00:00:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab",
     "media": {
       "type": "image",
       "url": "/archive/sg-15.webp",
-      "alt": "Dark generator UI with Exposure, Bloom, Field of view, and Samples sliders",
-      "width": 720,
-      "height": 774
-    },
-    "url": "https://x.com/ggsimm/status/2099506540478701664",
-    "timestamp": "2026-09-14T18:00:00.000Z",
-    "tags": [
-      "visual-slop"
-    ],
-    "author": "lab"
+      "alt": "Stable Diffusion XL: a photograph of an astronaut riding a horse on a lunar plain",
+      "width": 960,
+      "height": 960
+    }
   },
   {
     "id": "archive:sg-16",
-    "title": "Specimen 16 — Dynamic Visual Generator",
-    "caption": "Upload, then exhaustive options.",
-    "body": "@xin_pai88825 boosts a “super awesome dynamic visual generator” — upload an image, generate, “super detailed configuration options.” The artificial image as product UI: polish lives in the control panel.",
+    "title": "Specimen 16 — Empty Inside",
+    "caption": "DALL·E 3, September 2023. Illustration as a corporate cartoon.",
+    "body": "An avocado on a therapist's couch, pit as wound, spoon as analyst. The line is clean, the joke is the prompt. Late-2023 visual slop is not melted; it is a sticker pack — high saturation, no dirt, a caption already in the image.",
+    "url": "https://commons.wikimedia.org/wiki/File:DALL-E_3_AI_image_of_an_avocado_speaking.png",
+    "timestamp": "2023-09-20T00:00:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab",
     "media": {
       "type": "image",
       "url": "/archive/sg-16.webp",
-      "alt": "Machine Vision generator with a hyper-plastic shouting portrait on blue",
+      "alt": "DALL·E 3: avocado on a therapist couch telling a spoon it feels empty inside",
       "width": 960,
-      "height": 547
-    },
-    "url": "https://x.com/xin_pai88825/status/2099420876383129874",
-    "timestamp": "2026-09-14T18:02:00.000Z",
-    "tags": [
-      "visual-slop"
-    ],
-    "author": "lab"
+      "height": 720
+    }
   },
   {
     "id": "archive:sg-17",
-    "title": "Specimen 17 — Scenes Built by Claude",
-    "caption": "Provenance as credibility signal.",
-    "body": "@endel: benchmarks on an M1 Pro with engine defaults — “scenes built by @claudeai…” Technical humility and AI authorship become part of the developer register. Textual mean: the citation of the model as co-author.",
+    "title": "Specimen 17 — Authors Who Do Not Exist",
+    "caption": "Sports Illustrated, November 2023. GAN faces, hollow bylines.",
+    "body": "Drew Ortiz and colleagues: portraits from the same generator that made thispersondoesnotexist. Product reviews with no one behind them. Textual slop wearing a staff photo. Futurism logged the byline as the tell — expertise as a template.",
+    "url": "https://futurism.com/sports-illustrated-ai-generated-writers",
+    "timestamp": "2023-11-27T17:15:54.000Z",
+    "tags": ["textual-slop", "visual-slop"],
+    "author": "lab",
     "media": {
       "type": "image",
       "url": "/archive/sg-17.webp",
-      "alt": "GitHub card for endel/webgpu-webgl-benchmarks — scenes built by Claude",
-      "width": 800,
-      "height": 419
-    },
-    "url": "https://x.com/endel/status/2099482882439819346",
-    "timestamp": "2026-09-14T18:04:00.000Z",
-    "tags": [
-      "textual-slop"
-    ],
-    "author": "lab"
+      "alt": "Futurism card for Sports Illustrated's AI-generated writers investigation",
+      "width": 960,
+      "height": 504
+    }
   },
   {
     "id": "archive:sg-18",
-    "title": "Specimen 18 — Cyclical Nature / Code",
-    "caption": "Ecology and computation as one grammar.",
-    "body": "@soficrespo91: “of cyclical nature: oceans, ecosystems, animals, and code.” Biomorphic hyper-plastic organisms — artificial life as the visual mean of generative research aesthetics.",
+    "title": "Specimen 18 — Delve / Underscore / Intricate",
+    "caption": "Kobak et al., June 2024. Excess vocabulary after ChatGPT.",
+    "body": "Fourteen million PubMed abstracts. After November 2022 the style words spike: delve, intricate, underscore, showcasing, pivotal. Lexical attractors, measured. The helpful assistant had rewritten the literature in its own register. Count them in the wild.",
+    "url": "https://arxiv.org/abs/2406.07016",
+    "timestamp": "2024-06-11T00:00:00.000Z",
+    "tags": ["textual-slop"],
+    "author": "lab",
     "media": {
       "type": "image",
       "url": "/archive/sg-18.webp",
-      "alt": "Circular biomorphic apertures in a textured generative field",
-      "width": 720,
-      "height": 720
-    },
-    "url": "https://x.com/soficrespo91/status/2077916985594126572",
-    "timestamp": "2026-09-14T18:06:00.000Z",
-    "tags": [
-      "visual-slop"
-    ],
-    "author": "lab"
+      "alt": "Scatterplot of excess style words in 2024 PubMed abstracts: delve, intricate, underscore",
+      "width": 864,
+      "height": 300
+    }
   },
   {
     "id": "archive:sg-19",
-    "title": "Specimen 19 — NOX Universe",
-    "caption": "World-building language before the label.",
-    "body": "@Sinofuturism / Lawrence Lek: a new edition of NOX; “long-running NOX universe + the art of world building.” Speculative-world vocabulary performs the synthetic future as ongoing franchise grammar.",
+    "title": "Specimen 19 — The Curse of Recursion",
+    "caption": "Nature, 24 July 2024. Collapse, peer-reviewed.",
+    "body": "Indiscriminate training on generated data erases the tails. The figure is a loop: data, model, data, model. What began as an arXiv warning is now a journal fact. We log it as counter-slop: the first time the mean named itself in print.",
+    "url": "https://www.nature.com/articles/s41586-024-07566-y",
+    "timestamp": "2024-07-24T00:00:00.000Z",
+    "tags": ["counter-slop"],
+    "author": "lab",
     "media": {
       "type": "image",
       "url": "/archive/sg-19.webp",
-      "alt": "Lawrence Lek in-studio, speaking about agency in how a world develops",
-      "width": 960,
-      "height": 540
-    },
-    "url": "https://x.com/Sinofuturism/status/2012512054394138940",
-    "timestamp": "2026-09-14T18:08:00.000Z",
-    "tags": [
-      "textual-slop"
-    ],
-    "author": "lab"
-  },
-  {
-    "id": "archive:sg-20",
-    "title": "Specimen 20 — Vibecoding Preflight",
-    "caption": "Convert to WebP, then ship.",
-    "body": "@xin_pai88825: before vibecoding goes live, convert images to WebP and compress. AI-assisted making, ritualized as lifestyle and workflow — the optimization tip as genre.",
-    "media": {
-      "type": "image",
-      "url": "/archive/sg-20.webp",
-      "alt": "Finder windows of WebP assets staged before a vibecoding ship",
-      "width": 960,
-      "height": 696
-    },
-    "url": "https://x.com/xin_pai88825/status/2099447744226377870",
-    "timestamp": "2026-09-14T18:10:00.000Z",
-    "tags": [
-      "textual-slop"
-    ],
-    "author": "lab"
-  },
-  {
-    "id": "archive:sg-21",
-    "title": "Specimen 21 — Pelican Budget Exhausted",
-    "caption": "Lord of the Rings in, one million tokens, a render out.",
-    "body": "@karpathy: leaving the SVG-pelican-on-a-bicycle test era — feed the first paragraph of LOTR, a 1M token budget, ask for a render. Autonomous LLM world-building as the new eval: procedural code, animation, deliberately rough emergence.",
-    "media": {
-      "type": "image",
-      "url": "/archive/sg-21.webp",
-      "alt": "Procedural Shire landscape with a Bilbo Baggins caption — Karpathy LOTR render",
-      "width": 960,
-      "height": 540
-    },
-    "url": "https://x.com/karpathy/status/2083749667410727319",
-    "timestamp": "2026-09-14T18:20:00.000Z",
-    "tags": [
-      "visual-slop"
-    ],
-    "author": "lab"
-  },
-  {
-    "id": "archive:sg-22",
-    "title": "Specimen 22 — Marigold V2",
-    "caption": "Depth estimation as vivid moving media.",
-    "body": "@_akhaliq: “Marigold V2 — Revisiting Diffusion Transformers for Monocular Depth Estimation.” A model drop delivered as visual spectacle — research becoming the feed’s texture.",
-    "media": {
-      "type": "image",
-      "url": "/archive/sg-22.webp",
-      "alt": "Marigold V2 slide: portrait in, false-color depth out",
-      "width": 960,
-      "height": 540
-    },
-    "url": "https://x.com/_akhaliq/status/2097726716861186348",
-    "timestamp": "2026-09-14T18:22:00.000Z",
-    "tags": [
-      "textual-slop",
-      "visual-slop"
-    ],
-    "author": "lab"
-  },
-  {
-    "id": "archive:sg-23",
-    "title": "Specimen 23 — Digital Petri Dish",
-    "caption": "Neural cells fighting for a browser tab.",
-    "body": "@hardmaru: make neural network cells inside a “Digital Petri Dish” fight for control in a web tab. Biomorphic competitive emergence — artificial life as a playable mean.",
-    "media": {
-      "type": "image",
-      "url": "/archive/sg-23.webp",
-      "alt": "Color-field colonies competing in a digital petri dish",
-      "width": 960,
-      "height": 960
-    },
-    "url": "https://x.com/hardmaru/status/2045698772613951687",
-    "timestamp": "2026-09-14T18:24:00.000Z",
-    "tags": [
-      "visual-slop"
-    ],
-    "author": "lab"
-  },
-  {
-    "id": "archive:sg-24",
-    "title": "Specimen 24 — Screenplay to Blender",
-    "caption": "Shots, angles, cuts — determined in the DCC.",
-    "body": "@rainisto: v0.003 Blender system — screenplay → auto Blender animation → video; determine shots, camera angles, cuts. AI production workflow as the new craft mean: rough pre-vis reclaiming cinematic control.",
-    "media": {
-      "type": "image",
-      "url": "/archive/sg-24.webp",
-      "alt": "Split still: blocky Blender pre-vis above a live-action two-shot",
-      "width": 720,
-      "height": 810
-    },
-    "url": "https://x.com/rainisto/status/2097534642781884825",
-    "timestamp": "2026-09-14T18:26:00.000Z",
-    "tags": [
-      "visual-slop"
-    ],
-    "author": "lab"
-  },
-  {
-    "id": "archive:sg-25",
-    "title": "Specimen 25 — Code at M+",
-    "caption": "Computational form, in person.",
-    "body": "@zachlieberman: work finally seen in person at M+ museum. Code-native moving image enters the physical room — saturated procedural forms as lived culture, not only feed texture.",
-    "media": {
-      "type": "image",
-      "url": "/archive/sg-25.webp",
-      "alt": "Hanging screen of saturated procedural forms in the M+ galleries",
-      "width": 960,
-      "height": 540
-    },
-    "url": "https://x.com/zachlieberman/status/2098547851479367701",
-    "timestamp": "2026-09-14T18:28:00.000Z",
-    "tags": [
-      "visual-slop"
-    ],
-    "author": "lab"
-  },
-  {
-    "id": "archive:sg-26",
-    "title": "Specimen 26 — Seedance on Hedra",
-    "caption": "Prompt guides and an agent that knows the model.",
-    "body": "@hedra_labs: Seedance 2.5 live on Hedra API and Create — prompt guides, Hedra Agent with encyclopedic knowledge of the model. Generative video productized: API + guides + agent layer.",
-    "media": {
-      "type": "image",
-      "url": "/archive/sg-26.webp",
-      "alt": "Hedra × Seedance 2.5 flag over a starting grid",
-      "width": 960,
-      "height": 536
-    },
-    "url": "https://x.com/hedra_labs/status/2085806660589932593",
-    "timestamp": "2026-09-14T18:30:00.000Z",
-    "tags": [
-      "textual-slop"
-    ],
-    "author": "lab"
-  },
-  {
-    "id": "archive:sg-27",
-    "title": "Specimen 27 — Prime Agent Swarm",
-    "caption": "Twenty thousand stars, one vivid identity.",
-    "body": "@PrimeIntellect: Prime Agent hits 20k GitHub stars. Self-improving agent tooling marketed through swarm aesthetics — community, capability, and visual identity collapse into one product mean.",
-    "media": {
-      "type": "image",
-      "url": "/archive/sg-27.webp",
-      "alt": "Swarm of pixel birds collapsing into a flock — Prime Agent identity",
-      "width": 960,
-      "height": 960
-    },
-    "url": "https://x.com/PrimeIntellect/status/2097188160103182368",
-    "timestamp": "2026-09-14T18:32:00.000Z",
-    "tags": [
-      "textual-slop"
-    ],
-    "author": "lab"
+      "alt": "Nature figure: model collapse as recursive training on generated data",
+      "width": 686,
+      "height": 738
+    }
   }
 ]

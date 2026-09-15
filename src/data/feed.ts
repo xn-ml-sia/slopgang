@@ -18,6 +18,7 @@ export type ArchiveRecord = {
     height?: number
   } | null
   url: string
+  timestamp: string
   tags: FeedTag[]
 }
 
