@@ -44,7 +44,7 @@ function Hero() {
           </p>
           <div className="hero-cta">
             <a className="btn btn-solid" href="/">
-              Browse the catalogue
+              Browse the feed
             </a>
             <a className="link-arrow" href="#method">
               Read the method notes →
@@ -223,7 +223,7 @@ function Featured() {
             </dl>
             <div className="feature-cta">
               <a className="btn btn-solid" href="/">
-                Browse the catalogue
+                Browse the feed
               </a>
               <a className="link-arrow" href="#method">
                 Read the method notes →
