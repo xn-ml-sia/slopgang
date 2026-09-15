@@ -15,6 +15,7 @@ export function FeedWall() {
 
 function Tile({ item, shape }: { item: ArchiveRecord; shape: FeedShape }) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const playGen = useRef(0)
   const title = shortTitle(item.title)
   const label = item.caption ? `${title}. ${item.caption}` : title
   const isVideo = item.media?.type === 'video'
@@ -24,11 +25,19 @@ function Tile({ item, shape }: { item: ArchiveRecord; shape: FeedShape }) {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const video = videoRef.current
     if (!video) return
+    const gen = ++playGen.current
     video.muted = true
-    void video.play().catch(() => {})
+    video.playsInline = true
+    const play = () => {
+      if (playGen.current !== gen) return
+      void video.play().catch(() => {})
+    }
+    if (video.readyState >= 2) play()
+    else video.addEventListener('canplay', play, { once: true })
   }
 
   function stopPreview() {
+    playGen.current += 1
     const video = videoRef.current
     if (!video) return
     video.pause()
@@ -48,6 +57,8 @@ function Tile({ item, shape }: { item: ArchiveRecord; shape: FeedShape }) {
       aria-label={label}
       onMouseEnter={startPreview}
       onMouseLeave={stopPreview}
+      onPointerEnter={startPreview}
+      onPointerLeave={stopPreview}
       onFocus={startPreview}
       onBlur={stopPreview}
     >
@@ -84,6 +95,7 @@ function TileFace({
         loop
         playsInline
         preload="metadata"
+        controls={false}
         disablePictureInPicture
         aria-label={item.media.alt ?? title}
       />

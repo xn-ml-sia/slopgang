@@ -1097,6 +1097,11 @@ html:has(.feed),
   background: #111;
 }
 
+.feed-tile video::-webkit-media-controls,
+.feed-tile video::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+
 .feed-tile.shape-portrait img,
 .feed-tile.shape-portrait video,
 .feed-tile.shape-portrait .feed-swatch,
