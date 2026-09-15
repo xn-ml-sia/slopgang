@@ -1,3 +1,4 @@
+import { useRef, type RefObject } from 'react'
 import { arrangedSpecimens, shapeFor, shortTitle, type ArchiveRecord, type FeedShape } from '../data/feed.ts'
 
 export function FeedWall() {
@@ -13,18 +14,55 @@ export function FeedWall() {
 }
 
 function Tile({ item, shape }: { item: ArchiveRecord; shape: FeedShape }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const playGen = useRef(0)
   const title = shortTitle(item.title)
   const label = item.caption ? `${title}. ${item.caption}` : title
+  const isVideo = item.media?.type === 'video'
+
+  function startPreview() {
+    if (!isVideo) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const video = videoRef.current
+    if (!video) return
+    const gen = ++playGen.current
+    video.muted = true
+    video.playsInline = true
+    const play = () => {
+      if (playGen.current !== gen) return
+      void video.play().catch(() => {})
+    }
+    if (video.readyState >= 2) play()
+    else video.addEventListener('canplay', play, { once: true })
+  }
+
+  function stopPreview() {
+    playGen.current += 1
+    const video = videoRef.current
+    if (!video) return
+    video.pause()
+    try {
+      video.currentTime = 0
+    } catch {
+      /* ignore if metadata is not ready */
+    }
+  }
 
   return (
     <a
-      className={`feed-tile shape-${shape}`}
+      className={`feed-tile shape-${shape}${isVideo ? ' has-video' : ''}`}
       href={item.url}
       target="_blank"
       rel="noreferrer"
       aria-label={label}
+      onMouseEnter={startPreview}
+      onMouseLeave={stopPreview}
+      onPointerEnter={startPreview}
+      onPointerLeave={stopPreview}
+      onFocus={startPreview}
+      onBlur={stopPreview}
     >
-      <TileFace item={item} title={title} />
+      <TileFace item={item} title={title} videoRef={videoRef} />
       <span className="feed-meta">
         <strong>{title}</strong>
         {item.caption ? <em>{item.caption}</em> : null}
@@ -33,7 +71,37 @@ function Tile({ item, shape }: { item: ArchiveRecord; shape: FeedShape }) {
   )
 }
 
-function TileFace({ item, title }: { item: ArchiveRecord; title: string }) {
+function TileFace({
+  item,
+  title,
+  videoRef,
+}: {
+  item: ArchiveRecord
+  title: string
+  videoRef: RefObject<HTMLVideoElement | null>
+}) {
+  if (item.media?.type === 'video' && item.media.url) {
+    return (
+      <video
+        ref={(node) => {
+          videoRef.current = node
+          if (node) node.muted = true
+        }}
+        src={item.media.url}
+        poster={item.media.poster}
+        width={item.media.width ?? 960}
+        height={item.media.height ?? 540}
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        controls={false}
+        disablePictureInPicture
+        aria-label={item.media.alt ?? title}
+      />
+    )
+  }
+
   if (item.media?.url) {
     return (
       <img

@@ -1085,6 +1085,7 @@ html:has(.feed),
 }
 
 .feed-tile img,
+.feed-tile video,
 .feed-swatch,
 .feed-text {
   display: block;
@@ -1092,31 +1093,45 @@ html:has(.feed),
   object-fit: cover;
 }
 
+.feed-tile video {
+  background: #111;
+}
+
+.feed-tile video::-webkit-media-controls,
+.feed-tile video::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+
 .feed-tile.shape-portrait img,
+.feed-tile.shape-portrait video,
 .feed-tile.shape-portrait .feed-swatch,
 .feed-tile.shape-portrait .feed-text {
   aspect-ratio: 3 / 4;
 }
 
 .feed-tile.shape-tall img,
+.feed-tile.shape-tall video,
 .feed-tile.shape-tall .feed-swatch,
 .feed-tile.shape-tall .feed-text {
   aspect-ratio: 4 / 5;
 }
 
 .feed-tile.shape-square img,
+.feed-tile.shape-square video,
 .feed-tile.shape-square .feed-swatch,
 .feed-tile.shape-square .feed-text {
   aspect-ratio: 1 / 1;
 }
 
 .feed-tile.shape-wide img,
+.feed-tile.shape-wide video,
 .feed-tile.shape-wide .feed-swatch,
 .feed-tile.shape-wide .feed-text {
   aspect-ratio: 16 / 10;
 }
 
 .feed-tile.shape-land img,
+.feed-tile.shape-land video,
 .feed-tile.shape-land .feed-swatch,
 .feed-tile.shape-land .feed-text {
   aspect-ratio: 16 / 9;
@@ -1214,5 +1229,9 @@ html:has(.feed),
 @media (prefers-reduced-motion: reduce) {
   .feed-meta {
     transition: none;
+  }
+
+  .feed-tile.has-video video {
+    pointer-events: none;
   }
 }
