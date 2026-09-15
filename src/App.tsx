@@ -10,7 +10,7 @@ export default function App() {
   const about = isAboutPath()
 
   useEffect(() => {
-    document.title = about ? 'slopgang — manifesto' : 'slopgang — specimens of the mean'
+    document.title = about ? 'slopgang — manifesto' : 'slopgang'
   }, [about])
 
   if (about) {
@@ -26,8 +26,8 @@ export default function App() {
 
   return (
     <div className="site" id="top">
-      <a className="skip" href="#catalogue">
-        Skip to catalogue
+      <a className="skip" href="#feed">
+        Skip to feed
       </a>
       <Home />
     </div>
