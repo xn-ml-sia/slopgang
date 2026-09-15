@@ -119,6 +119,24 @@
     }
   },
   {
+    "id": "archive:sg-20",
+    "title": "Specimen 20 — AUTOMATIC1111 Walk",
+    "caption": "Stable Diffusion 1.4, October 2022. Ten seconds of denoise.",
+    "body": "Greg Rutkowski, Alphonse Mucha, park to ocean, hair blowing, smirk. 300 frames, denoise 0.4. The portrait mean, walking. Extra fingers live in the negative prompt; the face still drifts. Hover to watch the attractor twitch.",
+    "url": "https://commons.wikimedia.org/wiki/File:Algorithmically-generated_animation_of_young_woman_in_park.webm",
+    "timestamp": "2022-10-02T00:00:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab",
+    "media": {
+      "type": "video",
+      "url": "/archive/sg-20.mp4",
+      "poster": "/archive/sg-20.webp",
+      "alt": "Stable Diffusion 1.4 animation: a young woman in a park, face drifting toward the ocean mean",
+      "width": 720,
+      "height": 720
+    }
+  },
+  {
     "id": "archive:sg-08",
     "title": "Specimen 08 — As an AI Language Model",
     "caption": "30 November 2022. The helpful assistant is born.",
@@ -218,6 +236,24 @@
       "alt": "Viral Midjourney still: Pope Francis in an oversized white puffer jacket",
       "width": 784,
       "height": 960
+    }
+  },
+  {
+    "id": "archive:sg-21",
+    "title": "Specimen 21 — Watercolor, Scenic, Soft",
+    "caption": "Runway Gen-1, April 2023. Motion as a filter.",
+    "body": "Image to video: the landscape mean given a breeze. Early generative video is not cinema; it is a LUT that breathes. The same 8k valley, now twitching. Hover to see the weather the prompt could not name.",
+    "url": "https://commons.wikimedia.org/wiki/File:Gen-1_IMG_9350_-_Watercolor_painting,_scenic_landscape,_soft.webm",
+    "timestamp": "2023-04-09T00:00:00.000Z",
+    "tags": ["visual-slop"],
+    "author": "lab",
+    "media": {
+      "type": "video",
+      "url": "/archive/sg-21.mp4",
+      "poster": "/archive/sg-21.webp",
+      "alt": "Runway Gen-1 clip: a watercolor landscape that breathes as early generative video",
+      "width": 896,
+      "height": 512
     }
   },
   {

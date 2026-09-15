@@ -21,13 +21,15 @@ const records = raw as SeedRecord[]
 function seedMedia(record: SeedRecord): FeedMedia | undefined {
   const url = normalizeMediaUrl(record.media?.url)
   if (!url) return undefined
-  if (record.media?.type && record.media.type !== 'image') return undefined
+  const type = record.media?.type === 'video' ? 'video' : 'image'
+  const poster = type === 'video' ? normalizeMediaUrl(record.media?.poster) : undefined
   return {
-    type: 'image',
+    type,
     url,
     alt: record.media?.alt ?? record.title,
     width: record.media?.width,
     height: record.media?.height,
+    poster,
   }
 }
 

@@ -11,11 +11,12 @@ export type ArchiveRecord = {
   body?: string
   palette?: string[]
   media?: {
-    type: 'image'
+    type: 'image' | 'video'
     url: string
     alt?: string
     width?: number
     height?: number
+    poster?: string
   } | null
   url: string
   timestamp: string
