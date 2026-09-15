@@ -1,5 +1,18 @@
-export function SiteFooter() {
+export function SiteFooter({ compact = false }: { compact?: boolean }) {
   const year = new Date().getFullYear()
+
+  if (compact) {
+    return (
+      <footer className="footer footer-compact">
+        <div className="wrap">
+          <div className="footer-bottom">
+            <span>© {year} slopgang · specimens logged, not sold</span>
+            <a href="/about">About</a>
+          </div>
+        </div>
+      </footer>
+    )
+  }
 
   return (
     <footer className="footer">

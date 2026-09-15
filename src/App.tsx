@@ -1,6 +1,4 @@
 import { useEffect } from 'react'
-import { SiteFooter } from './components/SiteFooter.tsx'
-import { SiteNav } from './components/SiteNav.tsx'
 import { About } from './pages/About.tsx'
 import { Home } from './pages/Home.tsx'
 
@@ -21,9 +19,7 @@ export default function App() {
         <a className="skip" href="#study">
           Skip to manifesto
         </a>
-        <SiteNav current="about" />
         <About />
-        <SiteFooter />
       </div>
     )
   }
@@ -34,7 +30,6 @@ export default function App() {
         Skip to catalogue
       </a>
       <Home />
-      <SiteFooter />
     </div>
   )
 }
