@@ -181,19 +181,19 @@ export const journalNotes = [
     date: '15 September 2026',
     title: 'Why the mask stays analog',
     body: 'A clean render exists, and we looked at it. The skin is wider but the face loses its centre. Grain settled it anyway: the alibi is the subject.',
-    href: '/about',
+    href: '#featured',
   },
   {
     date: '2 September 2026',
     title: 'Collapse engineering, a lab note',
     body: 'Train a model on its own stills long enough and the hedges shorten. Sixteen bars become eight, then four. The average gets louder as it thins.',
-    href: '/about',
+    href: '#method',
   },
   {
     date: '21 August 2026',
     title: 'Setting a sleeve from the centroid',
     body: 'There is no original mechanical. How we rebuilt Poreless from a public still, a ruler, and the habit of putting the catalogue number on every surface.',
-    href: '#catalogue',
+    href: '/',
   },
 ] as const
 

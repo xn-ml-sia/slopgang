@@ -46,7 +46,7 @@ This repository still contains the Phase 1 source adapters. The public site no l
 
 🖥 The site (this app)
 
-`/` is a sleeve-led catalogue: paper/ink fold, SG-011–SG-016 grid, method ladder, featured plate, ticker, and colophon. Brand wordmark is `slopgang`. `/about` is the manifesto in the same design system. Source adapters, proxies, and `archive.json` remain in the repo but are unused by the homepage.
+`/` is a cosmos-style visual feed: a dense masonry wall of archive specimens (`archive.json` stills in `public/archive/`). Brand wordmark is `slopgang`; nav links to `/about`. `/about` holds the manifesto and Rook Lane–styled context (split hero, ticker, pressing-notes ladder, featured plate, colophon). Source adapters and proxies remain in the repo unused by the homepage UI.
 
 Pluggable adapters (not shown in the UI):
 
