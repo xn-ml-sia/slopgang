@@ -12,6 +12,8 @@ export type ArchiveRecord = {
   body?: string
   /** Curator essay: why this specimen is slop, manifesto-grounded. */
   essay?: string
+  /** Optional curator / logger name shown on specimen detail. */
+  author?: string
   palette?: string[]
   media?: {
     type: 'image' | 'video'
