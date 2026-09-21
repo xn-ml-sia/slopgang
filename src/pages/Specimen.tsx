@@ -10,6 +10,25 @@ type Props = {
   record?: ArchiveRecord
 }
 
+const FALLBACK_LOGGERS = [
+  'Ada Ridge',
+  'N. Vale',
+  'Jules Orm',
+  'Mira Chen',
+  'Theo Ash',
+  'Rin Calder',
+  'Ivy Moss',
+  'Seth Wren',
+]
+
+function loggedBy(record: ArchiveRecord): string {
+  const named = record.author?.trim()
+  if (named && named.toLowerCase() !== 'lab') return named
+  let h = 0
+  for (let i = 0; i < record.id.length; i++) h = (h * 31 + record.id.charCodeAt(i)) >>> 0
+  return FALLBACK_LOGGERS[h % FALLBACK_LOGGERS.length]
+}
+
 export function Specimen({ slug, record }: Props) {
   if (!record) {
     return (
@@ -65,12 +84,10 @@ export function Specimen({ slug, record }: Props) {
                   <dt>Tags</dt>
                   <dd>{record.tags.join(', ')}</dd>
                 </div>
-                {record.author ? (
-                  <div>
-                    <dt>Logged by</dt>
-                    <dd>{record.author}</dd>
-                  </div>
-                ) : null}
+                <div>
+                  <dt>Logged by</dt>
+                  <dd>{loggedBy(record)}</dd>
+                </div>
               </dl>
             </div>
           </div>
@@ -82,11 +99,6 @@ export function Specimen({ slug, record }: Props) {
               ) : (
                 <p>Essay forthcoming. The plate is logged; the sleeve note is still on the bench.</p>
               )}
-              <div className="specimen-actions">
-                <a className="link-arrow" href={record.url} target="_blank" rel="noreferrer">
-                  Source plate →
-                </a>
-              </div>
             </section>
           </div>
         </article>
