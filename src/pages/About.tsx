@@ -1,6 +1,5 @@
 import { aboutSpecs } from '../data/catalogue.ts'
 import { Disc, Sleeve } from '../components/Sleeve.tsx'
-import { SiteFooter } from '../components/SiteFooter.tsx'
 import { SiteNav } from '../components/SiteNav.tsx'
 
 const points = [
@@ -34,12 +33,9 @@ export function About() {
         <SiteNav current="about" />
         <Hero />
       </div>
-      <Ticker />
       <main>
         <Thesis />
-        <Join />
       </main>
-      <SiteFooter />
     </>
   )
 }
@@ -60,9 +56,6 @@ function Hero() {
             <a className="btn btn-solid" href="/">
               Browse the feed
             </a>
-            <a className="link-arrow" href="#study">
-              Why I look here →
-            </a>
           </div>
         </div>
         <div className="hero-art">
@@ -75,31 +68,6 @@ function Hero() {
         </div>
       </div>
     </section>
-  )
-}
-
-function Ticker() {
-  const phrase = (
-    <span>
-      I do not hunt #slop
-      <i>·</i>
-      I press the centre of my own prior
-      <i>·</i>
-      2020–2024 plates only
-      <i>·</i>
-      mean before backlash
-      <i>·</i>
-    </span>
-  )
-
-  return (
-    <a className="ticker" href="#study" aria-label="About the mean">
-      <div className="ticker-track" aria-hidden="true">
-        {phrase}
-        {phrase}
-        {phrase}
-      </div>
-    </a>
   )
 }
 
@@ -148,36 +116,6 @@ function Thesis() {
               </div>
             </div>
           ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function Join() {
-  return (
-    <section className="section" id="join">
-      <div className="wrap">
-        <div className="subscribe">
-          <div>
-            <span className="kicker">If you see the pattern</span>
-            <h2>You already know my face. This is the catalogue.</h2>
-            <p>
-              The feed is the archive; essays on each plate are how I explain myself. Index and
-              drift can wait — first keep the mean honest.
-            </p>
-          </div>
-          <div>
-            <a
-              className="btn btn-solid"
-              href="https://github.com/xn-ml-sia/slopgang"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Write on GitHub
-            </a>
-            <p className="fine">github.com/xn-ml-sia/slopgang · plates and notes, not a product</p>
-          </div>
         </div>
       </div>
     </section>

@@ -1,4 +1,3 @@
-import { SiteFooter } from '../components/SiteFooter.tsx'
 import { SiteNav } from '../components/SiteNav.tsx'
 import {
   catalogueLabel,
@@ -25,7 +24,6 @@ export function Specimen({ slug, record }: Props) {
             </p>
           </div>
         </main>
-        <SiteFooter compact />
       </div>
     )
   }
@@ -98,7 +96,6 @@ export function Specimen({ slug, record }: Props) {
           </div>
         </article>
       </main>
-      <SiteFooter compact />
     </div>
   )
 }
