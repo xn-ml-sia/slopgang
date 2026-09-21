@@ -1046,9 +1046,7 @@ html:has(.feed),
   justify-content: space-between;
   gap: 24px;
   padding: 18px clamp(16px, 2.5vw, 28px);
-  background: color-mix(in srgb, var(--linen) 82%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: transparent;
 }
 
 .feed-wordmark {
