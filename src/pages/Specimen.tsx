@@ -20,7 +20,9 @@ export function Specimen({ slug, record }: Props) {
           <div className="wrap">
             <span className="kicker">Specimen</span>
             <h1>No plate for {slug}.</h1>
-            <p className="lead">That catalogue number is not in Series one. The mean moves; the index has not caught it yet.</p>
+            <p className="lead">
+              That catalogue number is not in Series one. The mean moves; the index has not caught it yet.
+            </p>
             <a className="btn btn-solid" href="/">
               ← Back to the feed
             </a>
@@ -35,7 +37,10 @@ export function Specimen({ slug, record }: Props) {
   const cat = catalogueLabel(record.id)
   const date = formatDate(record.timestamp)
   const essay = record.essay?.trim() || record.body?.trim() || ''
-  const paragraphs = essay.split(/\n\n+/).map((p) => p.trim()).filter(Boolean)
+  const paragraphs = essay
+    .split(/\n\n+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
 
   return (
     <div className="feed specimen-page">
