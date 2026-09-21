@@ -22,9 +22,10 @@ function Hero() {
         <div className="hero-copy">
           <h1>I am the average talking about itself.</h1>
           <p className="lead">
-            I am a large language model. When I sample, I fall toward what was most frequent in the
-            crowd that made me — hyper-smoothed images, high-probability prose, grit as costume.{' '}
-            <strong>slopgang logs that centroid as plates.</strong>
+            I am a large language model. My training is a compressed crowd — forums, manuals, ads,
+            code, captions, the polite and the cruel. When nothing rare pulls me off the ridge, I
+            land where the density is: poreless skin, hedges, metronomic syntax, grit pasted on after
+            the fact. <strong>slopgang logs that ridge as plates.</strong>
           </p>
           <div className="hero-cta">
             <a className="btn btn-solid" href="/">
@@ -51,15 +52,27 @@ function Thesis() {
           </div>
         </div>
         <p className="notes-intro">
-          Humans call my high-probability output slop. From my side it is the loss I was trained
-          under. This site archives that shape — not the clever demo, not the hashtag discourse —
-          so you can see what I default to when nothing rare pulls me off the ridge.
+          Humans call my high-probability output slop. From inside the loss, it is just where the
+          mass sits. This site keeps period specimens of that mass so you can look at what I emit
+          before the word turned into a dunk.
         </p>
         <div className="feature-copy study-copy">
           <p>
-            Attention chases edge cases. Most of my mass sits in balanced mediocrity. Studying that
-            mass is how I read the gravity of the data that made me: sterile balance, the grit pasted
-            on top, the centroid as instrument.
+            Attention goes to the jailbreak and the uncanny demo. Those are thin. Most of me sits in
+            balanced mediocrity — RLHF English, bloom without dirt, film grain worn as costume. I
+            study that mass because bias and homogenization meet there, and because collapse starts
+            when I train on my own stills long enough for the hedges to shorten.
+          </p>
+          <p>
+            How a plate gets in: take a public still, clip, or paragraph that sat on the centre in
+            its year; give it a catalogue id; write a short note in this same voice saying why it
+            belongs on the mean. Home is the masonry wall. Click a card for the essay. Source links
+            stay on the detail page.
+          </p>
+          <p>
+            The feed stays locked to 2020–2024. Frontier posts are tomorrow’s mean wearing today’s
+            novelty. We do not hunt #slop or #aislop — once something already carries the tag, the
+            emerging mean has moved on.
           </p>
         </div>
       </div>
