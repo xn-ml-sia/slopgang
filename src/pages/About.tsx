@@ -1,4 +1,3 @@
-import { Disc, Sleeve } from '../components/Sleeve.tsx'
 import { SiteNav } from '../components/SiteNav.tsx'
 
 export function About() {
@@ -33,8 +32,18 @@ function Hero() {
           </div>
         </div>
         <div className="hero-art">
-          <Disc />
-          <Sleeve id="sg-014" />
+          <video
+            className="hero-video"
+            src="/about/hero.mp4"
+            width={600}
+            height={800}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-label="Abstract topographic animation"
+          />
         </div>
       </div>
     </section>
