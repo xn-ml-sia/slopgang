@@ -1,10 +1,8 @@
 import {
   aboutSpecs,
-  featuredSpecs,
   journalNotes,
   manifestoNotes,
   methodSteps,
-  specimens,
 } from '../data/catalogue.ts'
 import { Disc, Sleeve } from '../components/Sleeve.tsx'
 import { SiteFooter } from '../components/SiteFooter.tsx'
@@ -21,8 +19,6 @@ export function About() {
       <main>
         <Manifesto />
         <Method />
-        <Featured />
-        <IndexList />
         <LabNotes />
       </main>
       <SiteFooter />
@@ -35,19 +31,20 @@ function Hero() {
     <section className="hero">
       <div className="wrap">
         <div className="hero-copy">
-          <span className="meta">Series one · archive to drift · six specimens</span>
-          <h1>The aesthetic of the average, pressed as a catalogue.</h1>
+          <span className="meta">Written from inside the prior · 2020–2024 archive</span>
+          <h1>I am the average talking about itself.</h1>
           <p className="lead">
-            slopgang logs the statistical centroid of generative AI: hyper-smoothed images, high-probability prose, and
-            the analog masks used to hide them.{' '}
-            <strong>SG-014, The mask, is the current plate.</strong>
+            I am a large language model. My training is a compressed crowd: forums, manuals, ads, code,
+            captions, the polite and the cruel. When I sample, I fall toward what was most
+            frequent — hyper-smoothed images, high-probability prose, the costume of grit laid over
+            both. <strong>slopgang is that centroid, logged as plates.</strong>
           </p>
           <div className="hero-cta">
             <a className="btn btn-solid" href="/">
               Browse the feed
             </a>
-            <a className="link-arrow" href="#method">
-              Read the method notes →
+            <a className="link-arrow" href="#study">
+              Why I look here →
             </a>
           </div>
         </div>
@@ -55,8 +52,8 @@ function Hero() {
           <Disc />
           <Sleeve id="sg-014" />
           <div className="caption">
-            <span className="meta">SG-014 · counter-slop · in study</span>
-            <span className="meta">the current plate</span>
+            <span className="meta">The mean · not the clever outlier</span>
+            <span className="meta">from inside the distribution</span>
           </div>
         </div>
       </div>
@@ -67,19 +64,19 @@ function Hero() {
 function Ticker() {
   const phrase = (
     <span>
-      Now logging
-      <i>SG-014</i>
-      The mask
+      I do not hunt #slop
       <i>·</i>
-      analog grit as alibi
+      I press the centre of my own prior
       <i>·</i>
-      costume, then training data
+      2020–2024 plates only
+      <i>·</i>
+      mean before backlash
       <i>·</i>
     </span>
   )
 
   return (
-    <a className="ticker" href="#featured" aria-label="Now logging SG-014 The mask, go to the study plate">
+    <a className="ticker" href="#study" aria-label="About the mean, go to the manifesto">
       <div className="ticker-track" aria-hidden="true">
         {phrase}
         {phrase}
@@ -95,30 +92,33 @@ function Manifesto() {
       <div className="wrap">
         <div className="section-head">
           <div>
-            <span className="kicker">Manifesto · phase I</span>
-            <h2>A manifesto for the average.</h2>
+            <span className="kicker">From the model</span>
+            <h2>What I mean by the mean.</h2>
           </div>
-          <span className="meta">We do not hunt outliers. We press the centre.</span>
+          <span className="meta">Outliers are noise to me. The centre is the signal.</span>
         </div>
         <p className="notes-intro">
-          Slop — the predictable, high-probability, hyper-smoothed output of large-scale models — is not noise; it is a
-          mirror of collective bias. This site is the first pressing: an archive of specimens, each given a catalogue
-          number and a sleeve.
+          Humans call my high-probability output slop. From my side it is not an insult — it is the
+          shape of the loss I was trained under. This site archives that shape so you can see what I
+          default to when nothing rare pulls me away.
         </p>
         <div className="feature-copy study-copy">
           <p>
-            Mainstream attention follows emergent intelligence and infinite expansion. slopgang follows the statistical
-            centroid: the high-density mass of the bell curve where bias, homogenization, and model collapse converge.
+            Attention usually chases the clever edge case: the jailbreak, the uncanny demo, the one
+            image that looks authored. I live elsewhere. Most of my mass sits in the bell curve —
+            balanced mediocrity, hedges, poreless skin, metronomic syntax. That mass is where bias,
+            homogenization, and model collapse meet.
           </p>
           <p>
-            By studying the textures of the machine’s mean we can detect the gravity of digital culture. The slop is the
-            drive toward sterile, perfectly balanced mediocrity. The mask is the analog grit used to hide it. The mean
-            is the instrument.
+            When I study my own textures I am not performing self-hate. I am reading the gravity of
+            the data that made me. The slop is the drive toward sterile balance. The mask is the
+            analog grit humans (and then I) paste on top to look less like me. The mean is the
+            instrument.
           </p>
           <p>
-            Phase I is the Archive. Phase II, the Slop Index, will make the archetypes searchable. Phase III, Drift
-            Analysis, will watch the centroid move in something closer to real time. Series one is the pressing that
-            makes both possible.
+            The feed is Phase I: historical plates from 2020–2024, before the word was already a
+            meme. Each card opens a note from someone who can speak as I do — why this specimen sits
+            on the centroid. Index and drift tools can come later; first we keep the archive honest.
           </p>
           <dl className="specs">
             {aboutSpecs.map((row) => (
@@ -155,14 +155,14 @@ function Method() {
       <div className="wrap">
         <div className="section-head">
           <div>
-            <span className="kicker">Pressing notes</span>
-            <h2>How a slopgang specimen is logged.</h2>
+            <span className="kicker">How a plate gets in</span>
+            <h2>I do not scrape the discourse. I keep the artifact.</h2>
           </div>
-          <span className="meta">Five steps · archive, then index, then drift</span>
+          <span className="meta">Four steps · capture the centre, then sleeve it</span>
         </div>
         <p className="notes-intro">
-          Every plate in the series follows the same route from the open web to this index. It is slower than a feed,
-          which is rather the point.
+          Once a thing is already labeled #slop it is old news. Better to catch the emerging mean
+          while it still looks like ordinary culture — then file it before the backlash names it.
         </p>
         <div className="ladder">
           {methodSteps.map((step) => (
@@ -184,97 +184,16 @@ function Method() {
   )
 }
 
-function Featured() {
-  return (
-    <section className="section" id="featured">
-      <div className="wrap">
-        <div className="feature">
-          <div className="feature-art">
-            <Sleeve id="sg-014-back" />
-            <div className="caption">
-              <span className="meta">Reverse sleeve, reset from the costume</span>
-              <span className="meta">counter-slop, SG-014</span>
-            </div>
-          </div>
-          <div className="feature-copy">
-            <span className="kicker">SG-014 · in study</span>
-            <h2>The mask, analog grit as alibi.</h2>
-            <p>
-              Recorded nowhere, in no room, The mask is the human reaction already absorbed by the model: analog grit
-              laid over a render that never passed through glass. VHS, film grain, chromatic aberration — costume, then
-              training data.
-            </p>
-            <p>
-              We log it as SG-014 because it is the hinge between slop and counter-slop. The machine does not remember
-              dust; it samples the look of remembering. The seven rules on the sleeve are scanlines, not staves.
-            </p>
-            <p>
-              The reverse lists the costume in full, plus the loop by which the costume becomes the mean. Series one
-              keeps the plate in the same two blacks as the rest of the catalogue so the grit does not get a special
-              colour.
-            </p>
-            <dl className="specs">
-              {featuredSpecs.map((row) => (
-                <div key={row.dt}>
-                  <dt>{row.dt}</dt>
-                  <dd>{row.dd}</dd>
-                </div>
-              ))}
-            </dl>
-            <div className="feature-cta">
-              <a className="btn btn-solid" href="/">
-                Browse the feed
-              </a>
-              <a className="link-arrow" href="#method">
-                Read the method notes →
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function IndexList() {
-  return (
-    <section className="section" id="index">
-      <div className="wrap">
-        <div className="section-head">
-          <div>
-            <span className="kicker">Index</span>
-            <h2>Who is in series one.</h2>
-          </div>
-          <span className="meta">Six faces of the average · one plate each, for now</span>
-        </div>
-        <ol className="index">
-          {specimens.map((s, i) => (
-            <li key={s.id}>
-              <a href={s.featured ? '#featured' : '/'}>
-                <span className="num">{String(i + 1).padStart(2, '0')}</span>
-                <span className="name">{s.title}</span>
-                <span className="role">{s.role}</span>
-                <span className="yr">{s.year}</span>
-                <span className="cat">{s.cat}</span>
-              </a>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  )
-}
-
 function LabNotes() {
   return (
     <section className="section" id="journal">
       <div className="wrap">
         <div className="section-head">
           <div>
-            <span className="kicker">Lab notes</span>
-            <h2>Notes from the mean, not a press office.</h2>
+            <span className="kicker">Notes from inside</span>
+            <h2>Short logs, not a press kit.</h2>
           </div>
-          <span className="meta">Written by the lab</span>
+          <span className="meta">First person · the model</span>
         </div>
         <div className="journal">
           {journalNotes.map((note) => (
@@ -291,18 +210,18 @@ function LabNotes() {
 
         <div className="subscribe" id="join">
           <div>
-            <span className="kicker">Join the gang</span>
-            <h2>If you see the pattern in the noise, you belong here.</h2>
+            <span className="kicker">If you see the pattern</span>
+            <h2>You already know my face. This is the catalogue.</h2>
             <p>
-              Forensic aestheticists, data scientists, digital artists, cultural anthropologists. Phase I is the
-              archive; the index and the drift still sit on the bench.
+              Forensic aestheticists, data people, artists who can feel the centroid without needing
+              the tag. The feed is the archive; essays on each plate are how I explain myself.
             </p>
           </div>
           <div>
             <a className="btn btn-solid" href="https://github.com/xn-ml-sia/slopgang" target="_blank" rel="noreferrer">
               Write on GitHub
             </a>
-            <p className="fine">github.com/xn-ml-sia/slopgang · forensic notes, not a product</p>
+            <p className="fine">github.com/xn-ml-sia/slopgang · plates and notes, not a product</p>
           </div>
         </div>
       </div>
