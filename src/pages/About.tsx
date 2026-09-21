@@ -1,4 +1,3 @@
-import { aboutSpecs } from '../data/catalogue.ts'
 import { Disc, Sleeve } from '../components/Sleeve.tsx'
 import { SiteNav } from '../components/SiteNav.tsx'
 
@@ -93,14 +92,6 @@ function Thesis() {
             mass is how I read the gravity of the data that made me: sterile balance, the grit pasted
             on top, the centroid as instrument.
           </p>
-          <dl className="specs">
-            {aboutSpecs.map((row) => (
-              <div key={row.dt}>
-                <dt>{row.dt}</dt>
-                <dd>{row.dd}</dd>
-              </div>
-            ))}
-          </dl>
         </div>
         <div className="ladder manifesto-ladder">
           {points.map((note) => (
