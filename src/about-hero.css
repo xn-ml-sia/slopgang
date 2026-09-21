@@ -1,15 +1,25 @@
 .hero-art {
   width: min(100%, 420px);
+  margin-left: auto;
 }
 
-.hero-art .hero-image {
+.hero-art .hero-dotforge,
+.hero-art .dotforge-cellular {
+  width: 100%;
+  max-width: 100%;
+}
+
+.dotforge-cellular__canvas {
   display: block;
   width: 100%;
-  height: auto;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-  background: #efece7;
-  box-shadow:
-    inset 0 0 0 1px rgba(20, 20, 18, 0.1),
-    0 1px 0 rgba(20, 20, 18, 0.06);
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+@media (max-width: 860px) {
+  .hero-art {
+    margin-left: 0;
+    width: min(100%, 380px);
+  }
 }
