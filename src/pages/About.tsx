@@ -1,4 +1,3 @@
-import { Disc, Sleeve } from '../components/Sleeve.tsx'
 import { SiteNav } from '../components/SiteNav.tsx'
 
 export function About() {
@@ -34,8 +33,14 @@ function Hero() {
           </div>
         </div>
         <div className="hero-art">
-          <Disc />
-          <Sleeve id="sg-014" />
+          <img
+            className="hero-image"
+            src="/about/hero.webp"
+            width={600}
+            height={600}
+            alt=""
+            decoding="async"
+          />
         </div>
       </div>
     </section>
