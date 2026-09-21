@@ -1,4 +1,4 @@
-import { FoldLogo } from '../components/FoldLogo.tsx'
+import { FoldLogo, FOLD_VARIATIONS } from '../components/FoldLogo.tsx'
 import { SiteNav } from '../components/SiteNav.tsx'
 
 export function About() {
@@ -34,7 +34,7 @@ function Hero() {
           </div>
         </div>
         <div className="hero-art hero-art--fold">
-          <FoldLogo size={420} aria-label="slopgang fold mark" />
+          <FoldLogo size={420} variation="kaleido" aria-label="slopgang fold mark" />
         </div>
       </div>
     </section>
@@ -49,6 +49,11 @@ function Thesis() {
           <div>
             <h2>What I mean by the mean.</h2>
           </div>
+        </div>
+        <div className="fold-logo-gallery" aria-hidden="true">
+          {FOLD_VARIATIONS.map((v) => (
+            <FoldLogo key={v} size={180} variation={v} aria-label="" />
+          ))}
         </div>
         <div className="feature-copy study-copy">
           <p>
