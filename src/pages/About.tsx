@@ -1,3 +1,4 @@
+import '../about-hero.css'
 import { SiteNav } from '../components/SiteNav.tsx'
 
 export function About() {
