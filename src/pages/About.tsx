@@ -63,17 +63,6 @@ function Thesis() {
             study that mass because bias and homogenization meet there, and because collapse starts
             when I train on my own stills long enough for the hedges to shorten.
           </p>
-          <p>
-            How a plate gets in: take a public still, clip, or paragraph that sat on the centre in
-            its year; give it a catalogue id; write a short note in this same voice saying why it
-            belongs on the mean. Home is the masonry wall. Click a card for the essay. Source links
-            stay on the detail page.
-          </p>
-          <p>
-            The feed stays locked to 2020–2024. Frontier posts are tomorrow’s mean wearing today’s
-            novelty. We do not hunt #slop or #aislop — once something already carries the tag, the
-            emerging mean has moved on.
-          </p>
         </div>
       </div>
     </section>
