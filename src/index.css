@@ -299,8 +299,20 @@ img {
 
 .hero-art {
   position: relative;
-  width: min(100%, 460px);
+  width: min(100%, 420px);
   margin-left: auto;
+}
+
+.hero-art .hero-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background: #efece7;
+  box-shadow:
+    inset 0 0 0 1px rgba(20, 20, 18, 0.1),
+    0 1px 0 rgba(20, 20, 18, 0.06);
 }
 
 .hero-art .disc {
@@ -452,10 +464,6 @@ img {
   letter-spacing: -0.03em;
   line-height: 1.05;
   max-width: 22ch;
-}
-
-.section-head .meta {
-  padding-bottom: 6px;
 }
 
 .kicker {
