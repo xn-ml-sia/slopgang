@@ -66,9 +66,6 @@ export function Specimen({ slug, record }: Props) {
               <MediaPlate item={record} title={title} />
             </div>
             <div className="specimen-copy">
-              <span className="kicker">
-                {cat} · {record.tags.join(' · ')}
-              </span>
               <h1>{title}</h1>
               {record.caption ? <p className="specimen-deck">{record.caption}</p> : null}
               <dl className="specs specimen-specs">
@@ -81,7 +78,7 @@ export function Specimen({ slug, record }: Props) {
                   <dd>{cat}</dd>
                 </div>
                 <div>
-                  <dt>Tags</dt>
+                  <dt>Register</dt>
                   <dd>{record.tags.join(', ')}</dd>
                 </div>
                 <div>
