@@ -23,7 +23,7 @@ const FALLBACK_LOGGERS = [
 
 function loggedBy(record: ArchiveRecord): string {
   const named = record.author?.trim()
-  if (named) return named
+  if (named && named.toLowerCase() !== 'lab') return named
   let h = 0
   for (let i = 0; i < record.id.length; i++) h = (h * 31 + record.id.charCodeAt(i)) >>> 0
   return FALLBACK_LOGGERS[h % FALLBACK_LOGGERS.length]
