@@ -99,6 +99,11 @@ export function Specimen({ slug, record }: Props) {
               ) : (
                 <p>Essay forthcoming. The plate is logged; the sleeve note is still on the bench.</p>
               )}
+              <div className="specimen-actions">
+                <a className="link-arrow" href={record.url} target="_blank" rel="noreferrer">
+                  Source →
+                </a>
+              </div>
             </section>
           </div>
         </article>
