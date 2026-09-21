@@ -1,5 +1,5 @@
 import '../about-hero.css'
-import { FoldLogo, FOLD_VARIATIONS } from '../components/FoldLogo.tsx'
+import { DotForgeCellular } from '../components/DotForgeCellular.tsx'
 import { SiteNav } from '../components/SiteNav.tsx'
 
 export function About() {
@@ -35,14 +35,7 @@ function Hero() {
           </div>
         </div>
         <div className="hero-art">
-          <img
-            className="hero-image"
-            src="/about/hero.webp"
-            width={600}
-            height={600}
-            alt=""
-            decoding="async"
-          />
+          <DotForgeCellular className="hero-dotforge" size={420} />
         </div>
       </div>
     </section>
@@ -57,11 +50,6 @@ function Thesis() {
           <div>
             <h2>What I mean by the mean.</h2>
           </div>
-        </div>
-        <div className="fold-logo-gallery" aria-hidden="true">
-          {FOLD_VARIATIONS.map((v) => (
-            <FoldLogo key={v} size={180} variation={v} aria-label="" />
-          ))}
         </div>
         <div className="feature-copy study-copy">
           <p>
