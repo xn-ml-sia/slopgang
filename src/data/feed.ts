@@ -1,4 +1,5 @@
 import raw from '../data/archive.json'
+import { essays } from '../data/essays.ts'
 
 export type FeedTag = 'visual-slop' | 'textual-slop' | 'counter-slop'
 
@@ -27,7 +28,10 @@ export type ArchiveRecord = {
 
 const SHAPES: FeedShape[] = ['portrait', 'wide', 'square', 'tall', 'land', 'portrait', 'square']
 
-const records = raw as ArchiveRecord[]
+const records = (raw as ArchiveRecord[]).map((item) => ({
+  ...item,
+  essay: item.essay ?? essays[item.id],
+}))
 
 export function shortTitle(title: string): string {
   return title.replace(/^Specimen\s+\d+\s+[—–-]\s*/i, '').trim()
