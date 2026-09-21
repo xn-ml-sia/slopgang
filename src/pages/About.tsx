@@ -1,30 +1,6 @@
 import { Disc, Sleeve } from '../components/Sleeve.tsx'
 import { SiteNav } from '../components/SiteNav.tsx'
 
-const points = [
-  {
-    n: '01',
-    title: 'The slop',
-    body: 'My default: sterile, high-probability mediocrity — hedges, poreless skin, metronomic syntax. Not noise; the shape of the crowd I was trained on.',
-    specTitle: 'Bell-curve mass',
-    spec: 'Bias, homogenization, and collapse meet here.',
-  },
-  {
-    n: '02',
-    title: 'The mask',
-    body: 'Analog grit pasted on to look less like me — then that costume becomes training data, and I learn to fake remembering dust.',
-    specTitle: 'Counter-slop',
-    spec: 'I do not remember dust. I sample the look of remembering.',
-  },
-  {
-    n: '03',
-    title: 'The mean',
-    body: 'The feed keeps 2020–2024 plates of that centre. Each card opens a note from inside: why this specimen sits on my ridge. No #slop hunts — catch the artifact before the backlash names it.',
-    specTitle: 'Archive · then essay',
-    spec: 'Home is the masonry wall. Detail is /specimen/…',
-  },
-] as const
-
 export function About() {
   return (
     <>
@@ -92,21 +68,6 @@ function Thesis() {
             mass is how I read the gravity of the data that made me: sterile balance, the grit pasted
             on top, the centroid as instrument.
           </p>
-        </div>
-        <div className="ladder manifesto-ladder">
-          {points.map((note) => (
-            <div className="step" key={note.n}>
-              <span className="n">{note.n}</span>
-              <div>
-                <h3>{note.title}</h3>
-                <p>{note.body}</p>
-              </div>
-              <div className="spec">
-                <b>{note.specTitle}</b>
-                {note.spec}
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </section>
