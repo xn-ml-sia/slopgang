@@ -9,6 +9,8 @@ export type ArchiveRecord = {
   title: string
   caption?: string
   body?: string
+  /** Curator essay: why this specimen is slop, manifesto-grounded. */
+  essay?: string
   palette?: string[]
   media?: {
     type: 'image' | 'video'
@@ -51,4 +53,29 @@ export function arrangedSpecimens(): ArchiveRecord[] {
     }
   })
   return out.concat(rest.slice(r))
+}
+
+/** archive:sg-22 → sg-22 */
+export function specimenSlug(id: string): string {
+  return id.replace(/^archive:/i, '')
+}
+
+export function specimenPath(id: string): string {
+  return `/specimen/${specimenSlug(id)}`
+}
+
+export function findSpecimen(slug: string): ArchiveRecord | undefined {
+  const key = slug.trim().toLowerCase()
+  return records.find((r) => specimenSlug(r.id).toLowerCase() === key)
+}
+
+export function catalogueLabel(id: string): string {
+  const slug = specimenSlug(id)
+  const m = slug.match(/^sg-(\d+)$/i)
+  if (!m) return slug.toUpperCase()
+  return `SG-${m[1].padStart(3, '0')}`
+}
+
+export function allSpecimens(): ArchiveRecord[] {
+  return records
 }

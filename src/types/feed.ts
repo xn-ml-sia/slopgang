@@ -19,6 +19,8 @@ export interface FeedItem {
   title: string
   caption?: string
   body?: string
+  /** Curator essay: why this specimen is slop, manifesto-grounded. */
+  essay?: string
   media?: FeedMedia
   palette?: string[]
   url: string

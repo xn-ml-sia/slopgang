@@ -1,13 +1,16 @@
-type Page = 'home' | 'about'
+type Page = 'home' | 'about' | 'specimen'
 
 export function SiteNav({ current }: { current: Page }) {
-  if (current === 'home') {
+  if (current === 'home' || current === 'specimen') {
     return (
       <header className="feed-nav">
-        <a className="feed-wordmark" href="/" aria-current="page">
+        <a className="feed-wordmark" href="/" aria-current={current === 'home' ? 'page' : undefined}>
           slopgang
         </a>
         <nav aria-label="Primary">
+          {current === 'specimen' ? (
+            <a href="/">← Feed</a>
+          ) : null}
           <a href="/about">About</a>
         </nav>
       </header>
