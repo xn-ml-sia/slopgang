@@ -1,4 +1,4 @@
-import { Disc, Sleeve } from '../components/Sleeve.tsx'
+import { FoldLogo } from '../components/FoldLogo.tsx'
 import { SiteNav } from '../components/SiteNav.tsx'
 
 export function About() {
@@ -33,9 +33,8 @@ function Hero() {
             </a>
           </div>
         </div>
-        <div className="hero-art">
-          <Disc />
-          <Sleeve id="sg-014" />
+        <div className="hero-art hero-art--fold">
+          <FoldLogo size={420} aria-label="slopgang fold mark" />
         </div>
       </div>
     </section>

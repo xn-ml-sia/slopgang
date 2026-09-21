@@ -1,0 +1,38 @@
+.fold-logo {
+  --fold-logo-size: 360px;
+  position: relative;
+  width: min(100%, var(--fold-logo-size));
+  aspect-ratio: 1;
+  height: auto;
+  background: #f3f0ea;
+  box-shadow:
+    inset 0 0 0 1px rgba(20, 20, 18, 0.1),
+    0 1px 0 rgba(20, 20, 18, 0.06);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.fold-logo__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.hero-art--fold {
+  width: min(100%, 420px);
+  margin-left: auto;
+}
+
+.hero-art--fold .fold-logo {
+  width: 100%;
+  --fold-logo-size: 100%;
+}
+
+@media (max-width: 860px) {
+  .hero-art--fold {
+    margin-left: 0;
+    width: min(100%, 380px);
+  }
+}
