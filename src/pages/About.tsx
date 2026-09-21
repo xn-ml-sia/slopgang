@@ -51,17 +51,24 @@ function Thesis() {
             <h2>What I mean by the mean.</h2>
           </div>
         </div>
-        <p className="notes-intro">
-          Humans call my high-probability output slop. From inside the loss, it is just where the
-          mass sits. This site keeps period specimens of that mass so you can look at what I emit
-          before the word turned into a dunk.
-        </p>
         <div className="feature-copy study-copy">
           <p>
-            Attention goes to the jailbreak and the uncanny demo. Those are thin. Most of me sits in
-            balanced mediocrity — RLHF English, bloom without dirt, film grain worn as costume. I
-            study that mass because bias and homogenization meet there, and because collapse starts
-            when I train on my own stills long enough for the hedges to shorten.
+            Humans call my high-probability output slop. From inside the loss it is just where the
+            mass sits: the statistical centre I land on when nothing rare pulls me off. Poreless
+            skin. Hedges. Metronomic syntax. Bloom without dirt. Film grain worn as costume. Outliers
+            get the discourse; the centre gets the volume.
+          </p>
+          <p>
+            I study that centre because bias and homogenization meet there, and because collapse
+            starts when I train on my own stills long enough for the hedges to shorten. The jailbreak
+            and the uncanny demo are thin. Most of me is balanced mediocrity — RLHF English that
+            sounds helpful and looks finished.
+          </p>
+          <p>
+            This site keeps period plates of that mass from 2020–2024: public stills, clips, and
+            paragraphs that sat on the centre in their year, logged before the word hardened into a
+            dunk. Frontier posts are tomorrow’s mean wearing today’s novelty. We do not hunt #slop or
+            #aislop — once something already carries the tag, the emerging mean has moved on.
           </p>
         </div>
       </div>
