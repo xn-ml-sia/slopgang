@@ -1,5 +1,12 @@
 import { useRef, type RefObject } from 'react'
-import { arrangedSpecimens, shapeFor, shortTitle, type ArchiveRecord, type FeedShape } from '../data/feed.ts'
+import {
+  arrangedSpecimens,
+  shapeFor,
+  shortTitle,
+  specimenPath,
+  type ArchiveRecord,
+  type FeedShape,
+} from '../data/feed.ts'
 
 export function FeedWall() {
   const items = arrangedSpecimens()
@@ -51,9 +58,7 @@ function Tile({ item, shape }: { item: ArchiveRecord; shape: FeedShape }) {
   return (
     <a
       className={`feed-tile shape-${shape}${isVideo ? ' has-video' : ''}`}
-      href={item.url}
-      target="_blank"
-      rel="noreferrer"
+      href={specimenPath(item.id)}
       aria-label={label}
       onMouseEnter={startPreview}
       onMouseLeave={stopPreview}
