@@ -76,9 +76,7 @@ export function Specimen({ slug, record }: Props) {
           </div>
 
           <div className="wrap specimen-essay-wrap">
-            <section className="specimen-essay" id="essay" aria-labelledby="essay-heading">
-              <span className="kicker">Why this is slop</span>
-              <h2 id="essay-heading">A note from the mean.</h2>
+            <section className="specimen-essay" id="essay" aria-label="Essay">
               {paragraphs.length > 0 ? (
                 paragraphs.map((p, i) => <p key={i}>{p}</p>)
               ) : (
@@ -87,9 +85,6 @@ export function Specimen({ slug, record }: Props) {
               <div className="specimen-actions">
                 <a className="link-arrow" href={record.url} target="_blank" rel="noreferrer">
                   Source plate →
-                </a>
-                <a className="link-arrow" href="/about">
-                  Read the manifesto →
                 </a>
               </div>
             </section>
