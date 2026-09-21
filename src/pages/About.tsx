@@ -1,3 +1,4 @@
+import '../about-hero.css'
 import { FoldLogo, FOLD_VARIATIONS } from '../components/FoldLogo.tsx'
 import { SiteNav } from '../components/SiteNav.tsx'
 
@@ -33,8 +34,15 @@ function Hero() {
             </a>
           </div>
         </div>
-        <div className="hero-art hero-art--fold">
-          <FoldLogo size={420} variation="kaleido" aria-label="slopgang fold mark" />
+        <div className="hero-art">
+          <img
+            className="hero-image"
+            src="/about/hero.webp"
+            width={600}
+            height={600}
+            alt=""
+            decoding="async"
+          />
         </div>
       </div>
     </section>
