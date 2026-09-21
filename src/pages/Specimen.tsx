@@ -21,11 +21,8 @@ export function Specimen({ slug, record }: Props) {
             <span className="kicker">Specimen</span>
             <h1>No plate for {slug}.</h1>
             <p className="lead">
-              That catalogue number is not in Series one. The mean moves; the index has not caught it yet.
+              That catalogue number is not in the archive yet. The mean moves; the index has not caught it.
             </p>
-            <a className="btn btn-solid" href="/">
-              ← Back to the feed
-            </a>
           </div>
         </main>
         <SiteFooter compact />
@@ -52,9 +49,6 @@ export function Specimen({ slug, record }: Props) {
               <MediaPlate item={record} title={title} />
             </div>
             <div className="specimen-copy">
-              <a className="specimen-back link-arrow" href="/">
-                ← Back to the feed
-              </a>
               <span className="kicker">
                 {cat} · {record.tags.join(' · ')}
               </span>
@@ -93,9 +87,6 @@ export function Specimen({ slug, record }: Props) {
                 <p>Essay forthcoming. The plate is logged; the sleeve note is still on the bench.</p>
               )}
               <div className="specimen-actions">
-                <a className="btn btn-solid" href="/">
-                  ← Back to the feed
-                </a>
                 <a className="link-arrow" href={record.url} target="_blank" rel="noreferrer">
                   Source plate →
                 </a>
