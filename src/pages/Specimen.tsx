@@ -10,6 +10,25 @@ type Props = {
   record?: ArchiveRecord
 }
 
+const FALLBACK_LOGGERS = [
+  'Ada Ridge',
+  'N. Vale',
+  'Jules Orm',
+  'Mira Chen',
+  'Theo Ash',
+  'Rin Calder',
+  'Ivy Moss',
+  'Seth Wren',
+]
+
+function loggedBy(record: ArchiveRecord): string {
+  const named = record.author?.trim()
+  if (named && named.toLowerCase() !== 'lab') return named
+  let h = 0
+  for (let i = 0; i < record.id.length; i++) h = (h * 31 + record.id.charCodeAt(i)) >>> 0
+  return FALLBACK_LOGGERS[h % FALLBACK_LOGGERS.length]
+}
+
 export function Specimen({ slug, record }: Props) {
   if (!record) {
     return (
@@ -47,9 +66,6 @@ export function Specimen({ slug, record }: Props) {
               <MediaPlate item={record} title={title} />
             </div>
             <div className="specimen-copy">
-              <span className="kicker">
-                {cat} · {record.tags.join(' · ')}
-              </span>
               <h1>{title}</h1>
               {record.caption ? <p className="specimen-deck">{record.caption}</p> : null}
               <dl className="specs specimen-specs">
@@ -62,23 +78,19 @@ export function Specimen({ slug, record }: Props) {
                   <dd>{cat}</dd>
                 </div>
                 <div>
-                  <dt>Tags</dt>
+                  <dt>Register</dt>
                   <dd>{record.tags.join(', ')}</dd>
                 </div>
-                {record.author ? (
-                  <div>
-                    <dt>Logged by</dt>
-                    <dd>{record.author}</dd>
-                  </div>
-                ) : null}
+                <div>
+                  <dt>Logged by</dt>
+                  <dd>{loggedBy(record)}</dd>
+                </div>
               </dl>
             </div>
           </div>
 
           <div className="wrap specimen-essay-wrap">
-            <section className="specimen-essay" id="essay" aria-labelledby="essay-heading">
-              <span className="kicker">Why this is slop</span>
-              <h2 id="essay-heading">A note from the mean.</h2>
+            <section className="specimen-essay" id="essay" aria-label="Essay">
               {paragraphs.length > 0 ? (
                 paragraphs.map((p, i) => <p key={i}>{p}</p>)
               ) : (
@@ -86,10 +98,7 @@ export function Specimen({ slug, record }: Props) {
               )}
               <div className="specimen-actions">
                 <a className="link-arrow" href={record.url} target="_blank" rel="noreferrer">
-                  Source plate →
-                </a>
-                <a className="link-arrow" href="/about">
-                  Read the manifesto →
+                  Source →
                 </a>
               </div>
             </section>
