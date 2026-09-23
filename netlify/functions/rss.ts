@@ -1,11 +1,8 @@
-import { lambdaResult, requestUrlFromLambda, rssProxy } from '../../server/handlers.ts'
+import { netlifyFeedFunction } from '../../server/feedHandlers.ts'
 
-interface LambdaEvent {
-  rawQuery?: string
-  queryStringParameters?: Record<string, string | undefined> | null
-}
+export default netlifyFeedFunction('rss')
 
-export async function handler(event: LambdaEvent) {
-  const url = requestUrlFromLambda('/api/rss', event)
-  return lambdaResult(await rssProxy(url))
+export const config = {
+  method: ['GET'],
+  path: ['/api/rss', '/.netlify/functions/rss'],
 }

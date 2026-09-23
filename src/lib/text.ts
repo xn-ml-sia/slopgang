@@ -44,6 +44,16 @@ export function firstImageSrc(html: string): string | undefined {
   return match ? decodeEntities(match[1]) : undefined
 }
 
+/** Decode entities and accept http(s), protocol-relative, or site-root paths. */
+export function normalizeMediaUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined
+  const next = decodeEntities(url.trim())
+  if (!next) return undefined
+  if (next.startsWith('//')) return `https:${next}`
+  if (/^https?:\/\//i.test(next) || next.startsWith('/')) return next
+  return undefined
+}
+
 export function clip(text: string, max = 420): string {
   if (text.length <= max) return text
   return `${text.slice(0, max).replace(/\s+\S*$/, '')}…`

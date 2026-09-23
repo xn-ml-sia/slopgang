@@ -1,11 +1,8 @@
-import { instagramProxy, lambdaResult, requestUrlFromLambda } from '../../server/handlers.ts'
+import { netlifyFeedFunction } from '../../server/feedHandlers.ts'
 
-interface LambdaEvent {
-  rawQuery?: string
-  queryStringParameters?: Record<string, string | undefined> | null
-}
+export default netlifyFeedFunction('instagram')
 
-export async function handler(event: LambdaEvent) {
-  const url = requestUrlFromLambda('/api/instagram', event)
-  return lambdaResult(await instagramProxy(url, process.env))
+export const config = {
+  method: ['GET'],
+  path: ['/api/instagram', '/.netlify/functions/instagram'],
 }

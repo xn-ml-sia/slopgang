@@ -2,7 +2,7 @@ import { config } from '../config.ts'
 import { SourceFetchError, type SourceErrorKind } from '../lib/errors.ts'
 import { fillTemplate, relabelSource } from '../lib/relabel.ts'
 import { inferTags } from '../lib/tags.ts'
-import { clip } from '../lib/text.ts'
+import { clip, normalizeMediaUrl } from '../lib/text.ts'
 import { toIso } from '../lib/time.ts'
 import type { FeedItem, SourceAdapter, SourcePage } from '../types/feed.ts'
 import { loadRssFeed } from './rss.ts'
@@ -40,7 +40,9 @@ function mapMedia(payload: IgPayload): FeedItem[] {
       if (!post.id || !post.permalink) return null
       const caption = clip(post.caption ?? '', 420)
       const title = caption ? clip(caption.replace(/\s+/g, ' '), 140) : `${igLabel()} still`
-      const image = post.media_type === 'VIDEO' ? post.thumbnail_url : (post.media_url ?? post.thumbnail_url)
+      const image = normalizeMediaUrl(
+        post.media_type === 'VIDEO' ? post.thumbnail_url : (post.media_url ?? post.thumbnail_url),
+      )
 
       return {
         id: `instagram:${post.id}`,

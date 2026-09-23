@@ -1,40 +1,29 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Connect, Plugin } from 'vite'
-import { dispatchFeedProxy, type Env, type ProxyResult } from './handlers.ts'
+import { dispatchFeed, feedRouteName, type Env } from './feedHandlers.ts'
 
 function requestUrl(req: IncomingMessage): URL {
   return new URL(req.url ?? '/', 'http://localhost')
 }
 
-function write(res: ServerResponse, result: ProxyResult) {
-  res.statusCode = result.status
-  res.setHeader('Content-Type', result.contentType)
-  res.setHeader('Cache-Control', 'no-store')
-  res.end(result.body)
+async function pipe(res: ServerResponse, response: Response) {
+  res.statusCode = response.status
+  response.headers.forEach((value, key) => {
+    res.setHeader(key, value)
+  })
+  const buf = Buffer.from(await response.arrayBuffer())
+  res.end(buf)
 }
 
 function attach(middlewares: Connect.Server, env: Env) {
   middlewares.use((req: IncomingMessage, res: ServerResponse, next: Connect.NextFunction) => {
     const url = requestUrl(req)
-    if (req.method !== 'GET') {
+    if (req.method !== 'GET' || !feedRouteName(url.pathname)) {
       next()
       return
     }
-    void dispatchFeedProxy(url, env)
-      .then((result) => {
-        if (!result) {
-          next()
-          return
-        }
-        write(res, result)
-      })
-      .catch(() => {
-        write(res, {
-          status: 500,
-          contentType: 'application/json; charset=utf-8',
-          body: JSON.stringify({ error: 'proxy_failed' }),
-        })
-      })
+    const request = new Request(url, { method: 'GET' })
+    void dispatchFeed(request, env).then((response) => pipe(res, response)).catch(next)
   })
 }
 

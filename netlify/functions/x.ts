@@ -1,11 +1,8 @@
-import { lambdaResult, requestUrlFromLambda, xProxy } from '../../server/handlers.ts'
+import { netlifyFeedFunction } from '../../server/feedHandlers.ts'
 
-interface LambdaEvent {
-  rawQuery?: string
-  queryStringParameters?: Record<string, string | undefined> | null
-}
+export default netlifyFeedFunction('x')
 
-export async function handler(event: LambdaEvent) {
-  const url = requestUrlFromLambda('/api/x', event)
-  return lambdaResult(await xProxy(url, process.env))
+export const config = {
+  method: ['GET'],
+  path: ['/api/x', '/.netlify/functions/x'],
 }

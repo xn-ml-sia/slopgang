@@ -3,11 +3,13 @@ export type SourceId = 'archive' | 'reddit' | 'rss' | 'x' | 'instagram'
 export type SlopTag = 'visual-slop' | 'textual-slop' | 'counter-slop'
 
 export interface FeedMedia {
-  type: 'image'
+  type: 'image' | 'video'
   url: string
   alt?: string
   width?: number
   height?: number
+  /** First-frame still for video tiles; shown until hover/focus playback. */
+  poster?: string
 }
 
 export interface FeedItem {
@@ -17,6 +19,8 @@ export interface FeedItem {
   title: string
   caption?: string
   body?: string
+  /** Curator essay: why this specimen is slop, manifesto-grounded. */
+  essay?: string
   media?: FeedMedia
   palette?: string[]
   url: string

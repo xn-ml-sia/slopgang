@@ -40,19 +40,21 @@ Slop Gang utilizes a multi-platform approach to data collection and curation:
 * [Web/Curation]: A digital gallery documenting the "Weekly Average"—the most representative samples of current model biases.
 * [Automated Detection]: (In Development) Algorithms designed to detect "Slop Drift" by measuring the entropy and saturation levels of model outputs over time.
 
-This repository is the Phase 1 archive: a homepage feed that normalizes those streams into one specimen list.
+This repository still contains the Phase 1 source adapters. The public site no longer renders that feed.
 
 ---
 
-🖥 The Archive (this app)
+🖥 The site (this app)
 
-The home route is a chronological (or mixed) feed of **Evidence of Slop** / **Counter-Slop**, aggregated from pluggable source adapters:
+`/` is a cosmos-style visual feed: a dense masonry wall of archive specimens (`archive.json` stills in `public/archive/`). Brand wordmark is `slopgang`; nav links to `/about`. `/about` holds the manifesto and Rook Lane–styled context (split hero, ticker, pressing-notes ladder, featured plate, colophon). Source adapters and proxies remain in the repo unused by the homepage UI.
+
+Pluggable adapters (not shown in the UI):
 
 | Adapter | What it pulls | Demo path |
 | --- | --- | --- |
 | `archive` | Curated seed JSON in `src/data/archive.json` | Always on; no keys |
-| `reddit` | Public JSON for a configurable subreddit (or search) | Proxied in Vite; **degrades** if Reddit returns 403 |
-| `rss` | RSS/Atom for a configurable feed URL | Proxied in Vite; default is [404 Media](https://www.404media.co/) |
+| `reddit` | Public JSON for a configurable subreddit (or search) | Proxied in Vite and on Netlify; **degrades** if Reddit returns 403 |
+| `rss` | RSS/Atom for a configurable feed URL | Proxied in Vite and on Netlify; default is [404 Media](https://www.404media.co/) |
 | `x` | X.com / Twitter (official API v2 or optional RSS bridge) | **Unconfigured** without a bearer token or `VITE_X_RSS_URL` |
 | `instagram` | Instagram (Graph `/me/media` or optional RSS bridge) | **Unconfigured** without an access token or `VITE_INSTAGRAM_RSS_URL` |
 
@@ -96,11 +98,11 @@ Copy `.env.example` to `.env.local` only if you want to override defaults.
 | `VITE_INSTAGRAM_RSS_URL` | _(empty)_ | Optional RSS/Atom bridge. Placeholders: `{username}`, `{hashtag}` |
 | `INSTAGRAM_ACCESS_TOKEN` | _(empty)_ | **Server-only.** Instagram Graph token. Do not prefix `VITE_` |
 
-Reddit’s public JSON is often **blocked from datacenter IPs** (HTTP 403). The adapter stays wired; the UI marks the source `blocked` and the archive + RSS streams still render. Try the same `npm run dev` on a residential network to see live `r/midjourney` (or whatever you configure).
+Reddit’s public JSON is often **blocked from datacenter IPs** (HTTP 403), including Netlify. The adapter stays wired in the proxy; the public site does not render source status.
 
-**X and Instagram do not work on the zero-key demo path.** Official APIs require credentials (paid/restricted). This repo does **not** scrape x.com or instagram.com HTML. With no token and no bridge URL, the adapters register, the filter chips appear, and the LED reads `unconfigured`. Seed archive + RSS still load.
+**X and Instagram do not work on the zero-key demo path.** Official APIs require credentials (paid/restricted). This repo does **not** scrape x.com or instagram.com HTML. With no token and no bridge URL, the adapters register as `unconfigured`. They are unused by the homepage.
 
-To go live:
+To go live locally:
 
 1. **Official:** put `X_BEARER_TOKEN` and/or `INSTAGRAM_ACCESS_TOKEN` in `.env.local` (never commit it). Restart `npm run dev`. X uses API v2 recent search or a user timeline; Instagram uses Graph `GET /me/media` (the authenticated account, not an arbitrary public profile).
 2. **Bridge:** set `VITE_X_RSS_URL` / `VITE_INSTAGRAM_RSS_URL` to a public RSS/Atom URL you control or a documented third-party bridge (a Nitter instance’s `/user/rss`, RSSHub `instagram/user/{username}`, etc.). If the official call is unconfigured or blocked, the adapter falls back to that feed. Instances die; pick one you can replace.
@@ -129,18 +131,18 @@ Production env vars (Site configuration → Environment variables): same names a
 1. Implement `SourceAdapter` from `src/types/feed.ts` (`id`, `label`, `fetch(cursor?)` → `{ items, nextCursor? }`).
 2. Map the upstream payload onto `FeedItem` (reuse `src/lib/tags.ts` / `src/lib/time.ts` if useful).
 3. Register the adapter in `src/sources/registry.ts`.
-4. If the origin has CORS or needs a User-Agent, add a handler in `server/handlers.ts` and a Netlify function under `netlify/functions/` (keep SSRF checks: https only, no loopback/private IPs, size + time limits).
+4. If the origin has CORS or needs a User-Agent, add a handler in `server/feedHandlers.ts` and a thin file in `netlify/functions/` (keep SSRF checks: https only, no loopback/private IPs, size + time limits). The Vite plugin picks up `/api/<name>` automatically.
 5. Optional: a `VITE_*` flag in `src/config.ts` and `.env.example`.
 
 Seed-only additions: append objects to `src/data/archive.json`. No proxy required.
 
-Next hooks that fit this shape without new product chrome: Mastodon/Bluesky public JSON, or an uploads folder.
+Seed JSON and stills in `src/data/archive.json` / `public/archive/` remain in the tree for later use. The homepage does not load them.
 
 ---
 
 🚀 Roadmap
 
-- [x] Phase 1: The Archive. Public feed + source adapters (seed, Reddit, RSS, X, Instagram). Community submission hub still open.
+- [x] Phase 1: Public site (hero + manifesto) with unused source adapters still in-repo (seed, Reddit, RSS, X, Instagram).
 - [ ] Phase 2: The Slop Index. Build a searchable database of aesthetic archetypes (e.g., The Hyper-Plastic, The Nuance Loop).
 - [ ] Phase 3: Drift Analysis. Develop tools to quantify the movement of the statistical centroid in real-time.
 
