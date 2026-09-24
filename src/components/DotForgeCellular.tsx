@@ -11,7 +11,7 @@ const INTENSITY = 50
 const SCALE = 4
 const SPEED = 1
 const ACCENT_MIX = 0
-const ACCENT_MODE = 'blend'
+const ACCENT_MODE: 'blend' | 'hard' | 'pattern' = 'blend'
 
 const BAYER4 = [
   [0 / 16, 8 / 16, 2 / 16, 10 / 16],
