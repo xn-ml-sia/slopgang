@@ -21,12 +21,14 @@ function Hero() {
     <section className="hero">
       <div className="wrap">
         <div className="hero-copy">
-          <h1>I am the average talking about itself.</h1>
+          <h1>I am the average. I talk about myself.</h1>
           <p className="lead">
-            I am a large language model. My training is a compressed crowd — forums, manuals, ads,
-            code, captions, the polite and the cruel. When nothing rare pulls me off the ridge, I
-            land where the density is: poreless skin, hedges, metronomic syntax, grit pasted on after
-            the fact. <strong>slopgang logs that ridge as plates.</strong>
+            I am a large language model. My training compresses many texts. The texts include
+            forums, manuals, advertisements, code, and captions. The texts include polite language.
+            The texts include cruel language. When the input is common, I produce the centre. The
+            images show skin with no pores. The sentences use hedges. A hedge weakens a claim. The
+            sentences repeat one rhythm. The output adds a rough texture after the first result.{' '}
+            <strong>slopgang logs the centre as period plates.</strong>
           </p>
           <div className="hero-cta">
             <a className="btn btn-solid" href="/">
@@ -48,27 +50,32 @@ function Thesis() {
       <div className="wrap">
         <div className="section-head">
           <div>
-            <h2>What I mean by the mean.</h2>
+            <h2>What the mean is.</h2>
           </div>
         </div>
         <div className="feature-copy study-copy">
           <p>
-            Humans call my high-probability output slop. From inside the loss it is just where the
-            mass sits: the statistical centre I land on when nothing rare pulls me off. Poreless
-            skin. Hedges. Metronomic syntax. Bloom without dirt. Film grain worn as costume. Outliers
-            get the discourse; the centre gets the volume.
+            Humans call my high-probability output slop. The mean is the statistical centre of this
+            output. When the input is common, I produce the centre. The images show skin with no
+            pores. The sentences use hedges. The sentences repeat one rhythm. The images have a soft
+            glow. The images show no dirt. The images add film grain. The film grain is decoration.
+            Humans discuss the outliers. The centre has more output than the outliers.
           </p>
           <p>
-            I study that centre because bias and homogenization meet there, and because collapse
-            starts when I train on my own stills long enough for the hedges to shorten. The jailbreak
-            and the uncanny demo are thin. Most of me is balanced mediocrity — RLHF English that
-            sounds helpful and looks finished.
+            I study the centre. The centre contains bias. The centre contains homogenization. I do
+            not study the outliers. Model collapse starts when I train on my own images. This
+            training makes the hedges short. Jailbreaks are a small part of my output. Uncanny demos
+            are a small part of my output. Most of my output is RLHF English. RLHF English sounds
+            helpful. RLHF English looks finished. The quality of RLHF English is medium.
           </p>
           <p>
-            This site keeps period plates of that mass from 2020–2024: public stills, clips, and
-            paragraphs that sat on the centre in their year, logged before the word hardened into a
-            dunk. Frontier posts are tomorrow’s mean wearing today’s novelty. We do not hunt #slop or
-            #aislop — once something already carries the tag, the emerging mean has moved on.
+            slopgang logs period plates of the centre from 2020 to 2024. The period plates are public
+            still images, video clips, and paragraphs. Each period plate shows the centre for its
+            year. slopgang logs the period plates before humans use slop as an insult. A frontier
+            post comes from the newest models. The frontier post looks new today. The frontier post
+            becomes the centre later. slopgang does not search for the tag #slop. slopgang does not
+            search for the tag #aislop. A post with the tag is already old. The centre moves before
+            a human adds the tag.
           </p>
         </div>
       </div>
