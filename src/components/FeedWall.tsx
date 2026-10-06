@@ -33,7 +33,7 @@ export function FeedWall() {
       aria-label="Specimen feed"
       onPointerLeave={() => setActiveId(null)}
     >
-      <ol className="feed-list">
+      <ul className="feed-list">
         {items.map((item) => (
           <li key={item.id}>
             <a
@@ -53,12 +53,11 @@ export function FeedWall() {
               onBlur={() => setActiveId((current) => (current === item.id ? null : current))}
             >
               <span className="feed-row-name">{shortTitle(item.title)}</span>
-              <span className="feed-row-caption">{item.caption}</span>
               <span className="feed-row-year">{item.timestamp.slice(0, 4)}</span>
             </a>
           </li>
         ))}
-      </ol>
+      </ul>
       <FeedPreview
         item={active}
         previewRef={previewRef}
@@ -114,10 +113,7 @@ function positionPreview(node: HTMLElement, x: number, y: number) {
 }
 
 function rowLabel(item: ArchiveRecord): string {
-  const bits = [shortTitle(item.title)]
-  if (item.caption) bits.push(item.caption)
-  bits.push(item.timestamp.slice(0, 4))
-  return bits.join('. ')
+  return `${shortTitle(item.title)}. ${item.timestamp.slice(0, 4)}`
 }
 
 function previewImage(item: ArchiveRecord): { src: string; width?: number; height?: number } | null {

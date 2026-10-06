@@ -1078,41 +1078,38 @@ html:has(.feed),
 }
 
 .feed-list {
-  min-width: 0;
+  max-width: 42rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .feed-row {
-  display: grid;
-  grid-template-columns: minmax(10rem, 0.9fr) minmax(0, 1.5fr) 3.25rem;
-  gap: 16px 20px;
+  display: flex;
   align-items: baseline;
-  padding: 14px 8px;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 0.4rem 0;
   color: var(--feed-ink);
   font-size: 1rem;
   font-weight: 400;
-  line-height: 1.35;
+  line-height: 1.45;
 }
 
 .feed-row-name,
-.feed-row-caption,
 .feed-row-year {
   font: inherit;
   letter-spacing: 0;
 }
 
-.feed-row-year {
-  text-align: right;
-}
-
 .feed-row-name {
+  min-width: 0;
   transition: transform 0.2s ease;
 }
 
-.feed-row-caption {
+.feed-row-year {
+  flex: 0 0 auto;
   color: var(--feed-stone);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .feed-row:hover .feed-row-name,
@@ -1122,7 +1119,7 @@ html:has(.feed),
 }
 
 .feed-row.is-active {
-  background: #fff;
+  background: transparent;
 }
 
 .feed-row:focus-visible {
@@ -1188,21 +1185,7 @@ html:has(.feed),
   grid-template-rows: 1fr 1fr;
 }
 
-@media (max-width: 980px) {
-  .feed-row {
-    grid-template-columns: minmax(0, 1fr) 3.25rem;
-  }
-
-  .feed-row-caption {
-    display: none;
-  }
-}
-
 @media (max-width: 720px) {
-  .feed-index {
-    display: block;
-  }
-
   .feed-nav {
     padding: 14px 14px;
   }
