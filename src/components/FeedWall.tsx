@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   arrangedSpecimens,
-  catalogueLabel,
   shortTitle,
   specimenPath,
   type ArchiveRecord,
@@ -30,7 +29,6 @@ export function FeedWall() {
               onFocus={() => setActiveId(item.id)}
               onBlur={() => setActiveId((current) => (current === item.id ? null : current))}
             >
-              <span className="feed-row-num">{catalogueLabel(item.id)}</span>
               <span className="feed-row-name">{shortTitle(item.title)}</span>
               <span className="feed-row-caption">{item.caption}</span>
               <span className="feed-row-year">{item.timestamp.slice(0, 4)}</span>
@@ -63,9 +61,9 @@ function FeedPreview({ item }: { item: ArchiveRecord | null }) {
 }
 
 function rowLabel(item: ArchiveRecord): string {
-  const title = shortTitle(item.title)
-  const bits = [catalogueLabel(item.id), title]
+  const bits = [shortTitle(item.title)]
   if (item.caption) bits.push(item.caption)
+  bits.push(item.timestamp.slice(0, 4))
   return bits.join('. ')
 }
 
