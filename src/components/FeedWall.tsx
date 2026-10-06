@@ -1,138 +1,128 @@
-import { useRef, type RefObject } from 'react'
+import { useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import {
   arrangedSpecimens,
-  shapeFor,
   shortTitle,
   specimenPath,
   type ArchiveRecord,
-  type FeedShape,
 } from '../data/feed.ts'
 
 export function FeedWall() {
   const items = arrangedSpecimens()
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const previewRef = useRef<HTMLElement>(null)
+  const point = useRef({ x: 0, y: 0 })
+  const active = items.find((item) => item.id === activeId) ?? null
+
+  function place(x: number, y: number) {
+    point.current = { x, y }
+    const node = previewRef.current
+    if (node) positionPreview(node, x, y)
+  }
+
+  useLayoutEffect(() => {
+    if (!activeId) return
+    const node = previewRef.current
+    if (!node) return
+    positionPreview(node, point.current.x, point.current.y)
+  }, [activeId])
 
   return (
-    <section className="feed-wall" id="feed" aria-label="Specimen feed">
-      {items.map((item, index) => (
-        <Tile key={item.id} item={item} shape={shapeFor(item.id, index)} />
-      ))}
+    <section
+      className="feed-index"
+      id="feed"
+      aria-label="Specimen feed"
+      onPointerLeave={() => setActiveId(null)}
+    >
+      <ul className="feed-list">
+        {items.map((item) => (
+          <li key={item.id}>
+            <a
+              className={`feed-row${item.id === activeId ? ' is-active' : ''}`}
+              href={specimenPath(item.id)}
+              aria-label={rowLabel(item)}
+              onPointerEnter={(event) => {
+                setActiveId(item.id)
+                place(event.clientX, event.clientY)
+              }}
+              onPointerMove={(event) => place(event.clientX, event.clientY)}
+              onFocus={(event) => {
+                setActiveId(item.id)
+                const rect = event.currentTarget.getBoundingClientRect()
+                place(rect.left + 32, rect.bottom)
+              }}
+              onBlur={() => setActiveId((current) => (current === item.id ? null : current))}
+            >
+              <span className="feed-row-name">{shortTitle(item.title)}</span>
+              <span className="feed-row-year">{item.timestamp.slice(0, 4)}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <FeedPreview
+        item={active}
+        previewRef={previewRef}
+        onImageLoad={() => {
+          const node = previewRef.current
+          if (node) positionPreview(node, point.current.x, point.current.y)
+        }}
+      />
     </section>
   )
 }
 
-function Tile({ item, shape }: { item: ArchiveRecord; shape: FeedShape }) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const playGen = useRef(0)
-  const title = shortTitle(item.title)
-  const label = item.caption ? `${title}. ${item.caption}` : title
-  const isVideo = item.media?.type === 'video'
-
-  function startPreview() {
-    if (!isVideo) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const video = videoRef.current
-    if (!video) return
-    const gen = ++playGen.current
-    video.muted = true
-    video.playsInline = true
-    const play = () => {
-      if (playGen.current !== gen) return
-      void video.play().catch(() => {})
-    }
-    if (video.readyState >= 2) play()
-    else video.addEventListener('canplay', play, { once: true })
-  }
-
-  function stopPreview() {
-    playGen.current += 1
-    const video = videoRef.current
-    if (!video) return
-    video.pause()
-    try {
-      video.currentTime = 0
-    } catch {
-      /* ignore if metadata is not ready */
-    }
-  }
+function FeedPreview({
+  item,
+  previewRef,
+  onImageLoad,
+}: {
+  item: ArchiveRecord | null
+  previewRef: RefObject<HTMLElement | null>
+  onImageLoad: () => void
+}) {
+  const image = item ? previewImage(item) : null
+  const title = item ? shortTitle(item.title) : ''
 
   return (
-    <a
-      className={`feed-tile shape-${shape}${isVideo ? ' has-video' : ''}`}
-      href={specimenPath(item.id)}
-      aria-label={label}
-      onMouseEnter={startPreview}
-      onMouseLeave={stopPreview}
-      onPointerEnter={startPreview}
-      onPointerLeave={stopPreview}
-      onFocus={startPreview}
-      onBlur={stopPreview}
-    >
-      <TileFace item={item} title={title} videoRef={videoRef} />
-      <span className="feed-meta">
-        <strong>{title}</strong>
-        {item.caption ? <em>{item.caption}</em> : null}
-      </span>
-    </a>
+    <aside ref={previewRef} className={`feed-preview${image ? ' is-on' : ''}`} aria-hidden="true">
+      {image ? (
+        <figure className="feed-preview-plate">
+          <img src={image.src} alt="" width={image.width} height={image.height} onLoad={onImageLoad} />
+          <figcaption>
+            <strong>{title}</strong>
+            {item?.caption ? <span>{item.caption}</span> : null}
+          </figcaption>
+        </figure>
+      ) : null}
+    </aside>
   )
 }
 
-function TileFace({
-  item,
-  title,
-  videoRef,
-}: {
-  item: ArchiveRecord
-  title: string
-  videoRef: RefObject<HTMLVideoElement | null>
-}) {
-  if (item.media?.type === 'video' && item.media.url) {
-    return (
-      <video
-        ref={(node) => {
-          videoRef.current = node
-          if (node) node.muted = true
-        }}
-        src={item.media.url}
-        poster={item.media.poster}
-        width={item.media.width ?? 960}
-        height={item.media.height ?? 540}
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        controls={false}
-        disablePictureInPicture
-        aria-label={item.media.alt ?? title}
-      />
-    )
-  }
+function positionPreview(node: HTMLElement, x: number, y: number) {
+  const pad = 16
+  const width = node.offsetWidth
+  const height = node.offsetHeight
+  let left = x + pad
+  let top = y + pad
+  const maxX = window.innerWidth - 8
+  const maxY = window.innerHeight - 8
+  if (left + width > maxX) left = x - width - pad
+  if (top + height > maxY) top = y - height - pad
+  left = Math.max(8, Math.min(left, Math.max(8, maxX - width)))
+  top = Math.max(8, Math.min(top, Math.max(8, maxY - height)))
+  node.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`
+}
 
-  if (item.media?.url) {
-    return (
-      <img
-        src={item.media.url}
-        alt={item.media.alt ?? title}
-        width={item.media.width ?? 960}
-        height={item.media.height ?? 540}
-        loading="lazy"
-        decoding="async"
-      />
-    )
-  }
+function rowLabel(item: ArchiveRecord): string {
+  return `${shortTitle(item.title)}. ${item.timestamp.slice(0, 4)}`
+}
 
-  if (item.palette && item.palette.length > 0) {
-    return (
-      <div className="feed-swatch" aria-hidden="true">
-        {item.palette.map((color, i) => (
-          <span key={`${item.id}-${color}-${i}`} style={{ background: color }} />
-        ))}
-      </div>
-    )
+function previewImage(item: ArchiveRecord): { src: string; width?: number; height?: number } | null {
+  const media = item.media
+  if (!media) return null
+  if (media.type === 'video') {
+    if (!media.poster) return null
+    return { src: media.poster, width: media.width, height: media.height }
   }
-
-  return (
-    <div className="feed-text">
-      <p>{item.body ?? item.caption ?? title}</p>
-    </div>
-  )
+  if (!media.url) return null
+  return { src: media.url, width: media.width, height: media.height }
 }
