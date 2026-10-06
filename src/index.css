@@ -1074,10 +1074,7 @@ html:has(.feed),
 }
 
 .feed-index {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 340px);
-  gap: clamp(20px, 3vw, 40px);
-  align-items: start;
+  display: block;
 }
 
 .feed-list {
@@ -1134,11 +1131,14 @@ html:has(.feed),
 }
 
 .feed-preview {
-  position: sticky;
-  top: 76px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9;
+  width: min(280px, calc(100vw - 24px));
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.18s ease;
+  transition: opacity 0.12s ease;
 }
 
 .feed-preview.is-on {
@@ -1149,14 +1149,14 @@ html:has(.feed),
   margin: 0;
   overflow: hidden;
   background: #fff;
-  box-shadow: 0 1px 0 rgba(20, 20, 18, 0.06);
+  box-shadow: 0 12px 32px rgba(20, 20, 18, 0.16);
 }
 
 .feed-preview-plate img {
   display: block;
   width: 100%;
   height: auto;
-  max-height: min(52svh, 440px);
+  max-height: min(42svh, 280px);
   margin-inline: auto;
   object-fit: contain;
   background: #111;
@@ -1201,15 +1201,6 @@ html:has(.feed),
 @media (max-width: 720px) {
   .feed-index {
     display: block;
-  }
-
-  .feed-preview {
-    position: fixed;
-    right: 14px;
-    bottom: 14px;
-    z-index: 7;
-    width: min(220px, 58vw);
-    top: auto;
   }
 
   .feed-nav {
