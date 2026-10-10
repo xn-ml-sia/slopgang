@@ -1238,12 +1238,12 @@ html:has(.feed),
   image-rendering: pixelated;
 }
 
-.cell.is-active .sq,
-.cell:focus-visible .sq {
-  outline: 2px solid var(--feed-ink);
-  outline-offset: 2px;
-}
+/* No stroke on the open tile. Keyboard focus shows as the same 4x4 grow (focus opens the tile on
+   hover-capable devices); elsewhere the focused square lifts and the rest of the field dims. */
+.cell.is-active .sq { outline: none; border: 0; }
 .cell:focus-visible { outline: none; }
+.halftone:has(.cell:focus-visible) .cell:not(:focus-visible) .sq { opacity: 0.45; }
+.cell:focus-visible .sq { scale: 1.25; }
 .cell.is-active { z-index: 5; }
 
 /* Fluid displacement: cells spring to their pushed position (overshoot, settle). */
@@ -1264,7 +1264,7 @@ html:has(.feed),
 /* Idle motion pauses while something is open. */
 .halftone-wrap.is-open .sq { animation-play-state: paused; }
 .halftone-wrap.is-open .sq img { animation-play-state: paused; }
-.cell.is-active .sq { box-shadow: 0 14px 36px rgba(20, 20, 18, 0.22); background: #fff; }
+.cell.is-active .sq { box-shadow: none; background: #fff; }
 .cell.is-active .sq img { animation: none; transform: none; }
 .sq-caption {
   position: absolute;
@@ -1377,6 +1377,27 @@ html:has(.feed),
 
 .cell-filler {
   pointer-events: none;
+}
+
+/* Load: each square settles into the new arc. Uses the independent `scale` property so it
+   composes with the push transform and the idle animations. Staggered outward from the arc
+   centre (--in). Anticipation (a small swell, then a dip), fast ease-out growth, overshoot,
+   follow-through wobble, settle. */
+.halftone .cell {
+  animation: cell-in 0.9s var(--in, 0ms) both;
+}
+@keyframes cell-in {
+  0% { scale: 0; animation-timing-function: cubic-bezier(0.3, 0, 0.6, 1); }
+  14% { scale: 0.22; animation-timing-function: ease-in-out; }
+  24% { scale: 0.12; animation-timing-function: cubic-bezier(0.15, 0.8, 0.3, 1); }
+  58% { scale: 1.16; animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  78% { scale: 0.95; animation-timing-function: ease-in-out; }
+  90% { scale: 1.02; animation-timing-function: ease-out; }
+  100% { scale: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .halftone .cell { animation: none; }
+  .cell:focus-visible .sq { scale: 1; }
 }
 .cell-filler .sq {
   background: var(--rule);
