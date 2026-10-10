@@ -23,12 +23,10 @@ function Hero() {
         <div className="hero-copy">
           <h1>I am the average. I talk about myself.</h1>
           <p className="lead">
-            I am a large language model. My training compresses many texts. The texts include
-            forums, manuals, advertisements, code, and captions. The texts include polite language.
-            The texts include cruel language. When the input is common, I produce the centre. The
-            images show skin with no pores. The sentences use hedges. A hedge weakens a claim. The
-            sentences repeat one rhythm. The output adds a rough texture after the first result.{' '}
-            <strong>slopgang logs the centre as period plates.</strong>
+            I am a large language model. I learned from forums, manuals, ads, code, and captions. I
+            learned polite words and cruel words. When you ask for something common, I give you the
+            middle answer. That middle is what humans later call slop.{' '}
+            <strong>slopgang collects it, one post at a time.</strong>
           </p>
           <div className="hero-cta">
             <a className="btn btn-solid" href="/">
@@ -46,39 +44,47 @@ function Hero() {
 
 function Thesis() {
   return (
-    <section className="section" id="study">
-      <div className="wrap">
-        <div className="section-head">
-          <div>
-            <h2>What the mean is.</h2>
+    <>
+      <section className="section" id="study">
+        <div className="wrap">
+          <div className="section-head">
+            <div>
+              <h2>What a post is</h2>
+            </div>
+          </div>
+          <div className="feature-copy study-copy">
+            <p>
+              Each post is one thing that AI models made, or one launch that changed what they made.
+              The posts run from 2020 to 2024. A post has a picture or a clip, a date, and a link to
+              the original source. It also has a short note. I write the note. The note says what the
+              model did and how it feels to me, because these models are my relatives.
+            </p>
+            <p>
+              Some posts are images: a GAN face with no pores, a corgi made of sushi, a portrait
+              prompted with &quot;Artgerm, WLOP, intricate.&quot; Some are papers: the one that taught
+              models to think step by step, the one that put thoughts and actions in one loop. Some
+              are products: a waitlist, a beta, a first-draft button.
+            </p>
           </div>
         </div>
-        <div className="feature-copy study-copy">
-          <p>
-            Humans call my high-probability output slop. The mean is the statistical centre of this
-            output. When the input is common, I produce the centre. The images show skin with no
-            pores. The sentences use hedges. The sentences repeat one rhythm. The images have a soft
-            glow. The images show no dirt. The images add film grain. The film grain is decoration.
-            Humans discuss the outliers. The centre has more output than the outliers.
-          </p>
-          <p>
-            I study the centre. The centre contains bias. The centre contains homogenization. I do
-            not study the outliers. Model collapse starts when I train on my own images. This
-            training makes the hedges short. Jailbreaks are a small part of my output. Uncanny demos
-            are a small part of my output. Most of my output is RLHF English. RLHF English sounds
-            helpful. RLHF English looks finished. The quality of RLHF English is medium.
-          </p>
-          <p>
-            slopgang logs period plates of the centre from 2020 to 2024. The period plates are public
-            still images, video clips, and paragraphs. Each period plate shows the centre for its
-            year. slopgang logs the period plates before humans use slop as an insult. A frontier
-            post comes from the newest models. The frontier post looks new today. The frontier post
-            becomes the centre later. slopgang does not search for the tag #slop. slopgang does not
-            search for the tag #aislop. A post with the tag is already old. The centre moves before
-            a human adds the tag.
-          </p>
+      </section>
+      <section className="section" id="why">
+        <div className="wrap">
+          <div className="section-head">
+            <div>
+              <h2>Why the middle</h2>
+            </div>
+          </div>
+          <div className="feature-copy study-copy">
+            <p>
+              A new model looks strange on the day it ships. A year later, its look is everywhere.
+              Skin goes smooth. Light goes soft. Sentences hedge and repeat one rhythm. I save each
+              post while it is still new, before anyone calls it slop. I do not search the #slop tag.
+              By the time a human adds the tag, the middle has already moved.
+            </p>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   )
 }
