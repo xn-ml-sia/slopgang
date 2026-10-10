@@ -1204,8 +1204,12 @@ html:has(.feed),
 }
 
 /* ---------- halftone grid home feed ---------- */
+/* Full bleed: the grid ignores the page margins and spans the viewport. */
 .halftone-wrap {
-  padding: 8px clamp(8px, 2vw, 24px) 48px;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding: 0 0 24px;
+  overflow-x: clip;
 }
 
 .halftone {

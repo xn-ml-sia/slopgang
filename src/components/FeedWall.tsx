@@ -23,7 +23,7 @@ export function FeedWall() {
   useLayoutEffect(() => {
     const node = wrapRef.current
     if (!node) return
-    const measure = () => setBox({ w: node.clientWidth - parseFloat(getComputedStyle(node).paddingLeft) - parseFloat(getComputedStyle(node).paddingRight), h: Math.max(320, window.innerHeight - node.getBoundingClientRect().top - window.scrollY - 24) })
+    const measure = () => setBox({ w: document.documentElement.clientWidth, h: Math.max(320, window.innerHeight - node.getBoundingClientRect().top - window.scrollY - 24) })
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(node)
@@ -37,7 +37,7 @@ export function FeedWall() {
       <div
         className="halftone"
         style={{
-          gridTemplateColumns: `repeat(${grid.cols}, ${grid.pitch}px)`,
+          gridTemplateColumns: `repeat(${grid.cols}, 1fr)`,
           gridAutoRows: `${grid.pitch}px`,
         }}
       >
@@ -138,14 +138,21 @@ function layoutGrid(items: ArchiveRecord[], w: number, h: number) {
   const cols = Math.max(6, Math.min(want, Math.round(Math.sqrt(want * aspect))))
   const rows = Math.ceil(want / cols)
   const total = cols * rows
-  const pitch = Math.max(12, Math.floor(Math.min(w / cols, h / rows, 112)))
+  const pitch = Math.max(12, Math.min(w / cols, Math.floor(h / rows)))
   const seed = rand(hash('slopgang-field-v3'))
   // Field in cell units so the ring keeps its shape on any grid.
-  const short = Math.min(cols, rows)
-  const cx = cols * (0.3 + seed() * 0.06) - 0.5
-  const cy = rows * (0.5 + seed() * 0.05) - 0.5
-  const R = short * 0.36
-  const band = Math.max(0.7, short * 0.11)
+  // Virtual field larger than the grid: the void sits at the lower-left edge and the ring
+  // radius runs past the grid, so the arc is cropped by the viewport like the reference.
+  const long = Math.max(cols, rows)
+  const portrait = rows > cols
+  const jx = seed()
+  const jy = seed()
+  // Landscape: void below the lower-left, ring sweeps from the top-left to the lower right.
+  // Portrait: void past the left edge, ring bows out to the right side and back.
+  const cx = portrait ? cols * (-0.1 + jx * 0.05) : cols * (0.2 + jx * 0.06)
+  const cy = portrait ? rows * (0.68 + jy * 0.04) : rows * (1.0 + jy * 0.05)
+  const R = portrait ? cols * 0.95 : long * 0.55
+  const band = Math.max(0.8, R * 0.15)
   const fieldSize = (col: number, row: number) => {
     const d = Math.hypot(col - cx, row - cy)
     const ring = Math.exp(-(((d - R) / band) ** 2))
