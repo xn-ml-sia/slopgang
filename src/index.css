@@ -1202,3 +1202,182 @@ html:has(.feed),
     transform: translateX(6px);
   }
 }
+
+/* ---------- halftone grid home feed ---------- */
+/* Full bleed: the grid ignores the page margins and spans the viewport. */
+.halftone-wrap {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding: 0 0 24px;
+  overflow-x: clip;
+}
+
+.halftone {
+  display: grid;
+  justify-content: center;
+}
+
+/* The whole cell is the link and hit target; the visible square sits centered inside. */
+.cell {
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.sq {
+  display: block;
+  overflow: hidden;
+  background: var(--paper-2);
+}
+
+.sq img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.cell.is-active .sq,
+.cell:focus-visible .sq {
+  outline: 2px solid var(--feed-ink);
+  outline-offset: 2px;
+}
+.cell:focus-visible { outline: none; }
+.cell.is-active { z-index: 5; }
+
+/* Fluid displacement: cells spring to their pushed position (overshoot, settle). */
+.halftone .cell {
+  transition: transform 0.55s cubic-bezier(0.34, 1.3, 0.5, 1);
+  will-change: transform;
+}
+/* Squares are centred on their cell even when larger than it (the 4x4 tile). */
+.halftone .sq {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transition:
+    width 0.5s cubic-bezier(0.34, 1.35, 0.5, 1),
+    height 0.5s cubic-bezier(0.34, 1.35, 0.5, 1),
+    margin 0.5s cubic-bezier(0.34, 1.35, 0.5, 1);
+}
+/* Idle motion pauses while something is open. */
+.halftone-wrap.is-open .sq { animation-play-state: paused; }
+.halftone-wrap.is-open .sq img { animation-play-state: paused; }
+.cell.is-active .sq { box-shadow: 0 14px 36px rgba(20, 20, 18, 0.22); background: #fff; }
+.cell.is-active .sq img { animation: none; transform: none; }
+.sq-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 11px;
+  background: linear-gradient(transparent, rgba(13, 13, 13, 0.78) 40%);
+  color: #fff;
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+.sq-caption strong { font-weight: 600; font-size: 0.8125rem; letter-spacing: -0.02em; }
+.sq-caption span { opacity: 0.82; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.halftone-wrap { overflow: clip; }
+
+/* Motion types. Each acts in ~15% of its cycle, then rests (staging: few move at once). */
+.sq:not(.m-still) {
+  position: relative;
+  z-index: 1;
+  animation: var(--anim) var(--dur) var(--delay) infinite both;
+}
+.sq:not(.m-still) img {
+  animation: var(--anim-inner) var(--dur) var(--delay) infinite both;
+}
+.sq.m-hop { --anim: tile-hop; --anim-inner: tile-lag-y; transform-origin: 50% 100%; }
+.sq.m-tilt { --anim: tile-tilt; --anim-inner: tile-lag-x; transform-origin: 0% 100%; }
+.sq.m-pop { --anim: tile-pop; --anim-inner: tile-lag-zoom; transform-origin: 50% 50%; }
+.sq.m-nudge { --anim: tile-nudge; --anim-inner: tile-lag-x; transform-origin: 50% 100%; }
+
+/* Pose-to-pose keys, each with its own easing (slow in / slow out).
+   Squash/stretch keep area (scaleX * scaleY ~= 1). Offsets are % of the tile, so a 16px
+   square still reads (exaggeration) but never leaves its neighbourhood. */
+@keyframes tile-hop {
+  0% { transform: none; animation-timing-function: cubic-bezier(0.5, 0, 0.7, 0.4); }
+  3% { transform: translate(0, 4%) scale(1.12, 0.89); animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1); }
+  6% { transform: translate(calc(var(--dx) * 0.6), -40%) scale(0.92, 1.09); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  9% { transform: translate(var(--dx), -10%) scale(1, 1); animation-timing-function: cubic-bezier(0.6, 0, 1, 0.6); }
+  11% { transform: translate(0, 0) scale(1.14, 0.88); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+  13% { transform: scale(0.96, 1.04); animation-timing-function: ease-out; }
+  15%, 100% { transform: none; }
+}
+
+/* Tilt: leans back (anticipation), tips forward on its corner, rocks past rest, settles. */
+@keyframes tile-tilt {
+  0% { transform: none; animation-timing-function: cubic-bezier(0.5, 0, 0.7, 0.4); }
+  3% { transform: rotate(4deg) scale(1.04, 0.96); animation-timing-function: cubic-bezier(0.3, 0.7, 0.4, 1); }
+  7% { transform: translate(-3%, -6%) rotate(-12deg) scale(0.97, 1.03); animation-timing-function: cubic-bezier(0.5, 0, 0.5, 1); }
+  10% { transform: rotate(5deg); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  12.5% { transform: rotate(-2deg); animation-timing-function: ease-out; }
+  15%, 100% { transform: none; }
+}
+
+/* Pop: inhales (shrinks), bursts out with stretch, overshoots smaller, settles. */
+@keyframes tile-pop {
+  0% { transform: none; animation-timing-function: cubic-bezier(0.5, 0, 0.7, 0.4); }
+  4% { transform: scale(0.86); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
+  7% { transform: translate(0, -4%) scale(1.14, 1.2); animation-timing-function: cubic-bezier(0.5, 0, 0.5, 1); }
+  10% { transform: scale(0.95, 0.97); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  12.5% { transform: scale(1.02); animation-timing-function: ease-out; }
+  15%, 100% { transform: none; }
+}
+
+/* Nudge: steps back, slides sideways along a shallow arc, skids (squash), springs back home. */
+@keyframes tile-nudge {
+  0% { transform: none; animation-timing-function: cubic-bezier(0.5, 0, 0.7, 0.4); }
+  3% { transform: translate(calc(var(--dx) * -0.8), 0) scale(0.92, 1.08); animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1); }
+  6% { transform: translate(calc(var(--dx) * 1.5), -12%) scale(1.1, 0.92); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  9% { transform: translate(calc(var(--dx) * 2.5), 0) scale(1.12, 0.9); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  12% { transform: translate(calc(var(--dx) * -0.4), 0) scale(0.97, 1.03); animation-timing-function: ease-out; }
+  15%, 100% { transform: none; }
+}
+
+/* Secondary action: the thumbnail lags inside the frame, then catches up (follow-through). */
+@keyframes tile-lag-y {
+  0%, 4% { transform: scale(1.1); }
+  7% { transform: scale(1.1) translate(0, 4%); }
+  11% { transform: scale(1.1) translate(0, -4%); }
+  14% { transform: scale(1.1) translate(0, 1%); }
+  17%, 100% { transform: scale(1.1); }
+}
+@keyframes tile-lag-x {
+  0%, 4% { transform: scale(1.1); }
+  7% { transform: scale(1.1) translate(-4%, 0); }
+  11% { transform: scale(1.1) translate(4%, 0); }
+  14% { transform: scale(1.1) translate(-1%, 0); }
+  17%, 100% { transform: scale(1.1); }
+}
+@keyframes tile-lag-zoom {
+  0%, 5% { transform: scale(1.1); }
+  8% { transform: scale(1.02); }
+  11% { transform: scale(1.16); }
+  14% { transform: scale(1.08); }
+  17%, 100% { transform: scale(1.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sq,
+  .sq img {
+    animation: none;
+  }
+  .halftone .cell,
+  .halftone .sq {
+    transition: none;
+  }
+}
+
+.cell-filler {
+  pointer-events: none;
+}
+.cell-filler .sq {
+  background: var(--rule);
+}

@@ -1,113 +1,293 @@
-import { useLayoutEffect, useRef, useState, type RefObject } from 'react'
-import {
-  arrangedSpecimens,
-  shortTitle,
-  specimenPath,
-  type ArchiveRecord,
-} from '../data/feed.ts'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { arrangedSpecimens, shortTitle, specimenPath, type ArchiveRecord } from '../data/feed.ts'
+
 
 export function FeedWall() {
-  const items = newestFirst(arrangedSpecimens())
+  const items = useMemo(() => newestFirst(arrangedSpecimens()), [])
   const [activeId, setActiveId] = useState<string | null>(null)
-  const previewRef = useRef<HTMLElement>(null)
-  const point = useRef({ x: 0, y: 0 })
-  const active = items.find((item) => item.id === activeId) ?? null
-
-  function place(x: number, y: number) {
-    point.current = { x, y }
-    const node = previewRef.current
-    if (node) positionPreview(node, x, y)
-  }
+  const [box, setBox] = useState({ w: 1200, h: 800 })
+  const wrapRef = useRef<HTMLElement>(null)
+  const gridRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
-    if (!activeId) return
-    const node = previewRef.current
+    const node = wrapRef.current
     if (!node) return
-    positionPreview(node, point.current.x, point.current.y)
-  }, [activeId])
+    const measure = () =>
+      setBox({
+        w: document.documentElement.clientWidth,
+        h: Math.max(320, window.innerHeight - node.getBoundingClientRect().top - window.scrollY - 24),
+      })
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(node)
+    return () => ro.disconnect()
+  }, [])
+
+  const grid = useMemo(() => layoutGrid(items, box.w, box.h), [items, box.w, box.h])
+  const colW = box.w / grid.cols
+  const tile = Math.round(Math.min(grid.pitch, colW) * 4)
+  const activeRank = activeId ? items.findIndex((item) => item.id === activeId) : -1
+  const activeCell = activeRank >= 0 ? grid.cells[activeRank] : null
+
+  // Tight push: measured from the (edge-clamped) tile centre in a square metric, the first ring
+  // lands one gutter outside the tile, the next rings are compressed (and scaled to match) until
+  // they meet their rest position, so the wake is a few rings deep and nothing overlaps.
+  useLayoutEffect(() => {
+    const root = gridRef.current
+    if (!root) return
+    const nodes = root.querySelectorAll<HTMLElement>('[data-c]')
+    if (!activeCell) {
+      nodes.forEach((node) => {
+        node.style.transform = ''
+      })
+      return
+    }
+    const unit = Math.min(grid.pitch, colW)
+    const half = tile / 2
+    const gridH = grid.rows * grid.pitch
+    const ax = (activeCell.col + 0.5) * colW
+    const ay = (activeCell.row + 0.5) * grid.pitch
+    const tx = Math.min(Math.max(ax, half + 4), box.w - half - 4)
+    const ty = Math.min(Math.max(ay, half + 4), Math.max(half + 4, gridH - half - 4))
+    const squeeze = 0.6
+    const gutter = unit * 0.08
+    const first = half + gutter + unit * 0.5 * squeeze
+    nodes.forEach((node) => {
+      const c = Number(node.dataset.c)
+      const r = Number(node.dataset.r)
+      const cx = (c + 0.5) * colW
+      const cy = (r + 0.5) * grid.pitch
+      if (c === activeCell.col && r === activeCell.row) {
+        node.style.transform = `translate3d(${tx - ax}px, ${ty - ay}px, 0)`
+        return
+      }
+      const dx = cx - tx
+      const dy = cy - ty
+      const dc = Math.max(Math.abs(dx) / colW, Math.abs(dy) / grid.pitch, 0.001) * unit
+      // Rings at dc >= unit*0.5 map to first + (dc - unit) * squeeze, never inward.
+      const pushed = first + (dc - unit) * squeeze
+      const target = Math.max(dc, pushed)
+      const k = target / dc - 1
+      const scale = pushed > dc ? squeeze : 1
+      node.style.transform = `translate3d(${(dx * k).toFixed(1)}px, ${(dy * k).toFixed(1)}px, 0) scale(${scale})`
+    })
+  }, [activeCell, grid, colW, tile, box.w])
+
+  // Hover intent: ~60 ms before a new plate opens, so a neighbour springing under the
+  // pointer at the tile edge does not steal the hover.
+  const intent = useRef<number | undefined>(undefined)
+  function hoverOpen(id: string) {
+    window.clearTimeout(intent.current)
+    intent.current = window.setTimeout(() => setActiveId(id), 60)
+  }
+  function hoverClose() {
+    window.clearTimeout(intent.current)
+    setActiveId(null)
+  }
 
   return (
     <section
-      className="feed-index"
+      ref={wrapRef}
+      className={`halftone-wrap${activeCell ? ' is-open' : ''}`}
       id="feed"
       aria-label="Specimen feed"
-      onPointerLeave={() => setActiveId(null)}
+      onPointerLeave={hoverClose}
     >
-      <ul className="feed-list">
-        {items.map((item) => (
-          <li key={item.id}>
+      <div
+        ref={gridRef}
+        className="halftone"
+        style={{
+          gridTemplateColumns: `repeat(${grid.cols}, 1fr)`,
+          gridAutoRows: `${grid.pitch}px`,
+        }}
+      >
+        {items.map((item, rank) => {
+          const cell = grid.cells[rank]
+          const r = rand(hash(item.id))
+          r()
+          const motion = motionFor(r())
+          const open = item.id === activeId
+          const size = open ? tile : cell.size
+          return (
             <a
-              className={`feed-row${item.id === activeId ? ' is-active' : ''}`}
+              key={item.id}
+              data-c={cell.col}
+              data-r={cell.row}
+              className={`cell${open ? ' is-active' : ''}`}
               href={specimenPath(item.id)}
-              aria-label={rowLabel(item)}
+              aria-label={`${shortTitle(item.title)}, ${item.timestamp.slice(0, 4)}`}
+              style={{ gridColumn: cell.col + 1, gridRow: cell.row + 1 }}
               onPointerEnter={(event) => {
-                if (!canHover(event.pointerType)) return
-                setActiveId(item.id)
-                place(event.clientX, event.clientY)
+                if (canHover(event.pointerType)) hoverOpen(item.id)
               }}
-              onPointerMove={(event) => {
-                if (canHover(event.pointerType)) place(event.clientX, event.clientY)
-              }}
-              onFocus={(event) => {
-                if (!hoverCapable()) return
-                setActiveId(item.id)
-                const rect = event.currentTarget.getBoundingClientRect()
-                place(rect.left + 32, rect.bottom)
+              onFocus={() => {
+                if (hoverCapable()) setActiveId(item.id)
               }}
               onBlur={() => setActiveId((current) => (current === item.id ? null : current))}
             >
-              <span className="feed-row-name">{shortTitle(item.title)}</span>
-              <span className="feed-row-year">{item.timestamp.slice(0, 4)}</span>
+              <span
+                className={`sq m-${open ? 'still' : motion}`}
+                style={{
+                  width: `${size}px`,
+                  height: `${size}px`,
+                  margin: `${-size / 2}px 0 0 ${-size / 2}px`,
+                  ['--dur' as string]: `${(8 + r() * 10).toFixed(2)}s`,
+                  ['--delay' as string]: `${(r() * 12).toFixed(2)}s`,
+                  ['--dx' as string]: `${(r() * 4 - 2).toFixed(1)}px`,
+                  ['--dy' as string]: `${(r() * 4 - 2).toFixed(1)}px`,
+                }}
+              >
+                <img
+                  src={thumbSrc(item, open || cell.size >= 48 ? 4 : 1)}
+                  alt=""
+                  loading={rank < 40 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  onError={(event) => {
+                    const fallback = previewImage(item)?.src
+                    if (fallback && !event.currentTarget.src.endsWith(fallback)) event.currentTarget.src = fallback
+                  }}
+                />
+                {open ? (
+                  <span className="sq-caption" aria-hidden="true">
+                    <strong>{shortTitle(item.title)}</strong>
+                    <span>{item.caption ?? item.timestamp.slice(0, 10)}</span>
+                  </span>
+                ) : null}
+              </span>
             </a>
-          </li>
+          )
+        })}
+        {grid.fillers.map((cell) => (
+          <span
+            key={`f-${cell.col}-${cell.row}`}
+            data-c={cell.col}
+            data-r={cell.row}
+            className="cell cell-filler"
+            aria-hidden="true"
+            style={{ gridColumn: cell.col + 1, gridRow: cell.row + 1 }}
+          >
+            <span
+              className={`sq m-${cell.motion}`}
+              style={{
+                width: `${cell.size}px`,
+                height: `${cell.size}px`,
+                margin: `${-cell.size / 2}px 0 0 ${-cell.size / 2}px`,
+                ['--dur' as string]: `${cell.dur.toFixed(2)}s`,
+                ['--delay' as string]: `${cell.delay.toFixed(2)}s`,
+                ['--dx' as string]: `${cell.dx.toFixed(1)}px`,
+              }}
+            />
+          </span>
         ))}
-      </ul>
-      <FeedPreview
-        item={active}
-        previewRef={previewRef}
-        onImageLoad={() => {
-          const node = previewRef.current
-          if (node) positionPreview(node, point.current.x, point.current.y)
-        }}
-      />
+      </div>
     </section>
   )
 }
 
-function FeedPreview({
-  item,
-  previewRef,
-  onImageLoad,
-}: {
-  item: ArchiveRecord | null
-  previewRef: RefObject<HTMLElement | null>
-  onImageLoad: () => void
-}) {
-  const image = item ? previewImage(item) : null
-  const title = item ? shortTitle(item.title) : ''
+type Cell = { col: number; row: number; size: number }
 
-  return (
-    <aside ref={previewRef} className={`feed-preview${image ? ' is-on' : ''}`} aria-hidden="true">
-      {image ? (
-        <figure className="feed-preview-plate">
-          <img src={image.src} alt="" width={image.width} height={image.height} onLoad={onImageLoad} />
-          <figcaption>
-            <strong>{title}</strong>
-            {item?.caption ? <span>{item.caption}</span> : null}
-          </figcaption>
-        </figure>
-      ) : null}
-    </aside>
-  )
+/** Regular grid sized to the viewport; one plate per cell, seeded shuffle for placement,
+ *  square size from a halftone field: gradient outside, a sharp bright ring, a void of dots inside.
+ *  Trailing cells of the last row get non-link filler dots that follow the same field. */
+function layoutGrid(items: ArchiveRecord[], w: number, h: number) {
+  const n = items.length
+  // ~25% blank pixels scattered among the plates.
+  const want = Math.ceil(n / 0.75)
+  const aspect = Math.max(0.3, w / h)
+  const cols = Math.max(6, Math.min(want, Math.round(Math.sqrt(want * aspect))))
+  const rows = Math.ceil(want / cols)
+  const total = cols * rows
+  const pitch = Math.max(12, Math.min(w / cols, Math.floor(h / rows)))
+  const seed = rand(hash('slopgang-field-v3'))
+  // Field in cell units so the ring keeps its shape on any grid.
+  // Virtual field larger than the grid: the void sits at the lower-left edge and the ring
+  // radius runs past the grid, so the arc is cropped by the viewport like the reference.
+  const long = Math.max(cols, rows)
+  const portrait = rows > cols
+  const jx = seed()
+  const jy = seed()
+  // Landscape: void below the lower-left, ring sweeps from the top-left to the lower right.
+  // Portrait: void past the left edge, ring bows out to the right side and back.
+  const cx = portrait ? cols * (-0.1 + jx * 0.05) : cols * (0.2 + jx * 0.06)
+  const cy = portrait ? rows * (0.68 + jy * 0.04) : rows * (1.0 + jy * 0.05)
+  const R = portrait ? cols * 0.95 : long * 0.55
+  const band = Math.max(0.8, R * 0.15)
+  const fieldSize = (col: number, row: number) => {
+    const d = Math.hypot(col - cx, row - cy)
+    const ring = Math.exp(-(((d - R) / band) ** 2))
+    const u = cols > 1 ? col / (cols - 1) : 0.5
+    const v = rows > 1 ? row / (rows - 1) : 0.5
+    const grad = 0.18 + 0.5 * clamp01(0.5 + (u - v) * 0.8)
+    const t = d < R ? 0.04 + 0.96 * ring : Math.max(ring, grad * smooth(R, R + band * 2.5, d))
+    return Math.max(4, Math.round(pitch * 0.9 * clamp01(t)))
+  }
+  const at = (slot: number): Cell => {
+    const col = slot % cols
+    const row = Math.floor(slot / cols)
+    return { col, row, size: fieldSize(col, row) }
+  }
+  const shuffledSlots = Array.from({ length: total }, (_, i) => i).map((i) => ({ i, k: rand(hash(`blank-${i}`))() }))
+    .sort((a, b) => a.k - b.k)
+    .map((x) => x.i)
+  const blankSlots = shuffledSlots.slice(0, total - n).sort((a, b) => a - b)
+  const plateSlots = shuffledSlots.slice(total - n).sort((a, b) => a - b)
+  const order = items.map((item, i) => ({ i, k: hash(`slot-${item.id}`) })).sort((a, b) => a.k - b.k)
+  const cells: Cell[] = new Array(n)
+  order.forEach(({ i }, k) => {
+    cells[i] = at(plateSlots[k])
+  })
+  const fillers = blankSlots.map((slot) => {
+    const r = rand(hash(`blank-motion-${slot}`))
+    return {
+      ...at(slot),
+      motion: motionFor(r()),
+      dur: 8 + r() * 10,
+      delay: r() * 12,
+      dx: r() * 4 - 2,
+    }
+  })
+  return { cols, rows, pitch, cells, fillers }
 }
 
-/** Newest published first: highest sg number first. */
+function clamp01(x: number): number {
+  return Math.min(1, Math.max(0, x))
+}
+
+function smooth(a: number, b: number, x: number): number {
+  const t = clamp01((x - a) / (b - a))
+  return t * t * (3 - 2 * t)
+}
+
+/** Roughly half the squares stay still; the rest get one seeded motion type.
+ *  Every type is built on the 12 principles (see keyframes in index.css). */
+const MOTIONS = ['hop', 'tilt', 'pop', 'nudge'] as const
+function motionFor(x: number): string {
+  if (x < 0.5) return 'still'
+  return MOTIONS[Math.min(MOTIONS.length - 1, Math.floor((x - 0.5) * 2 * MOTIONS.length))]
+}
+
+
+function hash(s: string): number {
+  let h = 2166136261
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619)
+  return h >>> 0
+}
+
+function rand(seed: number): () => number {
+  let a = seed || 1
+  return () => {
+    a = (a + 0x6d2b79f5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
 function newestFirst(items: ArchiveRecord[]): ArchiveRecord[] {
   const num = (id: string) => Number(/sg-(\d+)/i.exec(id)?.[1] ?? -1)
   return [...items].sort((a, b) => num(b.id) - num(a.id))
 }
 
-/** Touch devices skip the hover preview so one tap opens the plate. */
 function hoverCapable(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
 }
@@ -116,32 +296,16 @@ function canHover(pointerType: string): boolean {
   return pointerType !== 'touch' && hoverCapable()
 }
 
-function positionPreview(node: HTMLElement, x: number, y: number) {
-  const pad = 16
-  const width = node.offsetWidth
-  const height = node.offsetHeight
-  let left = x + pad
-  let top = y + pad
-  const maxX = window.innerWidth - 8
-  const maxY = window.innerHeight - 8
-  if (left + width > maxX) left = x - width - pad
-  if (top + height > maxY) top = y - height - pad
-  left = Math.max(8, Math.min(left, Math.max(8, maxX - width)))
-  top = Math.max(8, Math.min(top, Math.max(8, maxY - height)))
-  node.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`
-}
 
-function rowLabel(item: ArchiveRecord): string {
-  return `${shortTitle(item.title)}. ${item.timestamp.slice(0, 4)}`
+function thumbSrc(item: ArchiveRecord, units: number): string {
+  const id = /sg-\d+/i.exec(item.id)?.[0]?.toLowerCase()
+  if (id) return `/archive/${units >= 4 ? 'md' : 'px'}/${id}.webp`
+  return previewImage(item)?.src ?? ''
 }
 
 function previewImage(item: ArchiveRecord): { src: string; width?: number; height?: number } | null {
   const media = item.media
   if (!media) return null
-  if (media.type === 'video') {
-    if (!media.poster) return null
-    return { src: media.poster, width: media.width, height: media.height }
-  }
-  if (!media.url) return null
-  return { src: media.url, width: media.width, height: media.height }
+  if (media.type === 'video') return media.poster ? { src: media.poster, width: media.width, height: media.height } : null
+  return media.url ? { src: media.url, width: media.width, height: media.height } : null
 }
