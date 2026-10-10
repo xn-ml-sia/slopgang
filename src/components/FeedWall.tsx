@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { arrangedSpecimens, shortTitle, specimenPath, type ArchiveRecord } from '../data/feed.ts'
 
 
@@ -7,23 +7,16 @@ export function FeedWall() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [box, setBox] = useState({ w: 1200, h: 800 })
   const wrapRef = useRef<HTMLElement>(null)
-  const previewRef = useRef<HTMLElement>(null)
-  const point = useRef({ x: 0, y: 0 })
-  const active = items.find((item) => item.id === activeId) ?? null
-
-  function place(x: number, y: number) {
-    point.current = { x, y }
-    if (previewRef.current) positionPreview(previewRef.current, x, y)
-  }
-
-  useLayoutEffect(() => {
-    if (activeId && previewRef.current) positionPreview(previewRef.current, point.current.x, point.current.y)
-  }, [activeId])
+  const gridRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
     const node = wrapRef.current
     if (!node) return
-    const measure = () => setBox({ w: document.documentElement.clientWidth, h: Math.max(320, window.innerHeight - node.getBoundingClientRect().top - window.scrollY - 24) })
+    const measure = () =>
+      setBox({
+        w: document.documentElement.clientWidth,
+        h: Math.max(320, window.innerHeight - node.getBoundingClientRect().top - window.scrollY - 24),
+      })
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(node)
@@ -31,10 +24,60 @@ export function FeedWall() {
   }, [])
 
   const grid = useMemo(() => layoutGrid(items, box.w, box.h), [items, box.w, box.h])
+  const colW = box.w / grid.cols
+  const tile = Math.round(Math.min(grid.pitch, colW) * 4)
+  const activeRank = activeId ? items.findIndex((item) => item.id === activeId) : -1
+  const activeCell = activeRank >= 0 ? grid.cells[activeRank] : null
+
+  // Displacement field: every other cell is pushed radially away from the expanded tile.
+  // Transform-only, applied straight to the DOM so 150 nodes never re-render per hover.
+  useLayoutEffect(() => {
+    const root = gridRef.current
+    if (!root) return
+    const nodes = root.querySelectorAll<HTMLElement>('[data-c]')
+    if (!activeCell) {
+      nodes.forEach((node) => {
+        node.style.transform = ''
+      })
+      return
+    }
+    const unit = Math.min(grid.pitch, colW)
+    const half = tile / 2
+    const gridH = grid.rows * grid.pitch
+    const ax = (activeCell.col + 0.5) * colW
+    const ay = (activeCell.row + 0.5) * grid.pitch
+    const tx = Math.min(Math.max(ax, half + 4), box.w - half - 4)
+    const ty = Math.min(Math.max(ay, half + 4), Math.max(half + 4, gridH - half - 4))
+    const reach = half + unit * 0.55
+    nodes.forEach((node) => {
+      const c = Number(node.dataset.c)
+      const r = Number(node.dataset.r)
+      const cx = (c + 0.5) * colW
+      const cy = (r + 0.5) * grid.pitch
+      if (c === activeCell.col && r === activeCell.row) {
+        node.style.transform = `translate3d(${tx - ax}px, ${ty - ay}px, 0)`
+        return
+      }
+      const dx = cx - tx
+      const dy = cy - ty
+      const dc = Math.max(Math.abs(dx), Math.abs(dy), 1)
+      // Square (Chebyshev) metric so the 4x4 tile's footprint is cleared; push decays with distance.
+      const target = dc + reach * Math.exp(-dc / (unit * 3))
+      const k = target / dc - 1
+      node.style.transform = `translate3d(${(dx * k).toFixed(1)}px, ${(dy * k).toFixed(1)}px, 0)`
+    })
+  }, [activeCell, grid, colW, tile, box.w])
 
   return (
-    <section ref={wrapRef} className="halftone-wrap" id="feed" aria-label="Specimen feed" onPointerLeave={() => setActiveId(null)}>
+    <section
+      ref={wrapRef}
+      className={`halftone-wrap${activeCell ? ' is-open' : ''}`}
+      id="feed"
+      aria-label="Specimen feed"
+      onPointerLeave={() => setActiveId(null)}
+    >
       <div
+        ref={gridRef}
         className="halftone"
         style={{
           gridTemplateColumns: `repeat(${grid.cols}, 1fr)`,
@@ -46,34 +89,30 @@ export function FeedWall() {
           const r = rand(hash(item.id))
           r()
           const motion = motionFor(r())
+          const open = item.id === activeId
+          const size = open ? tile : cell.size
           return (
             <a
               key={item.id}
-              className={`cell${item.id === activeId ? ' is-active' : ''}`}
+              data-c={cell.col}
+              data-r={cell.row}
+              className={`cell${open ? ' is-active' : ''}`}
               href={specimenPath(item.id)}
               aria-label={`${shortTitle(item.title)}, ${item.timestamp.slice(0, 4)}`}
               style={{ gridColumn: cell.col + 1, gridRow: cell.row + 1 }}
               onPointerEnter={(event) => {
-                if (!canHover(event.pointerType)) return
-                setActiveId(item.id)
-                place(event.clientX, event.clientY)
+                if (canHover(event.pointerType)) setActiveId(item.id)
               }}
-              onPointerMove={(event) => {
-                if (canHover(event.pointerType)) place(event.clientX, event.clientY)
-              }}
-              onFocus={(event) => {
-                if (!hoverCapable()) return
-                setActiveId(item.id)
-                const rect = event.currentTarget.getBoundingClientRect()
-                place(rect.right, rect.bottom)
+              onFocus={() => {
+                if (hoverCapable()) setActiveId(item.id)
               }}
               onBlur={() => setActiveId((current) => (current === item.id ? null : current))}
             >
               <span
-                className={`sq m-${motion}`}
+                className={`sq m-${open ? 'still' : motion}`}
                 style={{
-                  width: `${cell.size}px`,
-                  height: `${cell.size}px`,
+                  width: `${size}px`,
+                  height: `${size}px`,
                   ['--dur' as string]: `${(8 + r() * 10).toFixed(2)}s`,
                   ['--delay' as string]: `${(r() * 12).toFixed(2)}s`,
                   ['--dx' as string]: `${(r() * 4 - 2).toFixed(1)}px`,
@@ -81,7 +120,7 @@ export function FeedWall() {
                 }}
               >
                 <img
-                  src={thumbSrc(item, cell.size >= 48 ? 4 : 1)}
+                  src={thumbSrc(item, open || cell.size >= 48 ? 4 : 1)}
                   alt=""
                   loading={rank < 40 ? 'eager' : 'lazy'}
                   decoding="async"
@@ -90,6 +129,12 @@ export function FeedWall() {
                     if (fallback && !event.currentTarget.src.endsWith(fallback)) event.currentTarget.src = fallback
                   }}
                 />
+                {open ? (
+                  <span className="sq-caption" aria-hidden="true">
+                    <strong>{shortTitle(item.title)}</strong>
+                    <span>{item.caption ?? item.timestamp.slice(0, 10)}</span>
+                  </span>
+                ) : null}
               </span>
             </a>
           )
@@ -97,6 +142,8 @@ export function FeedWall() {
         {grid.fillers.map((cell) => (
           <span
             key={`f-${cell.col}-${cell.row}`}
+            data-c={cell.col}
+            data-r={cell.row}
             className="cell cell-filler"
             aria-hidden="true"
             style={{ gridColumn: cell.col + 1, gridRow: cell.row + 1 }}
@@ -114,13 +161,6 @@ export function FeedWall() {
           </span>
         ))}
       </div>
-      <FeedPreview
-        item={active}
-        previewRef={previewRef}
-        onImageLoad={() => {
-          if (previewRef.current) positionPreview(previewRef.current, point.current.x, point.current.y)
-        }}
-      />
     </section>
   )
 }
@@ -187,7 +227,7 @@ function layoutGrid(items: ArchiveRecord[], w: number, h: number) {
       dx: r() * 4 - 2,
     }
   })
-  return { cols, pitch, cells, fillers }
+  return { cols, rows, pitch, cells, fillers }
 }
 
 function clamp01(x: number): number {
@@ -207,26 +247,6 @@ function motionFor(x: number): string {
   return MOTIONS[Math.min(MOTIONS.length - 1, Math.floor((x - 0.5) * 2 * MOTIONS.length))]
 }
 
-function FeedPreview({ item, previewRef, onImageLoad }: {
-  item: ArchiveRecord | null
-  previewRef: RefObject<HTMLElement | null>
-  onImageLoad: () => void
-}) {
-  const image = item ? previewImage(item) : null
-  return (
-    <aside ref={previewRef} className={`feed-preview${image ? ' is-on' : ''}`} aria-hidden="true">
-      {image && item ? (
-        <figure className="feed-preview-plate">
-          <img src={image.src} alt="" width={image.width} height={image.height} onLoad={onImageLoad} />
-          <figcaption>
-            <strong>{shortTitle(item.title)}</strong>
-            <span>{item.caption ?? item.timestamp.slice(0, 10)}</span>
-          </figcaption>
-        </figure>
-      ) : null}
-    </aside>
-  )
-}
 
 function hash(s: string): number {
   let h = 2166136261
@@ -257,20 +277,6 @@ function canHover(pointerType: string): boolean {
   return pointerType !== 'touch' && hoverCapable()
 }
 
-function positionPreview(node: HTMLElement, x: number, y: number) {
-  const pad = 16
-  const width = node.offsetWidth
-  const height = node.offsetHeight
-  let left = x + pad
-  let top = y + pad
-  const maxX = window.innerWidth - 8
-  const maxY = window.innerHeight - 8
-  if (left + width > maxX) left = x - width - pad
-  if (top + height > maxY) top = y - height - pad
-  left = Math.max(8, Math.min(left, Math.max(8, maxX - width)))
-  top = Math.max(8, Math.min(top, Math.max(8, maxY - height)))
-  node.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`
-}
 
 function thumbSrc(item: ArchiveRecord, units: number): string {
   const id = /sg-\d+/i.exec(item.id)?.[0]?.toLowerCase()
