@@ -1328,3 +1328,7 @@ html:has(.feed),
     animation: none;
   }
 }
+
+.cell-filler .sq {
+  background: var(--rule);
+}

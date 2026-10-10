@@ -94,6 +94,16 @@ export function FeedWall() {
             </a>
           )
         })}
+        {grid.fillers.map((cell) => (
+          <span
+            key={`f-${cell.col}-${cell.row}`}
+            className="cell cell-filler"
+            aria-hidden="true"
+            style={{ gridColumn: cell.col + 1, gridRow: cell.row + 1 }}
+          >
+            <span className="sq" style={{ width: `${cell.size}px`, height: `${cell.size}px` }} />
+          </span>
+        ))}
       </div>
       <FeedPreview
         item={active}
@@ -109,34 +119,46 @@ export function FeedWall() {
 type Cell = { col: number; row: number; size: number }
 
 /** Regular grid sized to the viewport; one plate per cell, seeded shuffle for placement,
- *  square size from a smooth halftone field (diagonal gradient x radial void with an arc). */
-function layoutGrid(items: ArchiveRecord[], w: number, h: number): { cols: number; pitch: number; cells: Cell[] } {
+ *  square size from a halftone field: gradient outside, a sharp bright ring, a void of dots inside.
+ *  Trailing cells of the last row get non-link filler dots that follow the same field. */
+function layoutGrid(items: ArchiveRecord[], w: number, h: number) {
   const n = items.length
   const aspect = Math.max(0.3, w / h)
   const cols = Math.max(6, Math.min(n, Math.round(Math.sqrt(n * aspect))))
   const rows = Math.ceil(n / cols)
   const pitch = Math.max(12, Math.floor(Math.min(w / cols, (h * 1.1) / rows, 112)))
-  const field = rand(hash('slopgang-field-v1'))
-  const angle = Math.PI * (0.15 + field() * 0.2) // light from the upper right
-  const dir = { x: Math.cos(angle), y: -Math.sin(angle) }
-  const void0 = { x: 0.35 + field() * 0.15, y: 0.6 + field() * 0.15 }
-  const voidR = 0.24 + field() * 0.06
+  const seed = rand(hash('slopgang-field-v2'))
+  // Field in cell units so the ring keeps its shape on any grid.
+  const short = Math.min(cols, rows)
+  const cx = cols * (0.3 + seed() * 0.08)
+  const cy = rows * (0.62 + seed() * 0.08)
+  const R = short * 0.5
+  const band = Math.max(0.7, short * 0.11)
+  const fieldSize = (col: number, row: number) => {
+    const d = Math.hypot(col - cx, row - cy)
+    const ring = Math.exp(-(((d - R) / band) ** 2))
+    const u = cols > 1 ? col / (cols - 1) : 0.5
+    const v = rows > 1 ? row / (rows - 1) : 0.5
+    const grad = 0.18 + 0.5 * clamp01(0.5 + (u - v) * 0.8)
+    const inside = 0.04 + 0.96 * ring
+    const outside = Math.max(ring, grad * smooth(R, R + band * 2.5, d) + ring * 0.0)
+    const t = d < R ? inside : Math.max(ring, outside)
+    return Math.max(4, Math.round(pitch * 0.9 * clamp01(t)))
+  }
   const order = items.map((item, i) => ({ i, k: hash(`slot-${item.id}`) })).sort((a, b) => a.k - b.k)
   const cells: Cell[] = new Array(n)
   order.forEach(({ i }, slot) => {
     const col = slot % cols
     const row = Math.floor(slot / cols)
-    const u = cols > 1 ? col / (cols - 1) : 0.5
-    const v = rows > 1 ? row / (rows - 1) : 0.5
-    const grad = clamp01(0.5 + ((u - 0.5) * dir.x + (v - 0.5) * dir.y) * 1.25)
-    const d = Math.hypot((u - void0.x) * aspect * 0.8, v - void0.y)
-    const hole = smooth(voidR, voidR + 0.3, d)
-    const arc = Math.exp(-(((d - voidR - 0.06) / 0.06) ** 2)) * 0.55
-    const t = clamp01(grad * hole + arc * (0.4 + grad))
-    const size = Math.max(4, Math.round(pitch * 0.9 * t))
-    cells[i] = { col, row, size }
+    cells[i] = { col, row, size: fieldSize(col, row) }
   })
-  return { cols, pitch, cells }
+  const fillers: Cell[] = []
+  for (let slot = n; slot < cols * rows; slot++) {
+    const col = slot % cols
+    const row = Math.floor(slot / cols)
+    fillers.push({ col, row, size: fieldSize(col, row) })
+  }
+  return { cols, pitch, cells, fillers }
 }
 
 function clamp01(x: number): number {
