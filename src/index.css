@@ -1220,7 +1220,6 @@ html:has(.feed),
 
 .tile {
   --s: 1;
-  --amp: 0.006;
   position: relative;
   display: block;
   grid-column: span var(--s);
@@ -1228,16 +1227,12 @@ html:has(.feed),
   overflow: hidden;
   background: var(--paper-2);
   box-shadow: inset 0 0 0 0.5px rgba(20, 20, 18, 0.12);
-  animation:
-    tile-in 0.5s steps(4, end) both,
-    tile-breathe var(--breathe-dur) ease-in-out var(--breathe-delay) infinite;
-  animation-delay: calc(var(--i) * 18ms), var(--breathe-delay);
 }
 
-.tile.t16 { --s: 16; --amp: 0.02; }
-.tile.t8 { --s: 8; --amp: 0.016; }
-.tile.t4 { --s: 4; --amp: 0.012; }
-.tile.t2 { --s: 2; --amp: 0.008; }
+.tile.t16 { --s: 16; }
+.tile.t8 { --s: 8; }
+.tile.t4 { --s: 4; }
+.tile.t2 { --s: 2; }
 
 .tile img {
   display: block;
@@ -1245,8 +1240,20 @@ html:has(.feed),
   height: 100%;
   object-fit: cover;
   image-rendering: pixelated;
-  animation: tile-flicker var(--flicker-dur) steps(1, end) var(--flicker-delay) infinite;
 }
+
+/* Motion types. Each acts in ~15% of its cycle, then rests (staging: few move at once). */
+.tile[class*='m-']:not(.m-still) {
+  z-index: 1;
+  animation: var(--anim) var(--dur) var(--delay) infinite both;
+}
+.tile[class*='m-']:not(.m-still) img {
+  animation: var(--anim-inner) var(--dur) var(--delay) infinite both;
+}
+.tile.m-hop { --anim: tile-hop; --anim-inner: tile-lag-y; transform-origin: 50% 100%; }
+.tile.m-tilt { --anim: tile-tilt; --anim-inner: tile-lag-x; transform-origin: 0% 100%; }
+.tile.m-pop { --anim: tile-pop; --anim-inner: tile-lag-zoom; transform-origin: 50% 50%; }
+.tile.m-nudge { --anim: tile-nudge; --anim-inner: tile-lag-x; transform-origin: 50% 100%; }
 
 .tile.is-active,
 .tile:focus-visible {
@@ -1255,22 +1262,70 @@ html:has(.feed),
   outline-offset: -2px;
 }
 
-@keyframes tile-in {
-  from { opacity: 0; clip-path: inset(0 0 100% 0); }
-  to { opacity: 1; clip-path: inset(0 0 0 0); }
+/* Pose-to-pose keys, each with its own easing (slow in / slow out).
+   Squash/stretch keep area (scaleX * scaleY ~= 1). Offsets are % of the tile, so a 16px
+   square still reads (exaggeration) but never leaves its neighbourhood. */
+@keyframes tile-hop {
+  0% { transform: none; animation-timing-function: cubic-bezier(0.5, 0, 0.7, 0.4); }
+  3% { transform: translate(0, 4%) scale(1.12, 0.89); animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1); }
+  6% { transform: translate(calc(var(--dx) * 0.6), -40%) scale(0.92, 1.09); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  9% { transform: translate(var(--dx), -10%) scale(1, 1); animation-timing-function: cubic-bezier(0.6, 0, 1, 0.6); }
+  11% { transform: translate(0, 0) scale(1.14, 0.88); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+  13% { transform: scale(0.96, 1.04); animation-timing-function: ease-out; }
+  15%, 100% { transform: none; }
 }
 
-@keyframes tile-breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(calc(1 + var(--amp))); }
+/* Tilt: leans back (anticipation), tips forward on its corner, rocks past rest, settles. */
+@keyframes tile-tilt {
+  0% { transform: none; animation-timing-function: cubic-bezier(0.5, 0, 0.7, 0.4); }
+  3% { transform: rotate(4deg) scale(1.04, 0.96); animation-timing-function: cubic-bezier(0.3, 0.7, 0.4, 1); }
+  7% { transform: translate(-3%, -6%) rotate(-12deg) scale(0.97, 1.03); animation-timing-function: cubic-bezier(0.5, 0, 0.5, 1); }
+  10% { transform: rotate(5deg); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  12.5% { transform: rotate(-2deg); animation-timing-function: ease-out; }
+  15%, 100% { transform: none; }
 }
 
-/* A rare dithered blink: two quick steps, then a long rest. */
-@keyframes tile-flicker {
-  0%, 96%, 100% { opacity: 1; filter: none; }
-  97% { opacity: 0.7; filter: contrast(1.4) saturate(0.6); }
-  98% { opacity: 1; filter: none; }
-  99% { opacity: 0.85; filter: contrast(1.2); }
+/* Pop: inhales (shrinks), bursts out with stretch, overshoots smaller, settles. */
+@keyframes tile-pop {
+  0% { transform: none; animation-timing-function: cubic-bezier(0.5, 0, 0.7, 0.4); }
+  4% { transform: scale(0.86); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
+  7% { transform: translate(0, -4%) scale(1.14, 1.2); animation-timing-function: cubic-bezier(0.5, 0, 0.5, 1); }
+  10% { transform: scale(0.95, 0.97); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  12.5% { transform: scale(1.02); animation-timing-function: ease-out; }
+  15%, 100% { transform: none; }
+}
+
+/* Nudge: steps back, slides sideways along a shallow arc, skids (squash), springs back home. */
+@keyframes tile-nudge {
+  0% { transform: none; animation-timing-function: cubic-bezier(0.5, 0, 0.7, 0.4); }
+  3% { transform: translate(calc(var(--dx) * -0.8), 0) scale(0.92, 1.08); animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1); }
+  6% { transform: translate(calc(var(--dx) * 1.5), -12%) scale(1.1, 0.92); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  9% { transform: translate(calc(var(--dx) * 2.5), 0) scale(1.12, 0.9); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  12% { transform: translate(calc(var(--dx) * -0.4), 0) scale(0.97, 1.03); animation-timing-function: ease-out; }
+  15%, 100% { transform: none; }
+}
+
+/* Secondary action: the thumbnail lags inside the frame, then catches up (follow-through). */
+@keyframes tile-lag-y {
+  0%, 4% { transform: scale(1.1); }
+  7% { transform: scale(1.1) translate(0, 4%); }
+  11% { transform: scale(1.1) translate(0, -4%); }
+  14% { transform: scale(1.1) translate(0, 1%); }
+  17%, 100% { transform: scale(1.1); }
+}
+@keyframes tile-lag-x {
+  0%, 4% { transform: scale(1.1); }
+  7% { transform: scale(1.1) translate(-4%, 0); }
+  11% { transform: scale(1.1) translate(4%, 0); }
+  14% { transform: scale(1.1) translate(-1%, 0); }
+  17%, 100% { transform: scale(1.1); }
+}
+@keyframes tile-lag-zoom {
+  0%, 5% { transform: scale(1.1); }
+  8% { transform: scale(1.02); }
+  11% { transform: scale(1.16); }
+  14% { transform: scale(1.08); }
+  17%, 100% { transform: scale(1.1); }
 }
 
 @media (max-width: 560px) {

@@ -22,20 +22,21 @@ export function FeedWall() {
     <section className="mosaic-wrap" id="feed" aria-label="Specimen feed" onPointerLeave={() => setActiveId(null)}>
       <div className="mosaic">
         {items.map((item, rank) => {
-          const tier = tierFor(rank)
           const r = rand(hash(item.id))
+          const tier = tierFor(r())
+          const motion = motionFor(r())
           return (
             <a
               key={item.id}
-              className={`tile t${tier}${item.id === activeId ? ' is-active' : ''}`}
+              className={`tile t${tier} m-${motion}${item.id === activeId ? ' is-active' : ''}`}
               href={specimenPath(item.id)}
               aria-label={`${shortTitle(item.title)}, ${item.timestamp.slice(0, 4)}`}
               style={{
-                ['--i' as string]: String(rank),
-                ['--breathe-delay' as string]: `${(-r() * 9).toFixed(2)}s`,
-                ['--breathe-dur' as string]: `${(7 + r() * 5).toFixed(2)}s`,
-                ['--flicker-delay' as string]: `${(r() * 24).toFixed(2)}s`,
-                ['--flicker-dur' as string]: `${(14 + r() * 18).toFixed(2)}s`,
+                order: Math.floor(r() * 100000),
+                ['--dur' as string]: `${(8 + r() * 10).toFixed(2)}s`,
+                ['--delay' as string]: `${(r() * 12).toFixed(2)}s`,
+                ['--dx' as string]: `${(r() * 4 - 2).toFixed(1)}px`,
+                ['--dy' as string]: `${(r() * 4 - 2).toFixed(1)}px`,
               }}
               onPointerEnter={(event) => {
                 if (!canHover(event.pointerType)) return
@@ -78,20 +79,21 @@ export function FeedWall() {
   )
 }
 
-/** Size = attention. Rank 0 is the newest plate. Returns the tile side in 16px units. */
-const TIERS: Array<[count: number, units: number]> = [
-  [1, 16],
-  [5, 8],
-  [15, 4],
-  [30, 2],
-]
-function tierFor(rank: number): number {
-  let start = 0
-  for (const [count, units] of TIERS) {
-    if (rank < start + count) return units
-    start += count
-  }
+/** Chaos: each plate gets a seeded random tier (16px units). 1 = 16px ... 16 = 256px. */
+function tierFor(x: number): number {
+  if (x < 0.03) return 16
+  if (x < 0.1) return 8
+  if (x < 0.3) return 4
+  if (x < 0.6) return 2
   return 1
+}
+
+/** Roughly half the squares stay still; the rest get one seeded motion type.
+ *  Every type is built on the 12 principles (see keyframes in index.css). */
+const MOTIONS = ['hop', 'tilt', 'pop', 'nudge'] as const
+function motionFor(x: number): string {
+  if (x < 0.5) return 'still'
+  return MOTIONS[Math.min(MOTIONS.length - 1, Math.floor((x - 0.5) * 2 * MOTIONS.length))]
 }
 
 function FeedPreview({ item, previewRef, onImageLoad }: {
