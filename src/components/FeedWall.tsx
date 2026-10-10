@@ -29,8 +29,9 @@ export function FeedWall() {
   const activeRank = activeId ? items.findIndex((item) => item.id === activeId) : -1
   const activeCell = activeRank >= 0 ? grid.cells[activeRank] : null
 
-  // Displacement field: every other cell is pushed radially away from the expanded tile.
-  // Transform-only, applied straight to the DOM so 150 nodes never re-render per hover.
+  // Tight push: measured from the (edge-clamped) tile centre in a square metric, the first ring
+  // lands one gutter outside the tile, the next rings are compressed (and scaled to match) until
+  // they meet their rest position, so the wake is a few rings deep and nothing overlaps.
   useLayoutEffect(() => {
     const root = gridRef.current
     if (!root) return
@@ -48,7 +49,9 @@ export function FeedWall() {
     const ay = (activeCell.row + 0.5) * grid.pitch
     const tx = Math.min(Math.max(ax, half + 4), box.w - half - 4)
     const ty = Math.min(Math.max(ay, half + 4), Math.max(half + 4, gridH - half - 4))
-    const reach = half + unit * 0.55
+    const squeeze = 0.6
+    const gutter = unit * 0.08
+    const first = half + gutter + unit * 0.5 * squeeze
     nodes.forEach((node) => {
       const c = Number(node.dataset.c)
       const r = Number(node.dataset.r)
@@ -60,13 +63,27 @@ export function FeedWall() {
       }
       const dx = cx - tx
       const dy = cy - ty
-      const dc = Math.max(Math.abs(dx), Math.abs(dy), 1)
-      // Square (Chebyshev) metric so the 4x4 tile's footprint is cleared; push decays with distance.
-      const target = dc + reach * Math.exp(-dc / (unit * 3))
+      const dc = Math.max(Math.abs(dx) / colW, Math.abs(dy) / grid.pitch, 0.001) * unit
+      // Rings at dc >= unit*0.5 map to first + (dc - unit) * squeeze, never inward.
+      const pushed = first + (dc - unit) * squeeze
+      const target = Math.max(dc, pushed)
       const k = target / dc - 1
-      node.style.transform = `translate3d(${(dx * k).toFixed(1)}px, ${(dy * k).toFixed(1)}px, 0)`
+      const scale = pushed > dc ? squeeze : 1
+      node.style.transform = `translate3d(${(dx * k).toFixed(1)}px, ${(dy * k).toFixed(1)}px, 0) scale(${scale})`
     })
   }, [activeCell, grid, colW, tile, box.w])
+
+  // Hover intent: ~60 ms before a new plate opens, so a neighbour springing under the
+  // pointer at the tile edge does not steal the hover.
+  const intent = useRef<number | undefined>(undefined)
+  function hoverOpen(id: string) {
+    window.clearTimeout(intent.current)
+    intent.current = window.setTimeout(() => setActiveId(id), 60)
+  }
+  function hoverClose() {
+    window.clearTimeout(intent.current)
+    setActiveId(null)
+  }
 
   return (
     <section
@@ -74,7 +91,7 @@ export function FeedWall() {
       className={`halftone-wrap${activeCell ? ' is-open' : ''}`}
       id="feed"
       aria-label="Specimen feed"
-      onPointerLeave={() => setActiveId(null)}
+      onPointerLeave={hoverClose}
     >
       <div
         ref={gridRef}
@@ -101,7 +118,7 @@ export function FeedWall() {
               aria-label={`${shortTitle(item.title)}, ${item.timestamp.slice(0, 4)}`}
               style={{ gridColumn: cell.col + 1, gridRow: cell.row + 1 }}
               onPointerEnter={(event) => {
-                if (canHover(event.pointerType)) setActiveId(item.id)
+                if (canHover(event.pointerType)) hoverOpen(item.id)
               }}
               onFocus={() => {
                 if (hoverCapable()) setActiveId(item.id)
@@ -113,6 +130,7 @@ export function FeedWall() {
                 style={{
                   width: `${size}px`,
                   height: `${size}px`,
+                  margin: `${-size / 2}px 0 0 ${-size / 2}px`,
                   ['--dur' as string]: `${(8 + r() * 10).toFixed(2)}s`,
                   ['--delay' as string]: `${(r() * 12).toFixed(2)}s`,
                   ['--dx' as string]: `${(r() * 4 - 2).toFixed(1)}px`,
@@ -153,6 +171,7 @@ export function FeedWall() {
               style={{
                 width: `${cell.size}px`,
                 height: `${cell.size}px`,
+                margin: `${-cell.size / 2}px 0 0 ${-cell.size / 2}px`,
                 ['--dur' as string]: `${cell.dur.toFixed(2)}s`,
                 ['--delay' as string]: `${cell.delay.toFixed(2)}s`,
                 ['--dx' as string]: `${cell.dx.toFixed(1)}px`,
