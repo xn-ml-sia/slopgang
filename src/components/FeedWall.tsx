@@ -23,7 +23,9 @@ export function FeedWall() {
     return () => ro.disconnect()
   }, [])
 
-  const grid = useMemo(() => layoutGrid(items, box.w, box.h), [items, box.w, box.h])
+  // New arc each page load: one random seed, kept for the life of the page (resizes keep the arc).
+  const arcSeed = useMemo(() => (Math.random() * 4294967296) >>> 0, [])
+  const grid = useMemo(() => layoutGrid(items, box.w, box.h, arcSeed), [items, box.w, box.h, arcSeed])
   const colW = box.w / grid.cols
   const tile = Math.round(Math.min(grid.pitch, colW) * 4)
   const activeRank = activeId ? items.findIndex((item) => item.id === activeId) : -1
@@ -116,7 +118,7 @@ export function FeedWall() {
               className={`cell${open ? ' is-active' : ''}`}
               href={specimenPath(item.id)}
               aria-label={`${shortTitle(item.title)}, ${item.timestamp.slice(0, 4)}`}
-              style={{ gridColumn: cell.col + 1, gridRow: cell.row + 1 }}
+              style={{ gridColumn: cell.col + 1, gridRow: cell.row + 1, ['--in' as string]: `${cell.inDelay}ms` }}
               onPointerEnter={(event) => {
                 if (canHover(event.pointerType)) hoverOpen(item.id)
               }}
@@ -164,7 +166,7 @@ export function FeedWall() {
             data-r={cell.row}
             className="cell cell-filler"
             aria-hidden="true"
-            style={{ gridColumn: cell.col + 1, gridRow: cell.row + 1 }}
+            style={{ gridColumn: cell.col + 1, gridRow: cell.row + 1, ['--in' as string]: `${cell.inDelay}ms` }}
           >
             <span
               className={`sq m-${cell.motion}`}
@@ -184,12 +186,12 @@ export function FeedWall() {
   )
 }
 
-type Cell = { col: number; row: number; size: number }
+type Cell = { col: number; row: number; size: number; inDelay: number }
 
 /** Regular grid sized to the viewport; one plate per cell, seeded shuffle for placement,
  *  square size from a halftone field: gradient outside, a sharp bright ring, a void of dots inside.
  *  Trailing cells of the last row get non-link filler dots that follow the same field. */
-function layoutGrid(items: ArchiveRecord[], w: number, h: number) {
+function layoutGrid(items: ArchiveRecord[], w: number, h: number, arcSeed: number) {
   const n = items.length
   // ~25% blank pixels scattered among the plates.
   const want = Math.ceil(n / 0.75)
@@ -198,33 +200,43 @@ function layoutGrid(items: ArchiveRecord[], w: number, h: number) {
   const rows = Math.ceil(want / cols)
   const total = cols * rows
   const pitch = Math.max(12, Math.min(w / cols, Math.floor(h / rows)))
-  const seed = rand(hash('slopgang-field-v3'))
-  // Field in cell units so the ring keeps its shape on any grid.
-  // Virtual field larger than the grid: the void sits at the lower-left edge and the ring
-  // radius runs past the grid, so the arc is cropped by the viewport like the reference.
+  const seed = rand(arcSeed || 1)
+  // Field in cell units so the ring keeps its shape on any grid. The virtual field is larger
+  // than the grid: the void centre may sit past an edge and the ring runs past the grid.
+  // Every parameter is drawn per load inside bounds that keep a readable arc on screen.
   const long = Math.max(cols, rows)
   const portrait = rows > cols
-  const jx = seed()
-  const jy = seed()
-  // Landscape: void below the lower-left, ring sweeps from the top-left to the lower right.
-  // Portrait: void past the left edge, ring bows out to the right side and back.
-  const cx = portrait ? cols * (-0.1 + jx * 0.05) : cols * (0.2 + jx * 0.06)
-  const cy = portrait ? rows * (0.68 + jy * 0.04) : rows * (1.0 + jy * 0.05)
-  const R = portrait ? cols * 0.95 : long * 0.55
-  const band = Math.max(0.8, R * 0.15)
+  const corner = Math.floor(seed() * 4) // which side/corner the void leans toward
+  const ex = corner % 2 === 0 ? -1 : 1
+  const ey = corner < 2 ? 1 : -1
+  const cxU = 0.5 + ex * (0.15 + seed() * 0.45) // 0.5 +- (0.15..0.6): inside to just past the edge
+  const cyU = 0.5 + ey * (portrait ? 0.05 + seed() * 0.25 : 0.2 + seed() * 0.4)
+  const cx = cols * cxU
+  const cy = rows * cyU
+  const R = (portrait ? cols * (0.7 + seed() * 0.35) : long * (0.38 + seed() * 0.24))
+  const band = Math.max(0.8, R * (0.1 + seed() * 0.1))
+  const angle = seed() * Math.PI * 2
+  const gx = Math.cos(angle)
+  const gy = Math.sin(angle)
   const fieldSize = (col: number, row: number) => {
     const d = Math.hypot(col - cx, row - cy)
     const ring = Math.exp(-(((d - R) / band) ** 2))
     const u = cols > 1 ? col / (cols - 1) : 0.5
     const v = rows > 1 ? row / (rows - 1) : 0.5
-    const grad = 0.18 + 0.5 * clamp01(0.5 + (u - v) * 0.8)
+    const grad = 0.18 + 0.5 * clamp01(0.5 + ((u - 0.5) * gx + (v - 0.5) * gy) * 0.9)
     const t = d < R ? 0.04 + 0.96 * ring : Math.max(ring, grad * smooth(R, R + band * 2.5, d))
     return Math.max(4, Math.round(pitch * 0.9 * clamp01(t)))
   }
+  // Load stagger: squares settle outward from the arc centre (~1.1 s wave plus a little jitter).
+  const far = Math.max(
+    Math.hypot(cx, cy), Math.hypot(cols - cx, cy), Math.hypot(cx, rows - cy), Math.hypot(cols - cx, rows - cy),
+  )
+  const inDelayAt = (col: number, row: number) =>
+    Math.round((Math.hypot(col - cx, row - cy) / far) * 1100 + rand(hash(`in-${col}-${row}`))() * 120)
   const at = (slot: number): Cell => {
     const col = slot % cols
     const row = Math.floor(slot / cols)
-    return { col, row, size: fieldSize(col, row) }
+    return { col, row, size: fieldSize(col, row), inDelay: inDelayAt(col, row) }
   }
   const shuffledSlots = Array.from({ length: total }, (_, i) => i).map((i) => ({ i, k: rand(hash(`blank-${i}`))() }))
     .sort((a, b) => a.k - b.k)
