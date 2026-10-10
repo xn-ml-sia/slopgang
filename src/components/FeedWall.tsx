@@ -7,7 +7,7 @@ import {
 } from '../data/feed.ts'
 
 export function FeedWall() {
-  const items = arrangedSpecimens()
+  const items = newestFirst(arrangedSpecimens())
   const [activeId, setActiveId] = useState<string | null>(null)
   const previewRef = useRef<HTMLElement>(null)
   const point = useRef({ x: 0, y: 0 })
@@ -41,11 +41,15 @@ export function FeedWall() {
               href={specimenPath(item.id)}
               aria-label={rowLabel(item)}
               onPointerEnter={(event) => {
+                if (!canHover(event.pointerType)) return
                 setActiveId(item.id)
                 place(event.clientX, event.clientY)
               }}
-              onPointerMove={(event) => place(event.clientX, event.clientY)}
+              onPointerMove={(event) => {
+                if (canHover(event.pointerType)) place(event.clientX, event.clientY)
+              }}
               onFocus={(event) => {
+                if (!hoverCapable()) return
                 setActiveId(item.id)
                 const rect = event.currentTarget.getBoundingClientRect()
                 place(rect.left + 32, rect.bottom)
@@ -95,6 +99,21 @@ function FeedPreview({
       ) : null}
     </aside>
   )
+}
+
+/** Newest published first: highest sg number first. */
+function newestFirst(items: ArchiveRecord[]): ArchiveRecord[] {
+  const num = (id: string) => Number(/sg-(\d+)/i.exec(id)?.[1] ?? -1)
+  return [...items].sort((a, b) => num(b.id) - num(a.id))
+}
+
+/** Touch devices skip the hover preview so one tap opens the plate. */
+function hoverCapable(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
+}
+
+function canHover(pointerType: string): boolean {
+  return pointerType !== 'touch' && hoverCapable()
 }
 
 function positionPreview(node: HTMLElement, x: number, y: number) {
