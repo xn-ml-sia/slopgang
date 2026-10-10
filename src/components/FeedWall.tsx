@@ -23,7 +23,7 @@ export function FeedWall() {
   useLayoutEffect(() => {
     const node = wrapRef.current
     if (!node) return
-    const measure = () => setBox({ w: node.clientWidth, h: Math.max(320, window.innerHeight - node.getBoundingClientRect().top - 24) })
+    const measure = () => setBox({ w: node.clientWidth - parseFloat(getComputedStyle(node).paddingLeft) - parseFloat(getComputedStyle(node).paddingRight), h: Math.max(320, window.innerHeight - node.getBoundingClientRect().top - 24) })
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(node)
@@ -115,7 +115,7 @@ function layoutGrid(items: ArchiveRecord[], w: number, h: number): { cols: numbe
   const aspect = Math.max(0.3, w / h)
   const cols = Math.max(6, Math.min(n, Math.round(Math.sqrt(n * aspect))))
   const rows = Math.ceil(n / cols)
-  const pitch = Math.max(14, Math.floor(Math.min(w / cols, (h * 1.15) / rows, 72)))
+  const pitch = Math.max(12, Math.floor(Math.min(w / cols, (h * 1.1) / rows, 112)))
   const field = rand(hash('slopgang-field-v1'))
   const angle = Math.PI * (0.15 + field() * 0.2) // light from the upper right
   const dir = { x: Math.cos(angle), y: -Math.sin(angle) }
@@ -131,8 +131,8 @@ function layoutGrid(items: ArchiveRecord[], w: number, h: number): { cols: numbe
     const grad = clamp01(0.5 + ((u - 0.5) * dir.x + (v - 0.5) * dir.y) * 1.25)
     const d = Math.hypot((u - void0.x) * aspect * 0.8, v - void0.y)
     const hole = smooth(voidR, voidR + 0.3, d)
-    const arc = Math.exp(-(((d - voidR - 0.08) / 0.07) ** 2)) * 0.35
-    const t = clamp01(grad * hole + arc * grad)
+    const arc = Math.exp(-(((d - voidR - 0.06) / 0.06) ** 2)) * 0.55
+    const t = clamp01(grad * hole + arc * (0.4 + grad))
     const size = Math.max(4, Math.round(pitch * 0.9 * t))
     cells[i] = { col, row, size }
   })
