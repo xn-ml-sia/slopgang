@@ -1329,6 +1329,9 @@ html:has(.feed),
   }
 }
 
+.cell-filler {
+  pointer-events: none;
+}
 .cell-filler .sq {
   background: var(--rule);
 }

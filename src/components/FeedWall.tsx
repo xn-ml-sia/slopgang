@@ -23,7 +23,7 @@ export function FeedWall() {
   useLayoutEffect(() => {
     const node = wrapRef.current
     if (!node) return
-    const measure = () => setBox({ w: node.clientWidth - parseFloat(getComputedStyle(node).paddingLeft) - parseFloat(getComputedStyle(node).paddingRight), h: Math.max(320, window.innerHeight - node.getBoundingClientRect().top - 24) })
+    const measure = () => setBox({ w: node.clientWidth - parseFloat(getComputedStyle(node).paddingLeft) - parseFloat(getComputedStyle(node).paddingRight), h: Math.max(320, window.innerHeight - node.getBoundingClientRect().top - window.scrollY - 24) })
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(node)
@@ -101,7 +101,16 @@ export function FeedWall() {
             aria-hidden="true"
             style={{ gridColumn: cell.col + 1, gridRow: cell.row + 1 }}
           >
-            <span className="sq" style={{ width: `${cell.size}px`, height: `${cell.size}px` }} />
+            <span
+              className={`sq m-${cell.motion}`}
+              style={{
+                width: `${cell.size}px`,
+                height: `${cell.size}px`,
+                ['--dur' as string]: `${cell.dur.toFixed(2)}s`,
+                ['--delay' as string]: `${cell.delay.toFixed(2)}s`,
+                ['--dx' as string]: `${cell.dx.toFixed(1)}px`,
+              }}
+            />
           </span>
         ))}
       </div>
@@ -123,16 +132,19 @@ type Cell = { col: number; row: number; size: number }
  *  Trailing cells of the last row get non-link filler dots that follow the same field. */
 function layoutGrid(items: ArchiveRecord[], w: number, h: number) {
   const n = items.length
+  // ~25% blank pixels scattered among the plates.
+  const want = Math.ceil(n / 0.75)
   const aspect = Math.max(0.3, w / h)
-  const cols = Math.max(6, Math.min(n, Math.round(Math.sqrt(n * aspect))))
-  const rows = Math.ceil(n / cols)
-  const pitch = Math.max(12, Math.floor(Math.min(w / cols, (h * 1.1) / rows, 112)))
-  const seed = rand(hash('slopgang-field-v2'))
+  const cols = Math.max(6, Math.min(want, Math.round(Math.sqrt(want * aspect))))
+  const rows = Math.ceil(want / cols)
+  const total = cols * rows
+  const pitch = Math.max(12, Math.floor(Math.min(w / cols, h / rows, 112)))
+  const seed = rand(hash('slopgang-field-v3'))
   // Field in cell units so the ring keeps its shape on any grid.
   const short = Math.min(cols, rows)
-  const cx = cols * (0.3 + seed() * 0.08)
-  const cy = rows * (0.62 + seed() * 0.08)
-  const R = short * 0.5
+  const cx = cols * (0.3 + seed() * 0.06) - 0.5
+  const cy = rows * (0.5 + seed() * 0.05) - 0.5
+  const R = short * 0.36
   const band = Math.max(0.7, short * 0.11)
   const fieldSize = (col: number, row: number) => {
     const d = Math.hypot(col - cx, row - cy)
@@ -140,24 +152,34 @@ function layoutGrid(items: ArchiveRecord[], w: number, h: number) {
     const u = cols > 1 ? col / (cols - 1) : 0.5
     const v = rows > 1 ? row / (rows - 1) : 0.5
     const grad = 0.18 + 0.5 * clamp01(0.5 + (u - v) * 0.8)
-    const inside = 0.04 + 0.96 * ring
-    const outside = Math.max(ring, grad * smooth(R, R + band * 2.5, d) + ring * 0.0)
-    const t = d < R ? inside : Math.max(ring, outside)
+    const t = d < R ? 0.04 + 0.96 * ring : Math.max(ring, grad * smooth(R, R + band * 2.5, d))
     return Math.max(4, Math.round(pitch * 0.9 * clamp01(t)))
   }
+  const at = (slot: number): Cell => {
+    const col = slot % cols
+    const row = Math.floor(slot / cols)
+    return { col, row, size: fieldSize(col, row) }
+  }
+  const shuffledSlots = Array.from({ length: total }, (_, i) => i).map((i) => ({ i, k: rand(hash(`blank-${i}`))() }))
+    .sort((a, b) => a.k - b.k)
+    .map((x) => x.i)
+  const blankSlots = shuffledSlots.slice(0, total - n).sort((a, b) => a - b)
+  const plateSlots = shuffledSlots.slice(total - n).sort((a, b) => a - b)
   const order = items.map((item, i) => ({ i, k: hash(`slot-${item.id}`) })).sort((a, b) => a.k - b.k)
   const cells: Cell[] = new Array(n)
-  order.forEach(({ i }, slot) => {
-    const col = slot % cols
-    const row = Math.floor(slot / cols)
-    cells[i] = { col, row, size: fieldSize(col, row) }
+  order.forEach(({ i }, k) => {
+    cells[i] = at(plateSlots[k])
   })
-  const fillers: Cell[] = []
-  for (let slot = n; slot < cols * rows; slot++) {
-    const col = slot % cols
-    const row = Math.floor(slot / cols)
-    fillers.push({ col, row, size: fieldSize(col, row) })
-  }
+  const fillers = blankSlots.map((slot) => {
+    const r = rand(hash(`blank-motion-${slot}`))
+    return {
+      ...at(slot),
+      motion: motionFor(r()),
+      dur: 8 + r() * 10,
+      delay: r() * 12,
+      dx: r() * 4 - 2,
+    }
+  })
   return { cols, pitch, cells, fillers }
 }
 
