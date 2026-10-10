@@ -1203,38 +1203,30 @@ html:has(.feed),
   }
 }
 
-/* ---------- mosaic home feed ---------- */
-.mosaic-wrap {
-  padding: 0 clamp(8px, 2vw, 24px) 48px;
+/* ---------- halftone grid home feed ---------- */
+.halftone-wrap {
+  padding: 8px clamp(8px, 2vw, 24px) 48px;
 }
 
-/* 16px unit grid; dense flow packs tiles edge to edge, deterministically, in newest-first order. */
-.mosaic {
-  --u: 16px;
+.halftone {
   display: grid;
-  grid-template-columns: repeat(auto-fill, var(--u));
-  grid-auto-rows: var(--u);
-  grid-auto-flow: row dense;
   justify-content: center;
 }
 
-.tile {
-  --s: 1;
+/* The whole cell is the link and hit target; the visible square sits centered inside. */
+.cell {
+  display: grid;
+  place-items: center;
   position: relative;
-  display: block;
-  grid-column: span var(--s);
-  grid-row: span var(--s);
-  overflow: hidden;
-  background: var(--paper-2);
-  box-shadow: inset 0 0 0 0.5px rgba(20, 20, 18, 0.12);
 }
 
-.tile.t16 { --s: 16; }
-.tile.t8 { --s: 8; }
-.tile.t4 { --s: 4; }
-.tile.t2 { --s: 2; }
+.sq {
+  display: block;
+  overflow: hidden;
+  background: var(--paper-2);
+}
 
-.tile img {
+.sq img {
   display: block;
   width: 100%;
   height: 100%;
@@ -1242,25 +1234,27 @@ html:has(.feed),
   image-rendering: pixelated;
 }
 
+.cell.is-active .sq,
+.cell:focus-visible .sq {
+  outline: 2px solid var(--feed-ink);
+  outline-offset: 2px;
+}
+.cell:focus-visible { outline: none; }
+.cell.is-active { z-index: 2; }
+
 /* Motion types. Each acts in ~15% of its cycle, then rests (staging: few move at once). */
-.tile[class*='m-']:not(.m-still) {
+.sq:not(.m-still) {
+  position: relative;
   z-index: 1;
   animation: var(--anim) var(--dur) var(--delay) infinite both;
 }
-.tile[class*='m-']:not(.m-still) img {
+.sq:not(.m-still) img {
   animation: var(--anim-inner) var(--dur) var(--delay) infinite both;
 }
-.tile.m-hop { --anim: tile-hop; --anim-inner: tile-lag-y; transform-origin: 50% 100%; }
-.tile.m-tilt { --anim: tile-tilt; --anim-inner: tile-lag-x; transform-origin: 0% 100%; }
-.tile.m-pop { --anim: tile-pop; --anim-inner: tile-lag-zoom; transform-origin: 50% 50%; }
-.tile.m-nudge { --anim: tile-nudge; --anim-inner: tile-lag-x; transform-origin: 50% 100%; }
-
-.tile.is-active,
-.tile:focus-visible {
-  z-index: 2;
-  outline: 2px solid var(--feed-ink);
-  outline-offset: -2px;
-}
+.sq.m-hop { --anim: tile-hop; --anim-inner: tile-lag-y; transform-origin: 50% 100%; }
+.sq.m-tilt { --anim: tile-tilt; --anim-inner: tile-lag-x; transform-origin: 0% 100%; }
+.sq.m-pop { --anim: tile-pop; --anim-inner: tile-lag-zoom; transform-origin: 50% 50%; }
+.sq.m-nudge { --anim: tile-nudge; --anim-inner: tile-lag-x; transform-origin: 50% 100%; }
 
 /* Pose-to-pose keys, each with its own easing (slow in / slow out).
    Squash/stretch keep area (scaleX * scaleY ~= 1). Offsets are % of the tile, so a 16px
@@ -1328,14 +1322,9 @@ html:has(.feed),
   17%, 100% { transform: scale(1.1); }
 }
 
-@media (max-width: 560px) {
-  .tile.t16 { --s: 12; }
-  .tile.t8 { --s: 6; }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .tile,
-  .tile img {
+  .sq,
+  .sq img {
     animation: none;
   }
 }

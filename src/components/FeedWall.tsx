@@ -5,6 +5,8 @@ import { arrangedSpecimens, shortTitle, specimenPath, type ArchiveRecord } from 
 export function FeedWall() {
   const items = useMemo(() => newestFirst(arrangedSpecimens()), [])
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [box, setBox] = useState({ w: 1200, h: 800 })
+  const wrapRef = useRef<HTMLElement>(null)
   const previewRef = useRef<HTMLElement>(null)
   const point = useRef({ x: 0, y: 0 })
   const active = items.find((item) => item.id === activeId) ?? null
@@ -18,26 +20,39 @@ export function FeedWall() {
     if (activeId && previewRef.current) positionPreview(previewRef.current, point.current.x, point.current.y)
   }, [activeId])
 
+  useLayoutEffect(() => {
+    const node = wrapRef.current
+    if (!node) return
+    const measure = () => setBox({ w: node.clientWidth, h: Math.max(320, window.innerHeight - node.getBoundingClientRect().top - 24) })
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(node)
+    return () => ro.disconnect()
+  }, [])
+
+  const grid = useMemo(() => layoutGrid(items, box.w, box.h), [items, box.w, box.h])
+
   return (
-    <section className="mosaic-wrap" id="feed" aria-label="Specimen feed" onPointerLeave={() => setActiveId(null)}>
-      <div className="mosaic">
+    <section ref={wrapRef} className="halftone-wrap" id="feed" aria-label="Specimen feed" onPointerLeave={() => setActiveId(null)}>
+      <div
+        className="halftone"
+        style={{
+          gridTemplateColumns: `repeat(${grid.cols}, ${grid.pitch}px)`,
+          gridAutoRows: `${grid.pitch}px`,
+        }}
+      >
         {items.map((item, rank) => {
+          const cell = grid.cells[rank]
           const r = rand(hash(item.id))
-          const tier = tierFor(r())
+          r()
           const motion = motionFor(r())
           return (
             <a
               key={item.id}
-              className={`tile t${tier} m-${motion}${item.id === activeId ? ' is-active' : ''}`}
+              className={`cell${item.id === activeId ? ' is-active' : ''}`}
               href={specimenPath(item.id)}
               aria-label={`${shortTitle(item.title)}, ${item.timestamp.slice(0, 4)}`}
-              style={{
-                order: Math.floor(r() * 100000),
-                ['--dur' as string]: `${(8 + r() * 10).toFixed(2)}s`,
-                ['--delay' as string]: `${(r() * 12).toFixed(2)}s`,
-                ['--dx' as string]: `${(r() * 4 - 2).toFixed(1)}px`,
-                ['--dy' as string]: `${(r() * 4 - 2).toFixed(1)}px`,
-              }}
+              style={{ gridColumn: cell.col + 1, gridRow: cell.row + 1 }}
               onPointerEnter={(event) => {
                 if (!canHover(event.pointerType)) return
                 setActiveId(item.id)
@@ -54,16 +69,28 @@ export function FeedWall() {
               }}
               onBlur={() => setActiveId((current) => (current === item.id ? null : current))}
             >
-              <img
-                src={thumbSrc(item, tier)}
-                alt=""
-                loading={rank < 24 ? 'eager' : 'lazy'}
-                decoding="async"
-                onError={(event) => {
-                  const fallback = previewImage(item)?.src
-                  if (fallback && !event.currentTarget.src.endsWith(fallback)) event.currentTarget.src = fallback
+              <span
+                className={`sq m-${motion}`}
+                style={{
+                  width: `${cell.size}px`,
+                  height: `${cell.size}px`,
+                  ['--dur' as string]: `${(8 + r() * 10).toFixed(2)}s`,
+                  ['--delay' as string]: `${(r() * 12).toFixed(2)}s`,
+                  ['--dx' as string]: `${(r() * 4 - 2).toFixed(1)}px`,
+                  ['--dy' as string]: `${(r() * 4 - 2).toFixed(1)}px`,
                 }}
-              />
+              >
+                <img
+                  src={thumbSrc(item, cell.size >= 48 ? 4 : 1)}
+                  alt=""
+                  loading={rank < 40 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  onError={(event) => {
+                    const fallback = previewImage(item)?.src
+                    if (fallback && !event.currentTarget.src.endsWith(fallback)) event.currentTarget.src = fallback
+                  }}
+                />
+              </span>
             </a>
           )
         })}
@@ -79,13 +106,46 @@ export function FeedWall() {
   )
 }
 
-/** Chaos: each plate gets a seeded random tier (16px units). 1 = 16px ... 16 = 256px. */
-function tierFor(x: number): number {
-  if (x < 0.03) return 16
-  if (x < 0.1) return 8
-  if (x < 0.3) return 4
-  if (x < 0.6) return 2
-  return 1
+type Cell = { col: number; row: number; size: number }
+
+/** Regular grid sized to the viewport; one plate per cell, seeded shuffle for placement,
+ *  square size from a smooth halftone field (diagonal gradient x radial void with an arc). */
+function layoutGrid(items: ArchiveRecord[], w: number, h: number): { cols: number; pitch: number; cells: Cell[] } {
+  const n = items.length
+  const aspect = Math.max(0.3, w / h)
+  const cols = Math.max(6, Math.min(n, Math.round(Math.sqrt(n * aspect))))
+  const rows = Math.ceil(n / cols)
+  const pitch = Math.max(14, Math.floor(Math.min(w / cols, (h * 1.15) / rows, 72)))
+  const field = rand(hash('slopgang-field-v1'))
+  const angle = Math.PI * (0.15 + field() * 0.2) // light from the upper right
+  const dir = { x: Math.cos(angle), y: -Math.sin(angle) }
+  const void0 = { x: 0.35 + field() * 0.15, y: 0.6 + field() * 0.15 }
+  const voidR = 0.24 + field() * 0.06
+  const order = items.map((item, i) => ({ i, k: hash(`slot-${item.id}`) })).sort((a, b) => a.k - b.k)
+  const cells: Cell[] = new Array(n)
+  order.forEach(({ i }, slot) => {
+    const col = slot % cols
+    const row = Math.floor(slot / cols)
+    const u = cols > 1 ? col / (cols - 1) : 0.5
+    const v = rows > 1 ? row / (rows - 1) : 0.5
+    const grad = clamp01(0.5 + ((u - 0.5) * dir.x + (v - 0.5) * dir.y) * 1.25)
+    const d = Math.hypot((u - void0.x) * aspect * 0.8, v - void0.y)
+    const hole = smooth(voidR, voidR + 0.3, d)
+    const arc = Math.exp(-(((d - voidR - 0.08) / 0.07) ** 2)) * 0.35
+    const t = clamp01(grad * hole + arc * grad)
+    const size = Math.max(4, Math.round(pitch * 0.9 * t))
+    cells[i] = { col, row, size }
+  })
+  return { cols, pitch, cells }
+}
+
+function clamp01(x: number): number {
+  return Math.min(1, Math.max(0, x))
+}
+
+function smooth(a: number, b: number, x: number): number {
+  const t = clamp01((x - a) / (b - a))
+  return t * t * (3 - 2 * t)
 }
 
 /** Roughly half the squares stay still; the rest get one seeded motion type.
