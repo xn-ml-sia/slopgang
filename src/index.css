@@ -1202,3 +1202,63 @@ html:has(.feed),
     transform: translateX(6px);
   }
 }
+
+/* ---------- pixel field home feed (2.5D) ---------- */
+.pixel-field-wrap {
+  position: relative;
+  perspective: 900px;
+  perspective-origin: 50% 40%;
+}
+
+.pixel-field {
+  --px: 0;
+  --py: 0;
+  position: relative;
+  width: 100%;
+  min-height: calc(100svh - 80px);
+  height: calc((100svh - 80px) * var(--rows) * 0.9);
+  transform-style: preserve-3d;
+}
+
+/* z in [0,1]: 0 = far (small, soft, faint, slow), 1 = near (full, sharp, fast). */
+.pixel {
+  position: absolute;
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  transform: translate3d(
+      calc(var(--px) * (8px + var(--z) * 36px)),
+      calc(var(--py) * (8px + var(--z) * 36px)),
+      calc((var(--z) - 1) * 320px)
+    );
+  opacity: calc(0.45 + var(--z) * 0.55);
+  filter: blur(calc((1 - var(--z)) * 0.8px));
+  transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.15s ease, filter 0.15s ease;
+  will-change: transform;
+}
+
+.pixel img {
+  display: block;
+  width: 16px;
+  height: 16px;
+  object-fit: cover;
+  image-rendering: pixelated;
+  background: var(--paper-2);
+}
+
+.pixel.is-active,
+.pixel:focus-visible {
+  opacity: 1;
+  filter: none;
+  z-index: 2;
+  outline: 2px solid var(--feed-ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pixel {
+    transition: none;
+    transform: translate3d(0, 0, calc((var(--z) - 1) * 320px));
+  }
+}
