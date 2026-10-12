@@ -92,7 +92,7 @@ export function Specimen({ slug, record }: Props) {
                 </div>
                 <div>
                   <dt>Register</dt>
-                  <dd>{record.tags.join(', ')}</dd>
+                  <dd>{record.tags.map(registerLabel).join(', ')}</dd>
                 </div>
                 <div>
                   <dt>Logged by</dt>
@@ -187,8 +187,8 @@ function RelatedPlates({ record }: { record: ArchiveRecord }) {
   const links = forward.length ? forward : reverse
   if (!links.length) return null
   return (
-    <section className="specimen-related" aria-label={forward.length ? 'Slop plates' : 'Glitch pair'}>
-      <h2>{forward.length ? 'Slop plates' : 'Glitch pair'}</h2>
+    <section className="specimen-related" aria-label={forward.length ? 'Related plates' : 'Glitch pair'}>
+      <h2>{forward.length ? 'Related plates' : 'Glitch pair'}</h2>
       <ul>
         {links.map((l) => (
           <li key={l.record.id}>
@@ -265,4 +265,14 @@ function formatDate(iso: string): string {
     day: 'numeric',
     timeZone: 'UTC',
   })
+}
+
+const REGISTER_LABEL: Record<string, string> = {
+  'visual-slop': 'Visual',
+  'textual-slop': 'Textual',
+  'counter-slop': 'Counter',
+}
+
+function registerLabel(tag: string): string {
+  return REGISTER_LABEL[tag] ?? tag
 }

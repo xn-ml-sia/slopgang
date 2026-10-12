@@ -1630,3 +1630,20 @@ html:has(.cloud), .site:has(.cloud), .feed:has(.cloud), .cloud { background: #00
 .fold ~ main .about-sources li { margin: 0 0 8px; scroll-margin-top: 96px; }
 .fold ~ main .about-sources a { color: inherit; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
 .fold ~ main .about-sources li:target { background: rgba(0,0,0,0.06); }
+
+/* v15: page title matches the section title (About + detail), desktop and mobile. */
+:root { --page-title-size: var(--section-title-size); --page-title-lh: var(--section-title-lh); }
+.specimen-page .specimen-copy h1 { max-width: 20ch; }
+.specimen-page .specimen-related h2 {
+  font-size: var(--section-title-size);
+  font-weight: var(--section-title-weight);
+  line-height: var(--section-title-lh);
+  letter-spacing: var(--section-title-tracking);
+}
+/* v15b: one heading size on the detail page. */
+.specimen-page :is(h1, h2, h3, .pair-col h2, .specimen-related h2) {
+  font-size: var(--section-title-size);
+  font-weight: var(--section-title-weight);
+  line-height: var(--section-title-lh);
+  letter-spacing: var(--section-title-tracking);
+}
