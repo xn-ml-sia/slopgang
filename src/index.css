@@ -1402,3 +1402,146 @@ html:has(.feed),
 .cell-filler .sq {
   background: var(--rule);
 }
+
+/* ======================================================================
+   v10 theme, after meodai.github.io/color-names (Inter, ink on paper,
+   ink pills, clamp type scale). Overrides earlier tokens.
+   ====================================================================== */
+:root {
+  --paper: #fff;
+  --paper-2: #f2f2f2;
+  --sleeve-white: #fff;
+  --ink: #000;
+  --plate: #000;
+  --muted: #555;
+  --rule: #000;
+  --sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --t-1: clamp(0.72rem, 0.68rem + 0.2vw, 0.82rem);
+  --t0: clamp(1rem, 0.94rem + 0.3vw, 1.18rem);
+  --t1: clamp(1.4rem, 1.1rem + 1.4vw, 2.1rem);
+  --t2: clamp(2.2rem, 1.4rem + 3.6vw, 4rem);
+  --t3: clamp(3rem, 1.4rem + 7.2vw, 7rem);
+  --space-2xs: 0.5rem;
+  --space-xs: 0.875rem;
+  --space-s: 1.5rem;
+  --space-m: 2.5rem;
+  --space-l: 5rem;
+  --gutter: clamp(1.5rem, 6vw, 7rem);
+  --line: 2px;
+}
+body {
+  font-family: var(--sans);
+  font-feature-settings: 'tnum' 1;
+  -webkit-font-smoothing: antialiased;
+  font-stretch: normal;
+}
+h1, h2, h3 { font-family: var(--sans); font-stretch: normal; font-weight: 850; letter-spacing: -0.02em; }
+.feed { --linen: #fff; --feed-ink: #000; --feed-stone: #000; background: #fff; }
+html:has(.feed), .site:has(.feed) { background: #fff; }
+
+.feed-nav {
+  position: sticky;
+  top: 0;
+  padding: var(--space-xs) var(--space-s);
+  pointer-events: none;
+}
+.feed-nav > * { pointer-events: auto; }
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 2.5rem;
+  padding: 0 0.95rem 0 0.7rem;
+  border-radius: 999px;
+  background: #000;
+  color: #fff !important;
+  font-family: var(--sans);
+  font-size: var(--t0);
+  font-weight: 850;
+  letter-spacing: normal;
+  line-height: 1;
+  text-decoration: none;
+}
+.brand__logo { height: 1.4rem; width: auto; overflow: visible; }
+.brand__part { transform-box: view-box; transform-origin: 20px 24px; transition: transform 0.5s cubic-bezier(0.34, 1.8, 0.5, 1); }
+.brand__part--2 { transition-delay: 30ms; }
+.brand__part--3 { transition-delay: 60ms; }
+.brand__part--4 { transition-delay: 90ms; }
+.brand__part--5 { transition-delay: 120ms; }
+.brand:hover .brand__part--1 { transform: translate(2px, -2px) rotate(8deg); }
+.brand:hover .brand__part--2 { transform: translate(-2px, -1px) rotate(-6deg); }
+.brand:hover .brand__part--4 { transform: translateX(2px); }
+.brand:hover .brand__part--5 { transform: translateY(1px) rotate(-3deg); }
+.feed-nav nav { display: flex; gap: 0.4rem; }
+.feed-nav nav a {
+  color: #fff;
+  background: #000;
+  font-size: var(--t-1);
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  text-decoration: none;
+  transition: color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+.feed-nav nav a:hover,
+.feed-nav nav a:focus-visible,
+.feed-nav nav a[aria-current='page'] { color: #000; background: #fff; box-shadow: inset 0 0 0 var(--line) #000; }
+
+/* ---------- HSL point cloud home ---------- */
+.feed:has(.cloud) { height: 100svh; overflow: hidden; }
+.feed:has(.cloud) .feed-nav { position: fixed; inset: 0 0 auto; }
+.feed:has(.cloud) main { padding: 0; }
+.cloud {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  background: #fff;
+}
+.cloud:active { cursor: grabbing; }
+.cloud .block {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  will-change: transform;
+  opacity: 0;
+  cursor: pointer;
+}
+.cloud.is-ready .block { animation: block-in 0.6s cubic-bezier(0.3, 0.7, 0, 1) both; animation-delay: var(--in); }
+.cloud .block img { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.cloud .block:focus-visible { outline: var(--line) solid #000; outline-offset: 2px; }
+.cloud .block.is-active { z-index: 20000 !important; opacity: 1 !important; }
+@keyframes block-in { from { scale: 0; } to { scale: 1; } }
+.cloud-tip {
+  position: absolute;
+  z-index: 30000;
+  width: 220px;
+  translate: -50% -50%;
+  pointer-events: none;
+  background: #fff;
+}
+.cloud-tip img { display: block; width: 220px; height: 220px; object-fit: cover; }
+.cloud-tip-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem 0.6rem 0.5rem;
+  font-size: var(--t-1);
+  line-height: 1.3;
+}
+.cloud-tip-label strong { font-weight: 600; }
+.cloud-tip-label span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+@media (prefers-reduced-motion: reduce) {
+  .cloud.is-ready .block { animation: none; opacity: 1; }
+  .brand__part { transition: none; }
+}
+
+/* Home wall is ink, like the reference color wall; content pages stay paper. */
+html:has(.cloud), .site:has(.cloud), .feed:has(.cloud), .cloud { background: #000; }
+.feed:has(.cloud) .feed-nav nav a:hover,
+.feed:has(.cloud) .feed-nav nav a:focus-visible { color: #000; background: #fff; box-shadow: none; }
+.cloud .block:focus-visible { outline-color: #fff; }
