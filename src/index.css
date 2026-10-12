@@ -1451,10 +1451,9 @@ html:has(.feed), .site:has(.feed) { background: #fff; }
   align-items: center;
   gap: 0.6rem;
   height: 2.5rem;
-  padding: 0 0.95rem 0 0.7rem;
-  border-radius: 999px;
-  background: #000;
-  color: #fff !important;
+  padding: 0;
+  background: none;
+  color: #000 !important;
   font-family: var(--sans);
   font-size: var(--t0);
   font-weight: 850;
@@ -1462,30 +1461,23 @@ html:has(.feed), .site:has(.feed) { background: #fff; }
   line-height: 1;
   text-decoration: none;
 }
-.brand__logo { height: 1.4rem; width: auto; overflow: visible; }
-.brand__part { transform-box: view-box; transform-origin: 20px 24px; transition: transform 0.5s cubic-bezier(0.34, 1.8, 0.5, 1); }
-.brand__part--2 { transition-delay: 30ms; }
-.brand__part--3 { transition-delay: 60ms; }
-.brand__part--4 { transition-delay: 90ms; }
-.brand__part--5 { transition-delay: 120ms; }
-.brand:hover .brand__part--1 { transform: translate(2px, -2px) rotate(8deg); }
-.brand:hover .brand__part--2 { transform: translate(-2px, -1px) rotate(-6deg); }
-.brand:hover .brand__part--4 { transform: translateX(2px); }
-.brand:hover .brand__part--5 { transform: translateY(1px) rotate(-3deg); }
+.brand__logo { height: 1.9rem; width: auto; display: block; }
 .feed-nav nav { display: flex; gap: 0.4rem; }
 .feed-nav nav a {
   color: #fff;
   background: #000;
   font-size: var(--t-1);
   font-weight: 600;
+  border: 0;
   border-radius: 999px;
   padding: 0.35rem 0.8rem;
   text-decoration: none;
-  transition: color 0.2s, background 0.2s, box-shadow 0.2s;
+  outline: none;
+  transition: color 0.2s, background 0.2s;
 }
 .feed-nav nav a:hover,
 .feed-nav nav a:focus-visible,
-.feed-nav nav a[aria-current='page'] { color: #000; background: #fff; box-shadow: inset 0 0 0 var(--line) #000; }
+.feed-nav nav a[aria-current='page'] { color: #000; background: #fff; }
 
 /* ---------- HSL point cloud home ---------- */
 .feed:has(.cloud) { height: 100svh; overflow: hidden; }
@@ -1513,6 +1505,7 @@ html:has(.feed), .site:has(.feed) { background: #fff; }
 }
 .cloud.is-ready .block { animation: block-in 0.6s cubic-bezier(0.3, 0.7, 0, 1) both; animation-delay: var(--in); }
 .cloud .block img { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.feed:has(.cloud) .brand { color: #fff !important; }
 .cloud .block:focus-visible { outline: var(--line) solid #000; outline-offset: 2px; }
 .cloud .block.is-active { z-index: 20000 !important; opacity: 1 !important; }
 @keyframes block-in { from { scale: 0; } to { scale: 1; } }
@@ -1537,11 +1530,11 @@ html:has(.feed), .site:has(.feed) { background: #fff; }
 .cloud-tip-label span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 @media (prefers-reduced-motion: reduce) {
   .cloud.is-ready .block { animation: none; opacity: 1; }
-  .brand__part { transition: none; }
 }
 
 /* Home wall is ink, like the reference color wall; content pages stay paper. */
 html:has(.cloud), .site:has(.cloud), .feed:has(.cloud), .cloud { background: #000; }
 .feed:has(.cloud) .feed-nav nav a:hover,
 .feed:has(.cloud) .feed-nav nav a:focus-visible { color: #000; background: #fff; box-shadow: none; }
+.feed:has(.cloud) .brand { color: #fff !important; }
 .cloud .block:focus-visible { outline-color: #fff; }
