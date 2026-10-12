@@ -1621,3 +1621,12 @@ html:has(.cloud), .site:has(.cloud), .feed:has(.cloud), .cloud { background: #00
 .cloud-tip-media { position: relative; width: 220px; height: 220px; background-size: cover; background-position: center; overflow: hidden; }
 .cloud-full { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; display: block; }
 .cloud-full.is-ready { opacity: 1; }
+
+/* v14: About footnotes + sources */
+.fold ~ main .study-copy sup.cite { font-size: 0.6em; line-height: 0; vertical-align: super; margin-left: 1px; }
+.fold ~ main .study-copy sup.cite a { color: inherit; text-decoration: none; }
+.fold ~ main .study-copy sup.cite a:hover { text-decoration: underline; }
+.fold ~ main .about-sources { max-width: var(--content-measure); margin: 0; padding-left: 1.4em; font-size: var(--meta-size); line-height: 1.5; color: var(--ink); }
+.fold ~ main .about-sources li { margin: 0 0 8px; scroll-margin-top: 96px; }
+.fold ~ main .about-sources a { color: inherit; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+.fold ~ main .about-sources li:target { background: rgba(0,0,0,0.06); }
