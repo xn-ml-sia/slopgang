@@ -61,7 +61,7 @@ export function Disc({ className = 'disc' }: { className?: string }) {
         x="200"
         y="182"
         textAnchor="middle"
-        fontFamily="Archivo, sans-serif"
+        fontFamily="Inter, sans-serif"
         fontSize="11"
         fontWeight="700"
         fill="#141412"
@@ -72,7 +72,7 @@ export function Disc({ className = 'disc' }: { className?: string }) {
         x="200"
         y="228"
         textAnchor="middle"
-        fontFamily="Archivo, sans-serif"
+        fontFamily="Inter, sans-serif"
         fontSize="9"
         fill="#141412"
       >

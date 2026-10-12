@@ -1,283 +1,224 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { arrangedSpecimens, shortTitle, specimenPath, type ArchiveRecord } from '../data/feed.ts'
 
+/**
+ * HSL point cloud, after the color wall on meodai.github.io/color-names.
+ * Each plate is a block placed in an HSL bicone by its thumbnail's mean color:
+ * hue = angle, saturation x lightness-distance = radius, lightness = height.
+ * DOM blocks, projected in JS with a perspective orbit camera (42deg FOV),
+ * slow auto-orbit, drag to orbit, wheel/pinch-free. Depth sets z-order and fog.
+ */
+
+type Hsl = [number, number, number]
+type Point = { item: ArchiveRecord; p: [number, number, number]; size: number; rank: number }
+
+const R = 100 // bicone radius
+const LY = 180 // lightness height
+const FOV = (42 * Math.PI) / 180
+const DIST = 310
 
 export function FeedWall() {
   const items = useMemo(() => newestFirst(arrangedSpecimens()), [])
+  const [colors, setColors] = useState<Record<string, Hsl>>({})
   const [activeId, setActiveId] = useState<string | null>(null)
-  const [box, setBox] = useState({ w: 1200, h: 800 })
   const wrapRef = useRef<HTMLElement>(null)
-  const gridRef = useRef<HTMLDivElement>(null)
+  const nodes = useRef(new Map<string, HTMLAnchorElement>())
+  const cam = useRef({ yaw: Math.random() * Math.PI * 2, pitch: 0.32, drag: null as null | { x: number; y: number; yaw: number; pitch: number; moved: boolean } })
+  const activeRef = useRef<string | null>(null)
+  activeRef.current = activeId
 
-  useLayoutEffect(() => {
-    const node = wrapRef.current
-    if (!node) return
-    const measure = () =>
-      setBox({
-        w: document.documentElement.clientWidth,
-        h: Math.max(320, window.innerHeight - node.getBoundingClientRect().top - window.scrollY - 24),
-      })
-    measure()
-    const ro = new ResizeObserver(measure)
-    ro.observe(node)
-    return () => ro.disconnect()
-  }, [])
+  // Mean color of each tiny thumbnail, read on load so new plates place themselves.
+  useEffect(() => {
+    let live = true
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = 8
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    Promise.all(
+      items.map(
+        (item) =>
+          new Promise<[string, Hsl]>((resolve) => {
+            const img = new Image()
+            img.onload = () => {
+              try {
+                ctx!.drawImage(img, 0, 0, 8, 8)
+                const d = ctx!.getImageData(0, 0, 8, 8).data
+                let r = 0, g = 0, b = 0
+                for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2] }
+                const n = d.length / 4
+                resolve([item.id, rgbToHsl(r / n, g / n, b / n)])
+              } catch {
+                resolve([item.id, fallbackHsl(item.id)])
+              }
+            }
+            img.onerror = () => {
+              const full = fullSrc(item)
+              if (full && !img.src.endsWith(full)) img.src = full
+              else resolve([item.id, fallbackHsl(item.id)])
+            }
+            img.src = thumbSrc(item, 1)
+          }),
+      ),
+    ).then((pairs) => live && setColors(Object.fromEntries(pairs)))
+    return () => { live = false }
+  }, [items])
 
-  // New arc each page load: one random seed, kept for the life of the page (resizes keep the arc).
-  const arcSeed = useMemo(() => (Math.random() * 4294967296) >>> 0, [])
-  const grid = useMemo(() => layoutGrid(items, box.w, box.h, arcSeed), [items, box.w, box.h, arcSeed])
-  const colW = box.w / grid.cols
-  const tile = Math.round(Math.min(grid.pitch, colW) * 4)
-  const activeRank = activeId ? items.findIndex((item) => item.id === activeId) : -1
-  const activeCell = activeRank >= 0 ? grid.cells[activeRank] : null
-
-  // Tight push: measured from the (edge-clamped) tile centre in a square metric, the first ring
-  // lands one gutter outside the tile, the next rings are compressed (and scaled to match) until
-  // they meet their rest position, so the wake is a few rings deep and nothing overlaps.
-  useLayoutEffect(() => {
-    const root = gridRef.current
-    if (!root) return
-    const nodes = root.querySelectorAll<HTMLElement>('[data-c]')
-    if (!activeCell) {
-      nodes.forEach((node) => {
-        node.style.transform = ''
-      })
-      return
-    }
-    const unit = Math.min(grid.pitch, colW)
-    const half = tile / 2
-    const gridH = grid.rows * grid.pitch
-    const ax = (activeCell.col + 0.5) * colW
-    const ay = (activeCell.row + 0.5) * grid.pitch
-    const tx = Math.min(Math.max(ax, half + 4), box.w - half - 4)
-    const ty = Math.min(Math.max(ay, half + 4), Math.max(half + 4, gridH - half - 4))
-    const squeeze = 0.6
-    const gutter = unit * 0.08
-    const first = half + gutter + unit * 0.5 * squeeze
-    nodes.forEach((node) => {
-      const c = Number(node.dataset.c)
-      const r = Number(node.dataset.r)
-      const cx = (c + 0.5) * colW
-      const cy = (r + 0.5) * grid.pitch
-      if (c === activeCell.col && r === activeCell.row) {
-        node.style.transform = `translate3d(${tx - ax}px, ${ty - ay}px, 0)`
-        return
-      }
-      const dx = cx - tx
-      const dy = cy - ty
-      const dc = Math.max(Math.abs(dx) / colW, Math.abs(dy) / grid.pitch, 0.001) * unit
-      // Rings at dc >= unit*0.5 map to first + (dc - unit) * squeeze, never inward.
-      const pushed = first + (dc - unit) * squeeze
-      const target = Math.max(dc, pushed)
-      const k = target / dc - 1
-      const scale = pushed > dc ? squeeze : 1
-      node.style.transform = `translate3d(${(dx * k).toFixed(1)}px, ${(dy * k).toFixed(1)}px, 0) scale(${scale})`
+  const points = useMemo<Point[]>(() => {
+    if (!Object.keys(colors).length) return []
+    return items.map((item, rank) => {
+      const [h, s, l] = colors[item.id] ?? fallbackHsl(item.id)
+      // Small seeded jitter so plates with near-equal colors do not stack.
+      const j = rand(hash(item.id))
+      const chroma = s * (l < 0.5 ? l : 1 - l) * 2
+      const rad = (Math.sqrt(chroma) * 0.9 + 0.08) * R + (j() - 0.5) * 10
+      const a = (h * Math.PI) / 180 + (j() - 0.5) * 0.15
+      const p: [number, number, number] = [rad * Math.cos(a), (l - 0.5) * LY + (j() - 0.5) * 8, -rad * Math.sin(a)]
+      // Newest plates are the largest blocks.
+      const size = rank < 6 ? 20 : rank < 24 ? 14 : 10
+      return { item, p, size, rank }
     })
-  }, [activeCell, grid, colW, tile, box.w])
+  }, [colors, items])
 
-  // Hover intent: ~60 ms before a new plate opens, so a neighbour springing under the
-  // pointer at the tile edge does not steal the hover.
-  const intent = useRef<number | undefined>(undefined)
-  function hoverOpen(id: string) {
-    window.clearTimeout(intent.current)
-    intent.current = window.setTimeout(() => setActiveId(id), 60)
+  useEffect(() => {
+    const wrap = wrapRef.current
+    if (!wrap || !points.length) return
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    let raf = 0
+    let last = performance.now()
+    const frame = (now: number) => {
+      const dt = Math.min(50, now - last)
+      last = now
+      const c = cam.current
+      if (!reduce && !c.drag && !activeRef.current) c.yaw += dt * 0.00008
+      const w = wrap.clientWidth
+      const h = wrap.clientHeight
+      const fpx = h / 2 / Math.tan(FOV / 2)
+      const scaleFit = Math.min(1, w / h / 0.75)
+      const cy = Math.cos(c.yaw), sy = Math.sin(c.yaw), cp = Math.cos(c.pitch), sp = Math.sin(c.pitch)
+      for (const pt of points) {
+        const node = nodes.current.get(pt.item.id)
+        if (!node) continue
+        const [x, y, z] = pt.p
+        const x1 = x * cy - z * sy
+        const z1 = x * sy + z * cy
+        const y2 = y * cp - z1 * sp
+        const z2 = y * sp + z1 * cp
+        const depth = DIST - z2
+        const k = (fpx / depth) * scaleFit
+        const sx = w / 2 + x1 * k
+        const syy = h / 2 - y2 * k
+        const sz = pt.size * k
+        const fog = Math.min(1, Math.max(0.25, 1 - (depth - DIST + 60) / 260))
+        node.style.transform = `translate3d(${(sx - sz / 2).toFixed(1)}px, ${(syy - sz / 2).toFixed(1)}px, 0)`
+        node.style.width = node.style.height = `${sz.toFixed(1)}px`
+        node.style.zIndex = String(Math.round(10000 - depth * 10))
+        node.style.opacity = fog.toFixed(2)
+      }
+      if (!reduce) raf = requestAnimationFrame(frame)
+    }
+    raf = requestAnimationFrame(frame)
+    const redraw = () => { if (reduce) requestAnimationFrame(frame) }
+    window.addEventListener('resize', redraw)
+    ;(wrap as HTMLElement & { _redraw?: () => void })._redraw = redraw
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', redraw) }
+  }, [points])
+
+  // Drag to orbit. A tap (no movement) still follows the link.
+  function onDown(e: React.PointerEvent) {
+    const c = cam.current
+    c.drag = { x: e.clientX, y: e.clientY, yaw: c.yaw, pitch: c.pitch, moved: false }
   }
-  function hoverClose() {
-    window.clearTimeout(intent.current)
-    setActiveId(null)
+  function onMove(e: React.PointerEvent) {
+    const d = cam.current.drag
+    if (!d) return
+    const dx = e.clientX - d.x
+    const dy = e.clientY - d.y
+    if (!d.moved && Math.hypot(dx, dy) < 6) return
+    d.moved = true
+    cam.current.yaw = d.yaw - dx * 0.006
+    cam.current.pitch = Math.max(-1.4, Math.min(1.4, d.pitch + dy * 0.006))
+    ;(wrapRef.current as (HTMLElement & { _redraw?: () => void }) | null)?._redraw?.()
   }
+  function onUp() {
+    const d = cam.current.drag
+    window.setTimeout(() => { if (cam.current.drag === d) cam.current.drag = null }, 0)
+  }
+  function onClickCapture(e: React.MouseEvent) {
+    if (cam.current.drag?.moved) { e.preventDefault(); e.stopPropagation() }
+    cam.current.drag = null
+  }
+
+  const active = activeId ? points.find((pt) => pt.item.id === activeId) : null
 
   return (
     <section
       ref={wrapRef}
-      className={`halftone-wrap${activeCell ? ' is-open' : ''}`}
+      className={`cloud${points.length ? ' is-ready' : ''}`}
       id="feed"
       aria-label="Specimen feed"
-      onPointerLeave={hoverClose}
+      onPointerDown={onDown}
+      onPointerMove={onMove}
+      onPointerUp={onUp}
+      onPointerCancel={onUp}
+      onPointerLeave={() => setActiveId(null)}
+      onClickCapture={onClickCapture}
     >
-      <div
-        ref={gridRef}
-        className="halftone"
-        style={{
-          gridTemplateColumns: `repeat(${grid.cols}, 1fr)`,
-          gridAutoRows: `${grid.pitch}px`,
-        }}
-      >
-        {items.map((item, rank) => {
-          const cell = grid.cells[rank]
-          const r = rand(hash(item.id))
-          r()
-          const motion = motionFor(r())
-          const open = item.id === activeId
-          const size = open ? tile : cell.size
-          return (
-            <a
-              key={item.id}
-              data-c={cell.col}
-              data-r={cell.row}
-              className={`cell${open ? ' is-active' : ''}`}
-              href={specimenPath(item.id)}
-              aria-label={`${shortTitle(item.title)}, ${item.timestamp.slice(0, 4)}`}
-              style={{ gridColumn: cell.col + 1, gridRow: cell.row + 1, ['--in' as string]: `${cell.inDelay}ms` }}
-              onPointerEnter={(event) => {
-                if (canHover(event.pointerType)) hoverOpen(item.id)
-              }}
-              onFocus={() => {
-                if (hoverCapable()) setActiveId(item.id)
-              }}
-              onBlur={() => setActiveId((current) => (current === item.id ? null : current))}
-            >
-              <span
-                className={`sq m-${open ? 'still' : motion}`}
-                style={{
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  margin: `${-size / 2}px 0 0 ${-size / 2}px`,
-                  ['--dur' as string]: `${(8 + r() * 10).toFixed(2)}s`,
-                  ['--delay' as string]: `${(r() * 12).toFixed(2)}s`,
-                  ['--dx' as string]: `${(r() * 4 - 2).toFixed(1)}px`,
-                  ['--dy' as string]: `${(r() * 4 - 2).toFixed(1)}px`,
-                }}
-              >
-                <img
-                  src={thumbSrc(item, open || cell.size >= 48 ? 4 : 1)}
-                  alt=""
-                  loading={rank < 40 ? 'eager' : 'lazy'}
-                  decoding="async"
-                  onError={(event) => {
-                    const fallback = previewImage(item)?.src
-                    if (fallback && !event.currentTarget.src.endsWith(fallback)) event.currentTarget.src = fallback
-                  }}
-                />
-                {open ? (
-                  <span className="sq-caption" aria-hidden="true">
-                    <strong>{shortTitle(item.title)}</strong>
-                    <span>{item.caption ?? item.timestamp.slice(0, 10)}</span>
-                  </span>
-                ) : null}
-              </span>
-            </a>
-          )
-        })}
-        {grid.fillers.map((cell) => (
-          <span
-            key={`f-${cell.col}-${cell.row}`}
-            data-c={cell.col}
-            data-r={cell.row}
-            className="cell cell-filler"
-            aria-hidden="true"
-            style={{ gridColumn: cell.col + 1, gridRow: cell.row + 1, ['--in' as string]: `${cell.inDelay}ms` }}
-          >
-            <span
-              className={`sq m-${cell.motion}`}
-              style={{
-                width: `${cell.size}px`,
-                height: `${cell.size}px`,
-                margin: `${-cell.size / 2}px 0 0 ${-cell.size / 2}px`,
-                ['--dur' as string]: `${cell.dur.toFixed(2)}s`,
-                ['--delay' as string]: `${cell.delay.toFixed(2)}s`,
-                ['--dx' as string]: `${cell.dx.toFixed(1)}px`,
-              }}
-            />
-          </span>
-        ))}
-      </div>
+      {points.map((pt) => (
+        <a
+          key={pt.item.id}
+          ref={(el) => { if (el) nodes.current.set(pt.item.id, el); else nodes.current.delete(pt.item.id) }}
+          className={`block${pt.item.id === activeId ? ' is-active' : ''}`}
+          href={specimenPath(pt.item.id)}
+          draggable={false}
+          aria-label={`${shortTitle(pt.item.title)}, ${pt.item.timestamp.slice(0, 4)}`}
+          style={{ ['--in' as string]: `${Math.min(900, pt.rank * 8)}ms` }}
+          onPointerEnter={(e) => { if (e.pointerType !== 'touch' && hoverCapable()) setActiveId(pt.item.id) }}
+          onPointerLeave={() => setActiveId((cur) => (cur === pt.item.id ? null : cur))}
+          onFocus={() => { if (hoverCapable()) setActiveId(pt.item.id) }}
+          onBlur={() => setActiveId((cur) => (cur === pt.item.id ? null : cur))}
+        >
+          <img src={thumbSrc(pt.item, pt.size > 8 ? 4 : 1)} alt="" draggable={false} decoding="async" onError={fallbackImg(pt.item)} />
+        </a>
+      ))}
+      {active ? <Preview item={active.item} node={nodes.current.get(active.item.id)} /> : null}
     </section>
   )
 }
 
-type Cell = { col: number; row: number; size: number; inDelay: number }
-
-/** Regular grid sized to the viewport; one plate per cell, seeded shuffle for placement,
- *  square size from a halftone field: gradient outside, a sharp bright ring, a void of dots inside.
- *  Trailing cells of the last row get non-link filler dots that follow the same field. */
-function layoutGrid(items: ArchiveRecord[], w: number, h: number, arcSeed: number) {
-  const n = items.length
-  // ~25% blank pixels scattered among the plates.
-  const want = Math.ceil(n / 0.75)
-  const aspect = Math.max(0.3, w / h)
-  const cols = Math.max(6, Math.min(want, Math.round(Math.sqrt(want * aspect))))
-  const rows = Math.ceil(want / cols)
-  const total = cols * rows
-  const pitch = Math.max(12, Math.min(w / cols, Math.floor(h / rows)))
-  const seed = rand(arcSeed || 1)
-  // Field in cell units so the ring keeps its shape on any grid. The virtual field is larger
-  // than the grid: the void centre may sit past an edge and the ring runs past the grid.
-  // Every parameter is drawn per load inside bounds that keep a readable arc on screen.
-  const long = Math.max(cols, rows)
-  const portrait = rows > cols
-  const corner = Math.floor(seed() * 4) // which side/corner the void leans toward
-  const ex = corner % 2 === 0 ? -1 : 1
-  const ey = corner < 2 ? 1 : -1
-  const cxU = 0.5 + ex * (0.15 + seed() * 0.45) // 0.5 +- (0.15..0.6): inside to just past the edge
-  const cyU = 0.5 + ey * (portrait ? 0.05 + seed() * 0.25 : 0.2 + seed() * 0.4)
-  const cx = cols * cxU
-  const cy = rows * cyU
-  const R = (portrait ? cols * (0.7 + seed() * 0.35) : long * (0.38 + seed() * 0.24))
-  const band = Math.max(0.8, R * (0.1 + seed() * 0.1))
-  const angle = seed() * Math.PI * 2
-  const gx = Math.cos(angle)
-  const gy = Math.sin(angle)
-  const fieldSize = (col: number, row: number) => {
-    const d = Math.hypot(col - cx, row - cy)
-    const ring = Math.exp(-(((d - R) / band) ** 2))
-    const u = cols > 1 ? col / (cols - 1) : 0.5
-    const v = rows > 1 ? row / (rows - 1) : 0.5
-    const grad = 0.18 + 0.5 * clamp01(0.5 + ((u - 0.5) * gx + (v - 0.5) * gy) * 0.9)
-    const t = d < R ? 0.04 + 0.96 * ring : Math.max(ring, grad * smooth(R, R + band * 2.5, d))
-    return Math.max(4, Math.round(pitch * 0.9 * clamp01(t)))
-  }
-  // Load stagger: squares settle outward from the arc centre (~1.1 s wave plus a little jitter).
-  const far = Math.max(
-    Math.hypot(cx, cy), Math.hypot(cols - cx, cy), Math.hypot(cx, rows - cy), Math.hypot(cols - cx, rows - cy),
+function Preview({ item, node }: { item: ArchiveRecord; node?: HTMLElement }) {
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  useEffect(() => {
+    if (!node) return
+    const r = node.getBoundingClientRect()
+    const parent = node.parentElement!.getBoundingClientRect()
+    setPos({ x: r.left - parent.left + r.width / 2, y: r.top - parent.top + r.height / 2 })
+  }, [node])
+  if (!pos) return null
+  return (
+    <div className="cloud-tip" aria-hidden="true" style={{ left: pos.x, top: pos.y }}>
+      <img src={thumbSrc(item, 4)} alt="" onError={fallbackImg(item)} />
+      <span className="cloud-tip-label">
+        <strong>{shortTitle(item.title)}</strong>
+        <span>{item.caption ?? item.timestamp.slice(0, 10)}</span>
+      </span>
+    </div>
   )
-  const inDelayAt = (col: number, row: number) =>
-    Math.round((Math.hypot(col - cx, row - cy) / far) * 1100 + rand(hash(`in-${col}-${row}`))() * 120)
-  const at = (slot: number): Cell => {
-    const col = slot % cols
-    const row = Math.floor(slot / cols)
-    return { col, row, size: fieldSize(col, row), inDelay: inDelayAt(col, row) }
-  }
-  const shuffledSlots = Array.from({ length: total }, (_, i) => i).map((i) => ({ i, k: rand(hash(`blank-${i}`))() }))
-    .sort((a, b) => a.k - b.k)
-    .map((x) => x.i)
-  const blankSlots = shuffledSlots.slice(0, total - n).sort((a, b) => a - b)
-  const plateSlots = shuffledSlots.slice(total - n).sort((a, b) => a - b)
-  const order = items.map((item, i) => ({ i, k: hash(`slot-${item.id}`) })).sort((a, b) => a.k - b.k)
-  const cells: Cell[] = new Array(n)
-  order.forEach(({ i }, k) => {
-    cells[i] = at(plateSlots[k])
-  })
-  const fillers = blankSlots.map((slot) => {
-    const r = rand(hash(`blank-motion-${slot}`))
-    return {
-      ...at(slot),
-      motion: motionFor(r()),
-      dur: 8 + r() * 10,
-      delay: r() * 12,
-      dx: r() * 4 - 2,
-    }
-  })
-  return { cols, rows, pitch, cells, fillers }
 }
 
-function clamp01(x: number): number {
-  return Math.min(1, Math.max(0, x))
+function rgbToHsl(r: number, g: number, b: number): Hsl {
+  r /= 255; g /= 255; b /= 255
+  const max = Math.max(r, g, b), min = Math.min(r, g, b)
+  const l = (max + min) / 2
+  const d = max - min
+  if (!d) return [0, 0, l]
+  const s = d / (1 - Math.abs(2 * l - 1))
+  const h = (max === r ? ((g - b) / d + 6) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60
+  return [h, Math.min(1, s), l]
 }
 
-function smooth(a: number, b: number, x: number): number {
-  const t = clamp01((x - a) / (b - a))
-  return t * t * (3 - 2 * t)
+function fallbackHsl(id: string): Hsl {
+  const r = rand(hash(`c-${id}`))
+  return [r() * 360, 0.3, 0.3 + r() * 0.4]
 }
-
-/** Roughly half the squares stay still; the rest get one seeded motion type.
- *  Every type is built on the 12 principles (see keyframes in index.css). */
-const MOTIONS = ['hop', 'tilt', 'pop', 'nudge'] as const
-function motionFor(x: number): string {
-  if (x < 0.5) return 'still'
-  return MOTIONS[Math.min(MOTIONS.length - 1, Math.floor((x - 0.5) * 2 * MOTIONS.length))]
-}
-
 
 function hash(s: string): number {
   let h = 2166136261
@@ -304,20 +245,21 @@ function hoverCapable(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
 }
 
-function canHover(pointerType: string): boolean {
-  return pointerType !== 'touch' && hoverCapable()
-}
-
-
 function thumbSrc(item: ArchiveRecord, units: number): string {
   const id = /sg-\d+/i.exec(item.id)?.[0]?.toLowerCase()
   if (id) return `/archive/${units >= 4 ? 'md' : 'px'}/${id}.webp`
-  return previewImage(item)?.src ?? ''
+  const m = item.media
+  return (m?.type === 'video' ? m.poster : m?.url) ?? ''
 }
 
-function previewImage(item: ArchiveRecord): { src: string; width?: number; height?: number } | null {
-  const media = item.media
-  if (!media) return null
-  if (media.type === 'video') return media.poster ? { src: media.poster, width: media.width, height: media.height } : null
-  return media.url ? { src: media.url, width: media.width, height: media.height } : null
+function fullSrc(item: ArchiveRecord): string {
+  const m = item.media
+  return (m?.type === 'video' ? m.poster : m?.url) ?? ''
+}
+
+function fallbackImg(item: ArchiveRecord) {
+  return (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const full = fullSrc(item)
+    if (full && !event.currentTarget.src.endsWith(full)) event.currentTarget.src = full
+  }
 }
