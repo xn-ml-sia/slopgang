@@ -1539,3 +1539,9 @@ html:has(.feed), .site:has(.feed) { background: #fff; }
   .cloud.is-ready .block { animation: none; opacity: 1; }
   .brand__part { transition: none; }
 }
+
+/* Home wall is ink, like the reference color wall; content pages stay paper. */
+html:has(.cloud), .site:has(.cloud), .feed:has(.cloud), .cloud { background: #000; }
+.feed:has(.cloud) .feed-nav nav a:hover,
+.feed:has(.cloud) .feed-nav nav a:focus-visible { color: #000; background: #fff; box-shadow: none; }
+.cloud .block:focus-visible { outline-color: #fff; }
