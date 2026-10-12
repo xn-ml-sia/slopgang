@@ -44,7 +44,7 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
           <div>
             <span className="label">Colophon</span>
             <p>
-              Archivo for the sleeves and the page.
+              Inter for the sleeves and the page.
               <br />
               JetBrains Mono for catalogue numbers.
               <br />
