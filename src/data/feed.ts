@@ -26,11 +26,42 @@ export type ArchiveRecord = {
   url: string
   timestamp: string
   tags: FeedTag[]
+  /** Glitch posts: 'pair' (research x art) or 'glitch' (standalone). Absent on slop plates. */
+  kind?: 'pair' | 'glitch'
+  pairLabel?: 'DIRECT' | 'THEMATIC'
+  glitchType?: GlitchType
+  researcher?: PairSide
+  artist?: PairSide
+  /** One line with the source that proves DIRECT, or "hal's reading" for THEMATIC. */
+  evidence?: string
+  image?: { src: string | null; credit: string; license: string; link?: string }
+  sources?: string[]
+  /** Existing slop plates this glitch post answers, with a one-line reason. */
+  relatedSlop?: { id: string; reason: string }[]
+}
+
+export type GlitchType = 'artifact' | 'adversarial' | 'collapse' | 'hallucination' | 'artist'
+
+export type PairSide = {
+  name: string
+  work: string
+  year: string
+  url: string
+  handle?: string | null
+  handleVerified: boolean
+}
+
+export const GLITCH_TYPE_LABEL: Record<GlitchType, string> = {
+  artifact: 'Model artifact',
+  adversarial: 'Adversarial',
+  collapse: 'Model collapse',
+  hallucination: 'Hallucination',
+  artist: 'Artist-made glitch',
 }
 
 const SHAPES: FeedShape[] = ['portrait', 'wide', 'square', 'tall', 'land', 'portrait', 'square']
 
-const records = (raw as ArchiveRecord[]).map((item) => ({
+const records = (raw as unknown as ArchiveRecord[]).map((item) => ({
   ...item,
   essay: item.essay ?? essays[item.id],
 }))
@@ -84,4 +115,14 @@ export function catalogueLabel(id: string): string {
 
 export function allSpecimens(): ArchiveRecord[] {
   return records
+}
+
+/** Glitch posts that link back to a slop plate (reverse of relatedSlop). */
+export function glitchPairsFor(id: string): { record: ArchiveRecord; reason: string }[] {
+  const slug = specimenSlug(id).toLowerCase()
+  return records.flatMap((r) =>
+    (r.relatedSlop ?? [])
+      .filter((l) => l.id.toLowerCase() === slug)
+      .map((l) => ({ record: r, reason: l.reason })),
+  )
 }

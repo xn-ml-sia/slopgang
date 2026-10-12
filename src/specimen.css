@@ -165,3 +165,22 @@
 .specimen-page .specimen-text-plate {
   border-radius: 0;
 }
+
+/* Glitch posts: pair header, chips, related plates. Same scale, square, no rules. */
+.glitch-tags { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 16px; }
+.glitch-chip { font-size: 0.8125rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 8px; background: var(--ink); color: var(--paper, #fff); border-radius: 0; }
+.pair-header { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 4vw, 64px); padding-top: clamp(40px, 5vw, 72px); }
+.pair-col h2 { margin: 8px 0 0; font-size: var(--t2, 2.25rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+.pair-col h2 a { color: inherit; text-decoration: none; }
+.pair-col p { margin-top: 10px; color: var(--muted); font-size: var(--t0); }
+.pair-evidence { grid-column: 1 / -1; max-width: var(--measure); color: var(--muted); font-size: var(--t0); line-height: 1.5; margin: 0; }
+.specimen-credit { font-size: 1rem !important; }
+.specimen-related { margin-top: 40px; max-width: var(--measure); }
+.specimen-related h2 { font-size: var(--t2, 2.25rem); font-weight: 600; letter-spacing: -0.02em; margin: 0 0 12px; }
+.specimen-related ul, .specimen-sources { list-style: none; padding: 0; margin: 0; }
+.specimen-related li { margin-top: 14px; font-size: var(--t0); line-height: 1.5; }
+.specimen-related li a { display: block; color: var(--ink); }
+.specimen-related li span { color: var(--muted); }
+.specimen-sources { margin-top: 32px; font-size: 1rem; line-height: 1.6; }
+.specimen-sources a { color: var(--muted); word-break: break-all; }
+@media (max-width: 860px) { .pair-header { grid-template-columns: 1fr; } }
