@@ -1538,3 +1538,25 @@ html:has(.cloud), .site:has(.cloud), .feed:has(.cloud), .cloud { background: #00
 .feed:has(.cloud) .feed-nav nav a:focus-visible { color: #000; background: #fff; box-shadow: none; }
 .feed:has(.cloud) .brand { color: #fff !important; }
 .cloud .block:focus-visible { outline-color: #fff; }
+
+/* ---------- v12 edits ---------- */
+/* Detail page: no dividers, smaller essay, About button text only. */
+.specimen-page hr { display: none; }
+.specimen-page :is(main, article, section, div, dl, dt, dd, header, footer, figure, figcaption) { border-top: 0 !important; border-bottom: 0 !important; border-block: 0 !important; }
+.specimen-page .specimen-essay p { font-size: 0.9375rem; line-height: 1.6; }
+.specimen-page .specimen-essay p:first-of-type { font-size: 1.0625rem; line-height: 1.5; }
+.specimen-page .feed-nav nav a,
+.specimen-page .feed-nav nav a:hover,
+.specimen-page .feed-nav nav a:focus-visible,
+.specimen-page .feed-nav nav a[aria-current='page'] { background: transparent; color: #000; border: 0; box-shadow: none; outline: none; }
+.specimen-page .feed-nav nav a:hover { text-decoration: underline; }
+/* About page: smaller hero heading, section titles, body; no dividers. */
+.fold ~ main hr, .fold hr { display: none; }
+.section + .section, .fold ~ main .section { border-top: 0; border-bottom: 0; }
+.fold .hero h1 { font-size: clamp(2rem, 1.2rem + 3.2vw, 3.75rem); }
+.fold ~ main .section-head h2 { font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem); }
+.fold ~ main .study-copy p { font-size: clamp(1.05rem, 0.98rem + 0.4vw, 1.3rem); line-height: 1.5; }
+/* Home: plate background on hover. */
+.cloud-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.5s ease; background-size: cover; background-position: center; filter: blur(14px) brightness(0.55); transform: scale(1.08); }
+.cloud-bg.is-on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .cloud-bg { transition: none; } }

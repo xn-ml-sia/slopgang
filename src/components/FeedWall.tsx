@@ -12,15 +12,25 @@ import { arrangedSpecimens, shortTitle, specimenPath, type ArchiveRecord } from 
 type Hsl = [number, number, number]
 type Point = { item: ArchiveRecord; p: [number, number, number]; size: number; rank: number }
 
-const R = 100 // bicone radius
-const LY = 180 // lightness height
+const R = 150 // bicone radius
+const LY = 260 // lightness height
 const FOV = (42 * Math.PI) / 180
-const DIST = 310
+const DIST = 380
 
 export function FeedWall() {
   const items = useMemo(() => newestFirst(arrangedSpecimens()), [])
   const [colors, setColors] = useState<Record<string, Hsl>>({})
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [bg, setBg] = useState<{ a: string; b: string; on: 'a' | 'b' } | null>(null)
+  useEffect(() => {
+    const item = activeId ? items.find((i) => i.id === activeId) : null
+    setBg((cur) => {
+      const c = cur ?? { a: '', b: '', on: 'a' as const }
+      if (!item) return { ...c, on: c.on, a: c.on === 'a' ? '' : c.a, b: c.on === 'b' ? '' : c.b }
+      const src = `url(${thumbSrc(item, 4)})`
+      return c.on === 'a' ? { ...c, b: src, on: 'b' } : { ...c, a: src, on: 'a' }
+    })
+  }, [activeId, items])
   const wrapRef = useRef<HTMLElement>(null)
   const nodes = useRef(new Map<string, HTMLAnchorElement>())
   const cam = useRef({ yaw: Math.random() * Math.PI * 2, pitch: 0.32, drag: null as null | { x: number; y: number; yaw: number; pitch: number; moved: boolean } })
@@ -69,11 +79,13 @@ export function FeedWall() {
       // Small seeded jitter so plates with near-equal colors do not stack.
       const j = rand(hash(item.id))
       const chroma = s * (l < 0.5 ? l : 1 - l) * 2
-      const rad = (Math.sqrt(chroma) * 0.9 + 0.08) * R + (j() - 0.5) * 10
-      const a = (h * Math.PI) / 180 + (j() - 0.5) * 0.15
+      const rad = (Math.sqrt(chroma) * 0.9 + 0.08) * R + (j() - 0.5) * 34
+      const a = (h * Math.PI) / 180 + (j() - 0.5) * 0.3
       const p: [number, number, number] = [rad * Math.cos(a), (l - 0.5) * LY + (j() - 0.5) * 8, -rad * Math.sin(a)]
       // Newest plates are the largest blocks.
-      const size = rank < 6 ? 20 : rank < 24 ? 14 : 10
+      // Random size, 6 to 30 units, skewed small; newest get a lift.
+      const u = j()
+      const size = 6 + Math.pow(u, 1.8) * 24 + (rank < 6 ? 8 : rank < 18 ? 3 : 0)
       return { item, p, size, rank }
     })
   }, [colors, items])
@@ -162,6 +174,8 @@ export function FeedWall() {
       onPointerLeave={() => setActiveId(null)}
       onClickCapture={onClickCapture}
     >
+      <div className={`cloud-bg${bg?.on === 'a' && bg.a ? ' is-on' : ''}`} aria-hidden="true" style={bg?.a ? { backgroundImage: bg.a } : undefined} />
+      <div className={`cloud-bg${bg?.on === 'b' && bg.b ? ' is-on' : ''}`} aria-hidden="true" style={bg?.b ? { backgroundImage: bg.b } : undefined} />
       {points.map((pt) => (
         <a
           key={pt.item.id}
@@ -176,7 +190,7 @@ export function FeedWall() {
           onFocus={() => { if (hoverCapable()) setActiveId(pt.item.id) }}
           onBlur={() => setActiveId((cur) => (cur === pt.item.id ? null : cur))}
         >
-          <img src={thumbSrc(pt.item, pt.size > 8 ? 4 : 1)} alt="" draggable={false} decoding="async" onError={fallbackImg(pt.item)} />
+          <img src={thumbSrc(pt.item, pt.size > 12 ? 4 : 1)} alt="" draggable={false} decoding="async" onError={fallbackImg(pt.item)} />
         </a>
       ))}
       {active ? <Preview item={active.item} node={nodes.current.get(active.item.id)} /> : null}
