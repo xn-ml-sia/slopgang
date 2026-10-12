@@ -1640,3 +1640,10 @@ html:has(.cloud), .site:has(.cloud), .feed:has(.cloud), .cloud { background: #00
   line-height: var(--section-title-lh);
   letter-spacing: var(--section-title-tracking);
 }
+/* v15b: one heading size on the detail page. */
+.specimen-page :is(h1, h2, h3, .pair-col h2, .specimen-related h2) {
+  font-size: var(--section-title-size);
+  font-weight: var(--section-title-weight);
+  line-height: var(--section-title-lh);
+  letter-spacing: var(--section-title-tracking);
+}
