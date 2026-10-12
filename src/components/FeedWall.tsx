@@ -12,10 +12,10 @@ import { arrangedSpecimens, shortTitle, specimenPath, type ArchiveRecord } from 
 type Hsl = [number, number, number]
 type Point = { item: ArchiveRecord; p: [number, number, number]; size: number; rank: number }
 
-const R = 100 // bicone radius
-const LY = 180 // lightness height
+const R = 230 // bicone radius
+const LY = 260 // lightness height
 const FOV = (42 * Math.PI) / 180
-const DIST = 310
+const DIST = 380
 
 export function FeedWall() {
   const items = useMemo(() => newestFirst(arrangedSpecimens()), [])
@@ -69,11 +69,13 @@ export function FeedWall() {
       // Small seeded jitter so plates with near-equal colors do not stack.
       const j = rand(hash(item.id))
       const chroma = s * (l < 0.5 ? l : 1 - l) * 2
-      const rad = (Math.sqrt(chroma) * 0.9 + 0.08) * R + (j() - 0.5) * 10
-      const a = (h * Math.PI) / 180 + (j() - 0.5) * 0.15
+      const rad = (Math.sqrt(chroma) * 0.9 + 0.08) * R + (j() - 0.5) * 34
+      const a = (h * Math.PI) / 180 + (j() - 0.5) * 0.3
       const p: [number, number, number] = [rad * Math.cos(a), (l - 0.5) * LY + (j() - 0.5) * 8, -rad * Math.sin(a)]
       // Newest plates are the largest blocks.
-      const size = rank < 6 ? 20 : rank < 24 ? 14 : 10
+      // Random size, 6 to 30 units, skewed small; newest get a lift.
+      const u = j()
+      const size = 6 + Math.pow(u, 1.8) * 24 + (rank < 6 ? 8 : rank < 18 ? 3 : 0)
       return { item, p, size, rank }
     })
   }, [colors, items])
@@ -92,7 +94,7 @@ export function FeedWall() {
       const w = wrap.clientWidth
       const h = wrap.clientHeight
       const fpx = h / 2 / Math.tan(FOV / 2)
-      const scaleFit = Math.min(1, w / h / 0.75)
+      const scaleFit = Math.min(1, w / h / 1.2)
       const cy = Math.cos(c.yaw), sy = Math.sin(c.yaw), cp = Math.cos(c.pitch), sp = Math.sin(c.pitch)
       for (const pt of points) {
         const node = nodes.current.get(pt.item.id)
@@ -162,6 +164,7 @@ export function FeedWall() {
       onPointerLeave={() => setActiveId(null)}
       onClickCapture={onClickCapture}
     >
+      {active ? <FullBg key={active.item.id} item={active.item} /> : null}
       {points.map((pt) => (
         <a
           key={pt.item.id}
@@ -176,7 +179,7 @@ export function FeedWall() {
           onFocus={() => { if (hoverCapable()) setActiveId(pt.item.id) }}
           onBlur={() => setActiveId((cur) => (cur === pt.item.id ? null : cur))}
         >
-          <img src={thumbSrc(pt.item, pt.size > 8 ? 4 : 1)} alt="" draggable={false} decoding="async" onError={fallbackImg(pt.item)} />
+          <img src={thumbSrc(pt.item, pt.size > 12 ? 4 : 1)} alt="" draggable={false} decoding="async" onError={fallbackImg(pt.item)} />
         </a>
       ))}
       {active ? <Preview item={active.item} node={nodes.current.get(active.item.id)} /> : null}
@@ -195,11 +198,38 @@ function Preview({ item, node }: { item: ArchiveRecord; node?: HTMLElement }) {
   if (!pos) return null
   return (
     <div className="cloud-tip" aria-hidden="true" style={{ left: pos.x, top: pos.y }}>
-      <img src={thumbSrc(item, 4)} alt="" onError={fallbackImg(item)} />
+      <div className="cloud-tip-media" style={{ backgroundImage: `url(${thumbSrc(item, 4)})` }}>
+        <FullMedia item={item} />
+      </div>
       <span className="cloud-tip-label">
         <strong>{shortTitle(item.title)}</strong>
         <span>{item.caption ?? item.timestamp.slice(0, 10)}</span>
       </span>
+    </div>
+  )
+}
+
+function reducedMotion(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+/** Full-res media over a thumbnail placeholder. Shown with no fade once loaded. Video plays muted and loops; unmount stops it. */
+function FullMedia({ item }: { item: ArchiveRecord }) {
+  const [ready, setReady] = useState(false)
+  const m = item.media
+  const cls = `cloud-full${ready ? ' is-ready' : ''}`
+  if (m?.type === 'video' && m.url && !reducedMotion()) {
+    return <video className={cls} src={m.url} muted loop autoPlay playsInline preload="auto" onPlaying={() => setReady(true)} onLoadedData={() => setReady(true)} />
+  }
+  const still = /\.svg$/i.test(fullSrc(item)) ? '' : fullSrc(item)
+  if (!still) return null
+  return <img className={cls} src={still} alt="" decoding="async" onLoad={() => setReady(true)} />
+}
+
+function FullBg({ item }: { item: ArchiveRecord }) {
+  return (
+    <div className="cloud-bg is-on" aria-hidden="true" style={{ backgroundImage: `url(${thumbSrc(item, 4)})` }}>
+      <FullMedia item={item} />
     </div>
   )
 }
