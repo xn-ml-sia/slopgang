@@ -1569,3 +1569,8 @@ html:has(.cloud), .site:has(.cloud), .feed:has(.cloud), .cloud { background: #00
 .feed:has(.cloud) .feed-nav nav a:hover { text-decoration: underline; }
 .specimen-page .specimen-specs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 32px; }
 .specimen-page .specimen-specs > div { display: flex; flex-direction: column; gap: 4px; }
+
+/* v12c: full-res hover media */
+.cloud-tip-media { position: relative; width: 220px; height: 220px; background-size: cover; background-position: center; overflow: hidden; }
+.cloud-full { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; display: block; }
+.cloud-full.is-ready { opacity: 1; }

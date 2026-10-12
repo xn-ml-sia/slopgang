@@ -21,16 +21,6 @@ export function FeedWall() {
   const items = useMemo(() => newestFirst(arrangedSpecimens()), [])
   const [colors, setColors] = useState<Record<string, Hsl>>({})
   const [activeId, setActiveId] = useState<string | null>(null)
-  const [bg, setBg] = useState<{ a: string; b: string; on: 'a' | 'b' } | null>(null)
-  useEffect(() => {
-    const item = activeId ? items.find((i) => i.id === activeId) : null
-    setBg((cur) => {
-      const c = cur ?? { a: '', b: '', on: 'a' as const }
-      if (!item) return { ...c, on: c.on, a: c.on === 'a' ? '' : c.a, b: c.on === 'b' ? '' : c.b }
-      const src = `url(${thumbSrc(item, 4)})`
-      return c.on === 'a' ? { ...c, b: src, on: 'b' } : { ...c, a: src, on: 'a' }
-    })
-  }, [activeId, items])
   const wrapRef = useRef<HTMLElement>(null)
   const nodes = useRef(new Map<string, HTMLAnchorElement>())
   const cam = useRef({ yaw: Math.random() * Math.PI * 2, pitch: 0.32, drag: null as null | { x: number; y: number; yaw: number; pitch: number; moved: boolean } })
@@ -174,8 +164,7 @@ export function FeedWall() {
       onPointerLeave={() => setActiveId(null)}
       onClickCapture={onClickCapture}
     >
-      <div className={`cloud-bg${bg?.on === 'a' && bg.a ? ' is-on' : ''}`} aria-hidden="true" style={bg?.a ? { backgroundImage: bg.a } : undefined} />
-      <div className={`cloud-bg${bg?.on === 'b' && bg.b ? ' is-on' : ''}`} aria-hidden="true" style={bg?.b ? { backgroundImage: bg.b } : undefined} />
+      {active ? <FullBg key={active.item.id} item={active.item} /> : null}
       {points.map((pt) => (
         <a
           key={pt.item.id}
@@ -209,11 +198,38 @@ function Preview({ item, node }: { item: ArchiveRecord; node?: HTMLElement }) {
   if (!pos) return null
   return (
     <div className="cloud-tip" aria-hidden="true" style={{ left: pos.x, top: pos.y }}>
-      <img src={thumbSrc(item, 4)} alt="" onError={fallbackImg(item)} />
+      <div className="cloud-tip-media" style={{ backgroundImage: `url(${thumbSrc(item, 4)})` }}>
+        <FullMedia item={item} />
+      </div>
       <span className="cloud-tip-label">
         <strong>{shortTitle(item.title)}</strong>
         <span>{item.caption ?? item.timestamp.slice(0, 10)}</span>
       </span>
+    </div>
+  )
+}
+
+function reducedMotion(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+/** Full-res media over a thumbnail placeholder. Shown with no fade once loaded. Video plays muted and loops; unmount stops it. */
+function FullMedia({ item }: { item: ArchiveRecord }) {
+  const [ready, setReady] = useState(false)
+  const m = item.media
+  const cls = `cloud-full${ready ? ' is-ready' : ''}`
+  if (m?.type === 'video' && m.url && !reducedMotion()) {
+    return <video className={cls} src={m.url} muted loop autoPlay playsInline preload="auto" onPlaying={() => setReady(true)} onLoadedData={() => setReady(true)} />
+  }
+  const still = /\.svg$/i.test(fullSrc(item)) ? '' : fullSrc(item)
+  if (!still) return null
+  return <img className={cls} src={still} alt="" decoding="async" onLoad={() => setReady(true)} />
+}
+
+function FullBg({ item }: { item: ArchiveRecord }) {
+  return (
+    <div className="cloud-bg is-on" aria-hidden="true" style={{ backgroundImage: `url(${thumbSrc(item, 4)})` }}>
+      <FullMedia item={item} />
     </div>
   )
 }
