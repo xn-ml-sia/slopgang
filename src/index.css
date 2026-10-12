@@ -1562,7 +1562,7 @@ html:has(.cloud), .site:has(.cloud), .feed:has(.cloud), .cloud { background: #00
   --section-title-lh: 1.05;
   --section-title-weight: 600;
   --section-title-tracking: -0.03em;
-  --body-size: clamp(1.05rem, 0.98rem + 0.4vw, 1.3rem);
+  --body-size: clamp(1.05rem, 0.98rem + 0.4vw, 1.3125rem);
   --body-lh: 1.5;
   --body-tracking: -0.01em;
   --content-measure: 72ch;
