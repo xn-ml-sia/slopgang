@@ -12,7 +12,7 @@ import { arrangedSpecimens, shortTitle, specimenPath, type ArchiveRecord } from 
 type Hsl = [number, number, number]
 type Point = { item: ArchiveRecord; p: [number, number, number]; size: number; rank: number }
 
-const R = 150 // bicone radius
+const R = 230 // bicone radius
 const LY = 260 // lightness height
 const FOV = (42 * Math.PI) / 180
 const DIST = 380
@@ -104,7 +104,7 @@ export function FeedWall() {
       const w = wrap.clientWidth
       const h = wrap.clientHeight
       const fpx = h / 2 / Math.tan(FOV / 2)
-      const scaleFit = Math.min(1, w / h / 0.75)
+      const scaleFit = Math.min(1, w / h / 1.2)
       const cy = Math.cos(c.yaw), sy = Math.sin(c.yaw), cp = Math.cos(c.pitch), sp = Math.sin(c.pitch)
       for (const pt of points) {
         const node = nodes.current.get(pt.item.id)

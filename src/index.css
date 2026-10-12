@@ -1557,6 +1557,15 @@ html:has(.cloud), .site:has(.cloud), .feed:has(.cloud), .cloud { background: #00
 .fold ~ main .section-head h2 { font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem); }
 .fold ~ main .study-copy p { font-size: clamp(1.05rem, 0.98rem + 0.4vw, 1.3rem); line-height: 1.5; }
 /* Home: plate background on hover. */
-.cloud-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.5s ease; background-size: cover; background-position: center; filter: blur(14px) brightness(0.55); transform: scale(1.08); }
+.cloud-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; background-size: cover; background-position: center; }
 .cloud-bg.is-on { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .cloud-bg { transition: none; } }
+
+/* v12b */
+.feed:has(.cloud) .feed-nav nav a,
+.feed:has(.cloud) .feed-nav nav a:hover,
+.feed:has(.cloud) .feed-nav nav a:focus-visible,
+.feed:has(.cloud) .feed-nav nav a[aria-current='page'] { background: transparent; color: #fff; border: 0; box-shadow: none; outline: none; }
+.feed:has(.cloud) .feed-nav nav a:hover { text-decoration: underline; }
+.specimen-page .specimen-specs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 32px; }
+.specimen-page .specimen-specs > div { display: flex; flex-direction: column; gap: 4px; }
