@@ -1,11 +1,12 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 import { feedProxyPlugin } from './server/feedProxy.ts'
+import { archiveJsonPlugin } from './server/archiveJson.ts'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
-    plugins: [react(), feedProxyPlugin(env)],
+    plugins: [react(), feedProxyPlugin(env), archiveJsonPlugin()],
     server: {
       host: true,
       port: 5173,

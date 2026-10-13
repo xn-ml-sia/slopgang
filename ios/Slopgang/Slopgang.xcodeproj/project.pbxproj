@@ -1,0 +1,297 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		8DB35AA87066ABA32B6E099D /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07DA6A095C73BCBD6CC3E0BF /* AboutView.swift */; };
+		DEBAEFF873EE8B42F786F616 /* ArchiveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B56D447BF6397971869E8DE5 /* ArchiveStore.swift */; };
+		4ECDCBBBBC7D4194DFB97147 /* CloudView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E7F15D17990853B3CFC479 /* CloudView.swift */; };
+		86AADC60FA84F30B81596264 /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 403E61BB1DA4979B7038A0A3 /* DetailView.swift */; };
+		69B380A3E535006F402E415A /* ImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907F8C4AE5DDA2C059A69CE5 /* ImageLoader.swift */; };
+		EE1D18F233A18F8FE7380174 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A9357E796B1FEE3F2E57DD5 /* Models.swift */; };
+		74512FCC169EE8297897E1A2 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA16FDD54E76D4F5E0A52500 /* PlayerView.swift */; };
+		C805160143302AD34F1E2B8A /* Seeded.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02493523E476E7FBC5F96FC1 /* Seeded.swift */; };
+		18C29DCB013B3D5F80138670 /* SlopgangApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D1A34CA97B2CEDF59978AFF /* SlopgangApp.swift */; };
+		3CE9E92A18EC61DAA21A6072 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F0C612EF37DEF6456204642 /* Theme.swift */; };
+		67AD8B4FFD1ED43852CFC2CA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 32BB636196F91ED59D7A4919 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		07DA6A095C73BCBD6CC3E0BF /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		B56D447BF6397971869E8DE5 /* ArchiveStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveStore.swift; sourceTree = "<group>"; };
+		56E7F15D17990853B3CFC479 /* CloudView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudView.swift; sourceTree = "<group>"; };
+		403E61BB1DA4979B7038A0A3 /* DetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailView.swift; sourceTree = "<group>"; };
+		907F8C4AE5DDA2C059A69CE5 /* ImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageLoader.swift; sourceTree = "<group>"; };
+		5A9357E796B1FEE3F2E57DD5 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		FA16FDD54E76D4F5E0A52500 /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
+		02493523E476E7FBC5F96FC1 /* Seeded.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Seeded.swift; sourceTree = "<group>"; };
+		5D1A34CA97B2CEDF59978AFF /* SlopgangApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlopgangApp.swift; sourceTree = "<group>"; };
+		1F0C612EF37DEF6456204642 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		32BB636196F91ED59D7A4919 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		996AD237BC284D463E664FFE /* Slopgang.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Slopgang.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4F6F5CC3FCCF73F75AE9CCF4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2B731CEFC6751AAE0EC69B98 = {
+			isa = PBXGroup;
+			children = (
+				20F4BD606C0F6D1645AE4919 /* Slopgang */,
+				86024CAD1E83101D97359D73 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		20F4BD606C0F6D1645AE4919 /* Slopgang */ = {
+			isa = PBXGroup;
+			children = (
+				07DA6A095C73BCBD6CC3E0BF /* AboutView.swift */,
+				B56D447BF6397971869E8DE5 /* ArchiveStore.swift */,
+				56E7F15D17990853B3CFC479 /* CloudView.swift */,
+				403E61BB1DA4979B7038A0A3 /* DetailView.swift */,
+				907F8C4AE5DDA2C059A69CE5 /* ImageLoader.swift */,
+				5A9357E796B1FEE3F2E57DD5 /* Models.swift */,
+				FA16FDD54E76D4F5E0A52500 /* PlayerView.swift */,
+				02493523E476E7FBC5F96FC1 /* Seeded.swift */,
+				5D1A34CA97B2CEDF59978AFF /* SlopgangApp.swift */,
+				1F0C612EF37DEF6456204642 /* Theme.swift */,
+				307A90002D1285ED8C05A9E0 /* Resources */,
+			);
+			path = Slopgang;
+			sourceTree = "<group>";
+		};
+		307A90002D1285ED8C05A9E0 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				32BB636196F91ED59D7A4919 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		86024CAD1E83101D97359D73 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				996AD237BC284D463E664FFE /* Slopgang.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		42AEFBAE01D2DFD981F7DA7D /* Slopgang */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6D2F3F0C466A0EC0B2062AA7;
+			buildPhases = (
+				F2AB5FB218DA8B84623F4557 /* Sources */,
+				4F6F5CC3FCCF73F75AE9CCF4 /* Frameworks */,
+				55B558C7EF820E6E00E5993B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Slopgang;
+			productName = Slopgang;
+			productReference = 996AD237BC284D463E664FFE /* Slopgang.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		46F86FAA6BBF9AC94A7E4595 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					42AEFBAE01D2DFD981F7DA7D = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 6D7F5B15D0375C8E47D52728;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 2B731CEFC6751AAE0EC69B98;
+			productRefGroup = 86024CAD1E83101D97359D73 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				42AEFBAE01D2DFD981F7DA7D /* Slopgang */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		55B558C7EF820E6E00E5993B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				67AD8B4FFD1ED43852CFC2CA /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F2AB5FB218DA8B84623F4557 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8DB35AA87066ABA32B6E099D /* AboutView.swift in Sources */,
+				DEBAEFF873EE8B42F786F616 /* ArchiveStore.swift in Sources */,
+				4ECDCBBBBC7D4194DFB97147 /* CloudView.swift in Sources */,
+				86AADC60FA84F30B81596264 /* DetailView.swift in Sources */,
+				69B380A3E535006F402E415A /* ImageLoader.swift in Sources */,
+				EE1D18F233A18F8FE7380174 /* Models.swift in Sources */,
+				74512FCC169EE8297897E1A2 /* PlayerView.swift in Sources */,
+				C805160143302AD34F1E2B8A /* Seeded.swift in Sources */,
+				18C29DCB013B3D5F80138670 /* SlopgangApp.swift in Sources */,
+				3CE9E92A18EC61DAA21A6072 /* Theme.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2D53B50AE2273FABAAF8B8FA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1 $(inherited)";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		D4B2141B77146EF47E948847 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		FA7C752E798F561D7D156D98 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Slopgang/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = slopgang;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.slopgang.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		22F75101C717335ACF4089A0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Slopgang/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = slopgang;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.slopgang.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		6D7F5B15D0375C8E47D52728 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2D53B50AE2273FABAAF8B8FA /* Debug */,
+				D4B2141B77146EF47E948847 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6D2F3F0C466A0EC0B2062AA7 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FA7C752E798F561D7D156D98 /* Debug */,
+				22F75101C717335ACF4089A0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 46F86FAA6BBF9AC94A7E4595 /* Project object */;
+}
