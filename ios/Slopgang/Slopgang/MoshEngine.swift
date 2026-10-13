@@ -385,6 +385,13 @@ final class MoshView: MTKView, MTKViewDelegate {
         return run(old: ui, new: ui, motion: .live, params: p, completion: completion)
     }
 
+    /// Replaces the heal / keyframe target (the new screen) mid-run, e.g. with a fresher snapshot
+    /// once the detail page's images have loaded.
+    func updateNew(_ img: UIImage) {
+        guard let cg = img.cgImage, let t = newTex else { return }
+        upload(cg, into: t)
+    }
+
     private func upload(_ cg: CGImage, into t: MTLTexture) {
         guard cg.width == t.width, cg.height == t.height else { return }
         let rowBytes = cg.width * 4

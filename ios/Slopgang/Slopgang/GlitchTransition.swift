@@ -42,6 +42,10 @@ final class GlitchDirector: ObservableObject {
         p.pdupReach = 10
         p.diffusion = 0.12
         p.blockSchedule = [(1, 1)]
+        // Block heal into the full detail page from 65%, every block resolved by the end.
+        p.healStart = 0
+        p.healFrom = 0.65
+        p.healEnd = 1.0
         let top = keyWindow()?.safeAreaInsets.top ?? 59
         run(params: p, sound: "glitch-in", motion: { bounds in
             // Detail hero: full width under the nav bar, at the plate's aspect (capped like the site).
@@ -148,7 +152,16 @@ final class GlitchDirector: ObservableObject {
             #if DEBUG
             print("[sg] mosh started:", started); SGTrace.mark("mosh run returned")
             #endif
-            if started { mosh.isHidden = false } else { crossfade() }
+            if started {
+                mosh.isHidden = false
+                // Re-snapshot the full detail page just before the blocks start to heal, so they
+                // resolve into the page as it will be when the overlay goes (images loaded).
+                DispatchQueue.main.asyncAfter(deadline: .now() + timed.duration * 0.6) {
+                    guard self.token == my, self.busy else { return }
+                    mosh.updateNew(self.snapshot(w, after: false))
+                    SGTrace.mark("heal target refreshed")
+                }
+            } else { crossfade() }
         }
     }
 

@@ -122,8 +122,12 @@ fragment float4 moshPDup(VOut in [[stage_in]],
                          constant MoshUniforms& u [[buffer(0)]]) {
     constexpr sampler lin(coord::normalized, address::clamp_to_edge, filter::linear);
     constexpr sampler nn(coord::normalized, address::clamp_to_edge, filter::nearest);
-    if (u.keyframe > 0.5) return newTex.sample(lin, in.uv);
+    if (u.keyframe > 0.5) return newTex.sample(nn, in.uv);
     float2 cell = floor(in.uv * u.grid / u.blockScale) * u.blockScale;
+    // Block heal: each block has a fixed random turn, so once it resolves into the detail page it
+    // stays resolved. The target is the full detail snapshot (caption, grid, buttons), so at heal = 1
+    // the frame is pixel-identical to the real page and the swap is invisible.
+    if (hash2(cell, 7.0) < u.heal) return newTex.sample(nn, in.uv);
     float2 mv = motion.sample(nn, (cell + 0.5 * u.blockScale) / u.grid).xy * u.smear;
     float4 a = prev.sample(nn, in.uv + mv);
     float4 b = prev.sample(lin, in.uv + mv);          // a little bilinear bloom
