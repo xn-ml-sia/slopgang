@@ -3,6 +3,10 @@ import SwiftUI
 @main
 struct SlopgangApp: App {
     @StateObject private var store = ArchiveStore()
+
+    init() {
+        SFX.shared.prepare()   // audio session + players load off the main thread
+    }
     var body: some Scene {
         WindowGroup {
             RootView()
