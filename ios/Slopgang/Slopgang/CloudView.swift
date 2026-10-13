@@ -184,7 +184,8 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
             guard let self, self.window != nil else { return }
             // Frontmost plate that has its image and is big enough to see.
-            let front = self.blocks.filter { $0.placed && $0.layer.contents != nil && $0.layer.bounds.width > 24 }
+            let front = self.blocks.filter { $0.placed && $0.layer.contents != nil && $0.layer.bounds.width > 24
+                && self.bounds.insetBy(dx: 20, dy: 80).contains($0.layer.position) }
                 .max { $0.layer.zPosition < $1.layer.zPosition }
             guard let b = front else { print("[sg] autoTap: no plate"); return }
             let f = (b.layer.presentation() ?? b.layer).frame
