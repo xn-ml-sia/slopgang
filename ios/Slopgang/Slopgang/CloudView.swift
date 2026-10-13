@@ -215,8 +215,11 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
         let safeTop = Double(safeAreaInsets.top) + 44, safeBottom = Double(safeAreaInsets.bottom) + 12
         let safeH = max(100, h - safeTop - safeBottom)
         let cyScreen = safeTop + safeH / 2
-        let extent = LY / 2 + R * 0.55       // half-height of the bicone as seen at the default tilt
-        let yFit = (safeH * 0.48) / (extent * fpx / DIST)
+        // Half-height that real plates reach: the lightness axis (LY / 2 = 130). The bicone narrows at
+        // its tips, so plates rarely go past that. Map it to 56% of the half safe height, so the
+        // lightest and darkest plates reach the top bar and the bottom edge, and near ones run a bit past.
+        let extent = LY / 2
+        let yFit = (safeH * 0.56) / (extent * fpx / DIST)
         let cyw = cos(yaw), syw = sin(yaw), cp = cos(pitch), sp = sin(pitch)
 
         CATransaction.begin(); CATransaction.setDisableActions(true)
