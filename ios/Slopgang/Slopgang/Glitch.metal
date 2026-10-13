@@ -34,6 +34,9 @@ struct MoshUniforms {
     float2 seedFromS;
     float2 seedToO;      // where the enlarged plate sits in the seeded feedback (uv)
     float2 seedToS;
+    float fly;           // 1 = the card is the tapped thumbnail (seedFrom crop of the old screen) flying
+                         //     to its detail frame; the new screen appears only at the keyframe
+    float pad;
 };
 
 // First feedback frame: the old screen with the tapped plate blown up over it, so the
@@ -52,7 +55,10 @@ static float hash2(float2 p, float s) {
 static float4 inputAt(float2 uv, texture2d<float> oldTex, texture2d<float> newTex,
                       constant MoshUniforms& u, sampler s) {
     float2 q = (uv - u.cardOrigin) / u.cardSize;
-    if (all(q >= 0.0) && all(q <= 1.0)) return newTex.sample(s, q);
+    if (all(q >= 0.0) && all(q <= 1.0)) {
+        if (u.fly > 0.5) return oldTex.sample(s, u.seedFromO + q * u.seedFromS);
+        return newTex.sample(s, q);
+    }
     return oldTex.sample(s, uv);
 }
 
@@ -65,7 +71,7 @@ fragment float4 moshDisplace(VOut in [[stage_in]],
     constexpr sampler lin(coord::normalized, address::clamp_to_edge, filter::linear);
     constexpr sampler nn(coord::normalized, address::clamp_to_edge, filter::nearest);
     float4 truth = inputAt(in.uv, oldTex, newTex, u, lin);
-    if (u.keyframe > 0.5) return truth;
+    if (u.keyframe > 0.5) return u.fly > 0.5 ? newTex.sample(lin, in.uv) : truth;
 
     // One vector per macroblock (nearest lookup), so blocks move as hard rectangles.
     float2 cell = floor(in.uv * u.grid / u.blockScale) * u.blockScale;

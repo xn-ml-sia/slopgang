@@ -28,6 +28,7 @@ struct MoshParams {
 enum MoshMotion {
     case grow(from: CGRect, via: CGRect) // card grows from the tapped plate to the detail media rect, then full screen
     case settle(scale: CGFloat) // full-screen new frame zooms from `scale` to 1
+    case fly(from: CGRect, to: CGRect, crop: CGRect) // `crop` of the old screen flies from `from` to `to`; new screen only at the keyframe
     case live                   // full-screen live input (home entrance): its own motion drives the smear
 }
 
@@ -38,7 +39,7 @@ nonisolated final class BlockMatcher: @unchecked Sendable {   // used only on Mo
     let w: Int, h: Int, b: Int, gw: Int, gh: Int
     private let sizePt: CGSize
     private let oldGray: CGImage?
-    private let newGray: CGImage?
+    private var newGray: CGImage?
     private var prev: [UInt8]?
     private var lastVectors: [SIMD2<Float>]
 
@@ -51,6 +52,13 @@ nonisolated final class BlockMatcher: @unchecked Sendable {   // used only on Mo
         // Downscale both screens to the motion grid once; per-frame renders then touch ~1/16 of the pixels.
         oldGray = Self.small(old.cgImage, w, h); newGray = Self.small(new.cgImage, w, h)
         lastVectors = Array(repeating: .zero, count: gw * gh)
+    }
+
+    /// Fly mode: the card shown in the input frames is this crop of the old screen (points).
+    func useOldCrop(_ r: CGRect) {
+        let sx = CGFloat(w) / sizePt.width, sy = CGFloat(h) / sizePt.height
+        let px = CGRect(x: r.minX * sx, y: r.minY * sy, width: r.width * sx, height: r.height * sy).integral
+        newGray = oldGray?.cropping(to: px) ?? newGray
     }
 
     private static func small(_ img: CGImage?, _ w: Int, _ h: Int) -> CGImage? {
@@ -277,6 +285,7 @@ final class MoshView: MTKView, MTKViewDelegate {
         params = p
         motionKind = motion
         let m = BlockMatcher(size: bounds.size, blockPt: p.blockSize, old: old, new: new)
+        if case .fly(_, _, let crop) = motion { m.useOldCrop(crop) }
         matcher = m
         let md = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rg32Float, width: m.gw, height: m.gh, mipmapped: false)
         md.usage = .shaderRead
@@ -363,6 +372,12 @@ final class MoshView: MTKView, MTKViewDelegate {
             return lerp(via, full, CGFloat(easeOutCubic((p - 0.5) / 0.3)))
         case .live:
             return full
+        case .fly(let a, let b, _):
+            // Ease in-out, landing exactly on `to` at 92% and holding there for the keyframe.
+            let t = min(1, p / 0.92)
+            let k = CGFloat(t < 0.5 ? 4 * t * t * t : 1 - pow(-2 * t + 2, 3) / 2)
+            return CGRect(x: a.minX + (b.minX - a.minX) * k, y: a.minY + (b.minY - a.minY) * k,
+                          width: a.width + (b.width - a.width) * k, height: a.height + (b.height - a.height) * k)
         case .settle(let s):
             let k = CGFloat(easeOutCubic(p / 0.8))
             let sc = s + (1 - s) * k
@@ -391,7 +406,9 @@ final class MoshView: MTKView, MTKViewDelegate {
         let blockScale = params.blockSchedule.first { p < $0.until }?.scale ?? 1
         let sz0 = bounds.size
         var seedFrom = CGRect.zero, seedTo = CGRect.zero
-        if params.seedScale > 0, case .grow(let from, _) = motionKind {
+        var flyFlag: Float = 0
+        if case .fly(_, _, let crop) = motionKind { seedFrom = crop; flyFlag = 1 }
+        else if params.seedScale > 0, case .grow(let from, _) = motionKind {
             seedFrom = from
             let w = from.width * params.seedScale, h = from.height * params.seedScale
             seedTo = CGRect(x: from.midX - w / 2, y: from.midY - h / 2, width: w, height: h)
@@ -458,7 +475,7 @@ final class MoshView: MTKView, MTKViewDelegate {
             keyframe: keyframe ? 1 : 0,
             blockScale: blockScale,
             seeding: firstFrame ? 1 : 0,
-            seedFromO: sfo, seedFromS: sfs, seedToO: sto, seedToS: sts)
+            seedFromO: sfo, seedFromS: sfs, seedToO: sto, seedToS: sts, fly: flyFlag, pad: 0)
         frameIndex += 1
 
         // Pass 1: displacement into the next feedback texture.
@@ -501,7 +518,7 @@ final class MoshView: MTKView, MTKViewDelegate {
         cb.commit()
     }
 
-    /// Must match MoshUniforms in Glitch.metal: float2 x3, float x8, float2 x4 = 88 bytes, 8-byte aligned.
+    /// Must match MoshUniforms in Glitch.metal: float2 x3, float x8, float2 x4, float x2 = 96 bytes, 8-byte aligned.
     private struct Uniforms {
         var cardOrigin: SIMD2<Float>
         var cardSize: SIMD2<Float>
@@ -518,5 +535,7 @@ final class MoshView: MTKView, MTKViewDelegate {
         var seedFromS: SIMD2<Float>
         var seedToO: SIMD2<Float>
         var seedToS: SIMD2<Float>
+        var fly: Float
+        var pad: Float
     }
 }

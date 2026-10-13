@@ -35,26 +35,36 @@ final class GlitchDirector: ObservableObject {
     func push(from rect: CGRect?, mediaAspect: CGFloat = 0.75, _ change: @escaping () -> Void) {
         var p = MoshParams()
         p.duration = Self.pushDuration
-        // Progressive: smear starts at 30% and feedback at 55%, both reach full late (p^1.6);
-        // heal stays off until the last 12%.
+        // The thumbnail flies from its Home frame to the detail hero; its block motion drags pixels
+        // across the screen. Progressive: smear starts at 30% and feedback at 55%, full late (p^1.6).
+        // High melt keeps vectors flowing so trails spread; heal stays tiny so the smear never
+        // dissolves; the clean detail page lands only at the keyframe.
         p.smear = 3.0
         p.rampFrom = 0.3
         p.intensityFrom = 0.55
         p.rampPower = 1.6
-        p.melt = 0.6
+        p.melt = 0.85
         p.healStart = 0
-        p.healFrom = 0.88
-        p.healEnd = 0.5
+        p.healFrom = 0.9
+        p.healEnd = 0.12
         p.diffusion = 0.2
         p.seedScale = 3
         p.blockSchedule = [(0.25, 2), (0.5, 1.5), (1, 1)]
         let top = keyWindow()?.safeAreaInsets.top ?? 59
         run(params: p, sound: "glitch-in", motion: { bounds in
-            let from = rect ?? CGRect(x: bounds.midX - 40, y: bounds.midY - 40, width: 80, height: 80)
-            // Detail media: full width under the nav bar, at the plate's aspect (capped like the site).
+            // Detail hero: full width under the nav bar, at the plate's aspect (capped like the site).
             let mh = min(bounds.height * 0.6, bounds.width * max(0.3, mediaAspect))
-            let media = CGRect(x: 0, y: top + 44, width: bounds.width, height: mh)
-            return .grow(from: from, via: media)
+            let hero = CGRect(x: 0, y: top + 44, width: bounds.width, height: mh)
+            guard let from = rect, from.width > 1, from.height > 1 else {
+                return .grow(from: CGRect(x: bounds.midX - 40, y: bounds.midY - 40, width: 80, height: 80), via: hero)
+            }
+            // The thumbnail is drawn aspect-fill on Home; crop its centre to the hero's aspect so it
+            // flies without stretching.
+            let ha = hero.height / hero.width
+            var crop = from
+            if from.height / from.width > ha { crop.size.height = from.width * ha; crop.origin.y = from.midY - crop.height / 2 }
+            else { crop.size.width = from.height / ha; crop.origin.x = from.midX - crop.width / 2 }
+            return .fly(from: from, to: hero, crop: crop)
         }, change)
     }
 
