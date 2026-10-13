@@ -11,8 +11,8 @@ import UIKit
 @MainActor
 /// DEBUG timeline for the tap -> detail transition. Prints ms since the last "tap".
 enum SGTrace {
-    static var t0 = CACurrentMediaTime()
-    static func mark(_ s: String, reset: Bool = false) {
+    nonisolated(unsafe) static var t0 = CACurrentMediaTime()
+    nonisolated static func mark(_ s: String, reset: Bool = false) {
         #if DEBUG
         let now = CACurrentMediaTime()
         if reset { t0 = now }
