@@ -367,9 +367,7 @@ final class MoshView: MTKView, MTKViewDelegate {
                 let fr = matcher.frame(card: r)
                 let tf = CACurrentMediaTime()
                 let v = matcher.estimate(fr, threshold: th, melt: mt)
-                #if DEBUG
-                print(String(format: "[sg][t] match: frame %.1f ms, search %.1f ms", (tf - tm0) * 1000, (CACurrentMediaTime() - tf) * 1000))
-                #endif
+                _ = tf
                 let dt = (CACurrentMediaTime() - tm0) * 1000
                 DispatchQueue.main.async {
                     guard let self, self.generation == gen else { return }
