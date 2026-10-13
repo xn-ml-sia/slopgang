@@ -216,8 +216,9 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
         let safeH = max(100, h - safeTop - safeBottom)
         let cyScreen = safeTop + safeH / 2
         // Half-height that real plates reach: the lightness axis (LY / 2 = 130). The bicone narrows at
-        // its tips, so plates rarely go past that. Map it to 56% of the half safe height, so the
-        // lightest and darkest plates reach the top bar and the bottom edge, and near ones run a bit past.
+        // its tips, so plates rarely go past that. Map it to 0.56 x safe height from centre
+        // (112% of the half height), so the lightest and darkest plates reach the top bar and the bottom
+        // edge, and some run a bit past.
         let extent = LY / 2
         let yFit = (safeH * 0.56) / (extent * fpx / DIST)
         let cyw = cos(yaw), syw = sin(yaw), cp = cos(pitch), sp = sin(pitch)
