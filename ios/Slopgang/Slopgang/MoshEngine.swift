@@ -72,6 +72,7 @@ nonisolated final class BlockMatcher: @unchecked Sendable {   // used only on Mo
         return px
     }
 
+    @_optimize(speed)
     private func half(_ a: [UInt8], _ w: Int, _ h: Int) -> [UInt8] {
         let hw = w / 2, hh = h / 2
         var o = [UInt8](repeating: 0, count: hw * hh)
@@ -88,6 +89,7 @@ nonisolated final class BlockMatcher: @unchecked Sendable {   // used only on Mo
         cur.withUnsafeBufferPointer { c in ref.withUnsafeBufferPointer { r in sadP(c, r, w, h, x0, y0, bs, dx, dy) } }
     }
 
+    @_optimize(speed) @inline(__always)
     private func sadP(_ curB: UnsafeBufferPointer<UInt8>, _ refB: UnsafeBufferPointer<UInt8>, _ w: Int, _ h: Int, _ x0: Int, _ y0: Int, _ bs: Int, _ dx: Int, _ dy: Int) -> Int {
         let cur = curB.baseAddress!, ref = refB.baseAddress!
         var s = 0
@@ -102,6 +104,7 @@ nonisolated final class BlockMatcher: @unchecked Sendable {   // used only on Mo
     }
 
     /// Estimates motion from the previous frame to `cur`. `threshold` and `melt` as in MoshParams.
+    @_optimize(speed)
     func estimate(_ cur: [UInt8], threshold: Float, melt: Float) -> [SIMD2<Float>] {
         defer { prev = cur }
         guard let ref = prev else { return lastVectors }
