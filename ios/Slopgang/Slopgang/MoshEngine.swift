@@ -22,6 +22,7 @@ struct MoshParams {
     var rampFrom: Float = 1          // smear multiplier at p = 0 (1 = no ramp)
     var intensityFrom: Float? = nil  // feedback strength at p = 0 (nil = `intensity` throughout)
     var rampPower: Double = 1.5      // > 1: stronger late
+    var drift: Float = 0             // fly mode: screen-wide block drift strength at full ramp
 }
 
 /// How the new screen enters the input frame. Its motion is what drags the old pixels.
@@ -419,6 +420,9 @@ final class MoshView: MTKView, MTKViewDelegate {
         let (sfo, sfs) = uv(seedFrom), (sto, sts) = uv(seedTo)
         let keyframe = p >= 1
         let r = card(at: p)
+        // Thumbnail velocity (uv per 60 Hz frame), for the screen-wide drift in fly mode.
+        let rPrev = card(at: max(0, p - (1.0 / 60) / max(0.05, params.duration)))
+        let driftDir = SIMD2(Float((r.midX - rPrev.midX) / max(1, bounds.width)), Float((r.midY - rPrev.midY) / max(1, bounds.height)))
         // Progressive build (stronger late).
         let ramp = Float(pow(p, params.rampPower))
         let smearNow = params.smear * (params.rampFrom + (1 - params.rampFrom) * ramp)
@@ -475,7 +479,8 @@ final class MoshView: MTKView, MTKViewDelegate {
             keyframe: keyframe ? 1 : 0,
             blockScale: blockScale,
             seeding: firstFrame ? 1 : 0,
-            seedFromO: sfo, seedFromS: sfs, seedToO: sto, seedToS: sts, fly: flyFlag, pad: 0)
+            seedFromO: sfo, seedFromS: sfs, seedToO: sto, seedToS: sts, fly: flyFlag,
+            drift: flyFlag > 0 ? params.drift * ramp : 0, driftDir: driftDir)
         frameIndex += 1
 
         // Pass 1: displacement into the next feedback texture.
@@ -518,7 +523,7 @@ final class MoshView: MTKView, MTKViewDelegate {
         cb.commit()
     }
 
-    /// Must match MoshUniforms in Glitch.metal: float2 x3, float x8, float2 x4, float x2 = 96 bytes, 8-byte aligned.
+    /// Must match MoshUniforms in Glitch.metal: float2 x3, float x8, float2 x4, float x2, float2 = 104 bytes, 8-byte aligned.
     private struct Uniforms {
         var cardOrigin: SIMD2<Float>
         var cardSize: SIMD2<Float>
@@ -536,6 +541,7 @@ final class MoshView: MTKView, MTKViewDelegate {
         var seedToO: SIMD2<Float>
         var seedToS: SIMD2<Float>
         var fly: Float
-        var pad: Float
+        var drift: Float
+        var driftDir: SIMD2<Float>
     }
 }

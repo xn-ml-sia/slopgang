@@ -39,14 +39,15 @@ final class GlitchDirector: ObservableObject {
         // across the screen. Progressive: smear starts at 30% and feedback at 55%, full late (p^1.6).
         // High melt keeps vectors flowing so trails spread; heal stays tiny so the smear never
         // dissolves; the clean detail page lands only at the keyframe.
-        p.smear = 3.0
         p.rampFrom = 0.3
-        p.intensityFrom = 0.55
         p.rampPower = 1.6
-        p.melt = 0.85
+        p.smear = 3.4
+        p.intensityFrom = 0.65
+        p.drift = 1.0                // screen-wide block drift, building with the ramp
+        p.melt = 0.9
         p.healStart = 0
-        p.healFrom = 0.9
-        p.healEnd = 0.12
+        p.healFrom = 0.92
+        p.healEnd = 0.08
         p.diffusion = 0.2
         p.seedScale = 3
         p.blockSchedule = [(0.25, 2), (0.5, 1.5), (1, 1)]

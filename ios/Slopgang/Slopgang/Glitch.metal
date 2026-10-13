@@ -36,7 +36,8 @@ struct MoshUniforms {
     float2 seedToS;
     float fly;           // 1 = the card is the tapped thumbnail (seedFrom crop of the old screen) flying
                          //     to its detail frame; the new screen appears only at the keyframe
-    float pad;
+    float drift;         // fly mode: strength of the screen-wide block drift (0..1, ramps late)
+    float2 driftDir;     // fly mode: the thumbnail's motion this frame (uv per frame)
 };
 
 // First feedback frame: the old screen with the tapped plate blown up over it, so the
@@ -76,6 +77,16 @@ fragment float4 moshDisplace(VOut in [[stage_in]],
     // One vector per macroblock (nearest lookup), so blocks move as hard rectangles.
     float2 cell = floor(in.uv * u.grid / u.blockScale) * u.blockScale;
     float2 mv = motion.sample(nn, (cell + 0.5 * u.blockScale) / u.grid).xy * u.smear;
+    if (u.fly > 0.5 && u.drift > 0.0) {
+        // Screen-wide field driven by the thumbnail: every block copies from a point back along the
+        // flight and toward the flying card, by a random per-block amount, so the thumbnail's pixels
+        // tear outward in blocks and fill the screen as the drift builds.
+        float r1 = hash2(cell, 11.0), r2 = hash2(cell, 23.0 + floor(u.seed / 6.0));
+        float2 cc = u.cardOrigin + 0.5 * u.cardSize;
+        float2 toward = cc - in.uv;
+        mv += -u.driftDir * u.smear * (0.5 + 1.5 * r1) * u.drift * 6.0;
+        mv += toward * (0.02 + 0.10 * r2 * r2) * u.drift;
+    }
 
     // P-frame: copy the previous output from where this block's content came from.
     float2 jitter = (float2(hash2(cell, u.seed + 1.0), hash2(cell, u.seed + 2.0)) - 0.5) / u.grid * 0.5;
