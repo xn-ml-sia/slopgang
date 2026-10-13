@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Procedural glitch SFX for the home -> detail transition. No samples, no third-party audio.
-Writes Resources/Sounds/glitch-in.wav (520 ms) and glitch-out.wav (200 ms), 44.1 kHz mono 16-bit.
+Writes Resources/Sounds/glitch-in.wav (1000 ms) and glitch-out.wav (200 ms), 44.1 kHz mono 16-bit.
 Seeded, so the output is the same on every run."""
 import math, os, random, struct, wave
 SR = 44100
@@ -74,6 +74,17 @@ glitch_out = [
     ('tone',    40, 200, 0.4, 260, 1600),  # rising: reverse of the falling sweep
     ('noise',  240,  50, 0.4, 6, 2),
 ]
-write('glitch-in.wav', build(520, glitch_in, 7))
+# 1.0 s open: builds with the visual smear (sparse early, dense and loud late), clean tick at the keyframe.
+glitch_in_1s = [
+    ('noise',    0,  40, 0.7, 4, 8),      # hit
+    ('tone',     0, 160, 0.35, 1800, 220),
+    ('stutter', 120, 200, 0.45, 22, 9),   # light tearing
+    ('noise',   300, 220, 0.5, 3, 16),    # smear starts
+    ('stutter', 450, 260, 0.75, 16, 16),  # tearing grows
+    ('noise',   560, 300, 0.85, 2, 28),   # heavy coarse smear, loudest late
+    ('tone',    600, 300, 0.45, 110, 50), # sub under it
+    ('noise',   930,  60, 0.45, 6, 2),    # tick as the keyframe lands
+]
+write('glitch-in.wav', build(1000, glitch_in_1s, 7))
 write('glitch-out.wav', build(200, glitch_out, 11, 200 / 300))
 print('ok')

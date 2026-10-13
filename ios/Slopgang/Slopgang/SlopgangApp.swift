@@ -41,6 +41,7 @@ struct HeaderBrand: ToolbarContent {
                 Button { goHome.run() } label: { Brand(color: Theme.ink) }.buttonStyle(.plain)
             }
         }
+        .plainToolbarBackground()
     }
 }
 

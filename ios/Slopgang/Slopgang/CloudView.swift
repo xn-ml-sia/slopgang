@@ -8,18 +8,99 @@ struct CloudView: UIViewRepresentable {
     var plates: [Plate]
     var onOpen: (Plate, CGRect) -> Void
 
-    func makeUIView(context: Context) -> CloudUIView {
-        let v = CloudUIView()
-        v.onOpen = onOpen
+    func makeUIView(context: Context) -> CloudHostView {
+        let v = CloudHostView()
+        v.cloud.onOpen = onOpen
         return v
     }
 
-    func updateUIView(_ v: CloudUIView, context: Context) {
-        v.onOpen = onOpen
-        v.setPlates(plates)
+    func updateUIView(_ v: CloudHostView, context: Context) {
+        v.cloud.onOpen = onOpen
+        v.cloud.setPlates(plates)
+        v.setNeedsLayout()
     }
 
-    static func dismantleUIView(_ v: CloudUIView, coordinator: ()) { v.stop() }
+    static func dismantleUIView(_ v: CloudHostView, coordinator: ()) { v.stop() }
+}
+
+/// The cloud plus a datamosh layer over it for the entrance: while the plates arc in, the live
+/// cloud is fed frame by frame into MoshView, so their own motion drags the previous frame's pixels.
+/// Reduce Motion gets a plain fade instead.
+final class CloudHostView: UIView {
+    let cloud = CloudUIView()
+    private let mosh = MoshView()
+    private var entranceDone = false
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .black
+        addSubview(cloud)
+        mosh.isUserInteractionEnabled = false   // touches go straight to the cloud
+        mosh.isHidden = true
+        addSubview(mosh)
+    }
+    required init?(coder: NSCoder) { fatalError() }
+
+    func stop() { mosh.cancel(); mosh.isHidden = true; cloud.stop() }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        cloud.frame = bounds
+        mosh.frame = bounds
+        if !entranceDone, cloud.hasPlates, window != nil, bounds.width > 0, bounds.height > 0 {
+            entranceDone = true
+            DispatchQueue.main.async { self.startEntrance() }
+        }
+    }
+
+    private func startEntrance() {
+        if UIAccessibility.isReduceMotionEnabled {
+            cloud.alpha = 0
+            UIView.animate(withDuration: 0.45, delay: 0, options: [.curveEaseOut, .allowUserInteraction]) { self.cloud.alpha = 1 }
+            return
+        }
+        let scale = window?.screen.scale ?? 3
+        mosh.drawableSize = CGSize(width: bounds.width * scale, height: bounds.height * scale)
+        // Live frames at 1x: the mosh is blocky anyway, and this keeps each capture cheap.
+        let fmt = UIGraphicsImageRendererFormat()
+        fmt.scale = 1
+        fmt.opaque = true
+        fmt.preferredRange = .standard
+        let renderer = UIGraphicsImageRenderer(bounds: bounds, format: fmt)
+        let source: () -> CGImage? = { [weak self] in
+            guard let self else { return nil }
+            return renderer.image { _ in _ = self.cloud.drawHierarchy(in: self.cloud.bounds, afterScreenUpdates: false) }.cgImage
+        }
+        var p = MoshParams()
+        p.duration = 1.4
+        p.smear = 2.6
+        p.rampFrom = 0.5
+        p.intensity = 0.9            // trails over the live plates, not a full freeze
+        p.intensityFrom = 0.6
+        p.rampPower = 1.2
+        p.melt = 0.55
+        p.healStart = 0.02
+        p.healFrom = 0.75
+        p.healEnd = 0.45
+        p.diffusion = 0.2
+        p.blockSchedule = [(0.3, 2), (0.6, 1.5), (1, 1)]
+        mosh.onFirstFrame = { [weak self] in self?.mosh.isHidden = false }
+        let ok = mosh.runLive(source: source, params: p) { [weak self] in
+            self?.mosh.isHidden = true
+            self?.mosh.cancel()
+            #if DEBUG
+            print("[sg] entrance mosh finished")
+            #endif
+        }
+        #if DEBUG
+        print("[sg] entrance mosh started:", ok)
+        #endif
+        // Safety: never leave the layer up.
+        DispatchQueue.main.asyncAfter(deadline: .now() + p.duration + 0.5) { [weak self] in
+            guard let self, !self.mosh.isHidden else { return }
+            self.mosh.cancel(); self.mosh.isHidden = true
+        }
+    }
 }
 
 /// Port of src/components/FeedWall.tsx to UIKit + Core Animation.
@@ -145,6 +226,8 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
     }
 
     // MARK: Data
+
+    var hasPlates: Bool { !blocks.isEmpty }
 
     func setPlates(_ plates: [Plate]) {
         let newIds = plates.map(\.id)

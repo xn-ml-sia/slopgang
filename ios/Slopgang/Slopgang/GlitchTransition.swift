@@ -22,7 +22,7 @@ enum SGTrace {
 }
 
 final class GlitchDirector: ObservableObject {
-    static let pushDuration = 0.52   // matches glitch-in.wav
+    static let pushDuration = 1.0    // tap -> clean detail; matches glitch-in.wav
     static let popDuration = 0.20    // matches glitch-out.wav
 
     private var overlay: UIWindow?
@@ -35,11 +35,16 @@ final class GlitchDirector: ObservableObject {
     func push(from rect: CGRect?, mediaAspect: CGFloat = 0.75, _ change: @escaping () -> Void) {
         var p = MoshParams()
         p.duration = Self.pushDuration
+        // Progressive: smear starts at 30% and feedback at 55%, both reach full late (p^1.6);
+        // heal stays off until the last 12%.
         p.smear = 3.0
-        p.melt = 0.5
+        p.rampFrom = 0.3
+        p.intensityFrom = 0.55
+        p.rampPower = 1.6
+        p.melt = 0.6
         p.healStart = 0
-        p.healFrom = 0.6
-        p.healEnd = 0.35
+        p.healFrom = 0.88
+        p.healEnd = 0.5
         p.diffusion = 0.2
         p.seedScale = 3
         p.blockSchedule = [(0.25, 2), (0.5, 1.5), (1, 1)]

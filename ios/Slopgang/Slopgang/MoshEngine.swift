@@ -18,12 +18,17 @@ struct MoshParams {
     var threshold: Float = 1        // SAD gain per pixel needed to accept a vector
     var diffusion: Float = 0.15
     var duration: Double = 0.52
+    /// Progressive build: smear and feedback ramp from these fractions/values up to full by p^rampPower.
+    var rampFrom: Float = 1          // smear multiplier at p = 0 (1 = no ramp)
+    var intensityFrom: Float? = nil  // feedback strength at p = 0 (nil = `intensity` throughout)
+    var rampPower: Double = 1.5      // > 1: stronger late
 }
 
 /// How the new screen enters the input frame. Its motion is what drags the old pixels.
 enum MoshMotion {
     case grow(from: CGRect, via: CGRect) // card grows from the tapped plate to the detail media rect, then full screen
     case settle(scale: CGFloat) // full-screen new frame zooms from `scale` to 1
+    case live                   // full-screen live input (home entrance): its own motion drives the smear
 }
 
 /// CPU block matching between consecutive low-res input frames, two levels (coarse then refine),
@@ -54,6 +59,18 @@ nonisolated final class BlockMatcher: @unchecked Sendable {   // used only on Mo
         ctx.interpolationQuality = .medium
         ctx.draw(img, in: CGRect(x: 0, y: 0, width: w, height: h))
         return ctx.makeImage()
+    }
+
+    /// Low-res grey version of a live input frame.
+    func frame(live img: CGImage) -> [UInt8] {
+        var px = [UInt8](repeating: 0, count: w * h)
+        px.withUnsafeMutableBytes { buf in
+            guard let ctx = CGContext(data: buf.baseAddress, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w,
+                                      space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return }
+            ctx.interpolationQuality = .low
+            ctx.draw(img, in: CGRect(x: 0, y: 0, width: w, height: h))
+        }
+        return px
     }
 
     /// Renders the low-res grey input frame: old screen, new screen as a card in `card` (points).
@@ -195,6 +212,8 @@ final class MoshView: MTKView, MTKViewDelegate {
     private var matching = false
     private var fieldLive = true
     private var generation = 0
+    private var liveSource: (() -> CGImage?)?
+    private var liveImage: CGImage?
 
     init() {
         let dev = MTLCreateSystemDefaultDevice()
@@ -287,6 +306,29 @@ final class MoshView: MTKView, MTKViewDelegate {
         return true
     }
 
+    /// Live mode (home entrance): `source` returns the current frame of the view under the mosh,
+    /// at a fixed pixel size. Its own motion, frame to frame, drives the smear.
+    func runLive(source: @escaping () -> CGImage?, params p: MoshParams, completion: @escaping () -> Void) -> Bool {
+        guard let first = source() else { return false }
+        let ui = UIImage(cgImage: first)
+        liveSource = source
+        liveImage = first
+        return run(old: ui, new: ui, motion: .live, params: p, completion: completion)
+    }
+
+    private func upload(_ cg: CGImage, into t: MTLTexture) {
+        guard cg.width == t.width, cg.height == t.height else { return }
+        let rowBytes = cg.width * 4
+        var bytes = [UInt8](repeating: 0, count: rowBytes * cg.height)
+        bytes.withUnsafeMutableBytes { buf in
+            guard let ctx = CGContext(data: buf.baseAddress, width: cg.width, height: cg.height, bitsPerComponent: 8, bytesPerRow: rowBytes,
+                                      space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue) else { return }
+            ctx.draw(cg, in: CGRect(x: 0, y: 0, width: cg.width, height: cg.height))
+            t.replace(region: MTLRegionMake2D(0, 0, cg.width, cg.height), mipmapLevel: 0, withBytes: buf.baseAddress!, bytesPerRow: rowBytes)
+        }
+    }
+
     /// Stops drawing and drops the textures. Safe to call more than once.
     func cancel() {
         #if DEBUG
@@ -303,6 +345,7 @@ final class MoshView: MTKView, MTKViewDelegate {
         onFirstFrame = nil
         finished = true
         oldTex = nil; newTex = nil; motionTex = nil; ping = []; matcher = nil
+        liveSource = nil; liveImage = nil
     }
 
     private func easeOutCubic(_ t: Double) -> Double { 1 - pow(1 - min(1, max(0, t)), 3) }
@@ -318,6 +361,8 @@ final class MoshView: MTKView, MTKViewDelegate {
             }
             if p < 0.5 { return lerp(from, via, CGFloat(easeOutCubic(p / 0.5))) }
             return lerp(via, full, CGFloat(easeOutCubic((p - 0.5) / 0.3)))
+        case .live:
+            return full
         case .settle(let s):
             let k = CGFloat(easeOutCubic(p / 0.8))
             let sc = s + (1 - s) * k
@@ -357,6 +402,15 @@ final class MoshView: MTKView, MTKViewDelegate {
         let (sfo, sfs) = uv(seedFrom), (sto, sts) = uv(seedTo)
         let keyframe = p >= 1
         let r = card(at: p)
+        // Progressive build (stronger late).
+        let ramp = Float(pow(p, params.rampPower))
+        let smearNow = params.smear * (params.rampFrom + (1 - params.rampFrom) * ramp)
+        let intensityNow = params.intensityFrom.map { $0 + (params.intensity - $0) * ramp } ?? params.intensity
+        var live: CGImage?
+        if let src = liveSource, let img = src() {
+            live = img
+            upload(img, into: newTex)
+        }
 
         // Motion estimation between the previous and current input frames.
         if !matching {
@@ -364,7 +418,7 @@ final class MoshView: MTKView, MTKViewDelegate {
             let gen = generation, th = params.threshold, mt = params.melt
             matchQueue.async { [weak self] in
                 let tm0 = CACurrentMediaTime()
-                let fr = matcher.frame(card: r)
+                let fr = live.map { matcher.frame(live: $0) } ?? matcher.frame(card: r)
                 let tf = CACurrentMediaTime()
                 let v = matcher.estimate(fr, threshold: th, melt: mt)
                 _ = tf
@@ -396,10 +450,10 @@ final class MoshView: MTKView, MTKViewDelegate {
             cardOrigin: SIMD2(Float(r.minX / sz.width), Float(r.minY / sz.height)),
             cardSize: SIMD2(Float(max(1, r.width) / sz.width), Float(max(1, r.height) / sz.height)),
             grid: SIMD2(Float(matcher.gw), Float(matcher.gh)),
-            smear: params.smear,
+            smear: smearNow,
             heal: params.healStart + (params.healEnd - params.healStart) * healK * healK,
             diffusion: params.diffusion,
-            intensity: params.intensity,
+            intensity: intensityNow,
             seed: Float(frameIndex % 997),
             keyframe: keyframe ? 1 : 0,
             blockScale: blockScale,

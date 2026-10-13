@@ -190,15 +190,23 @@ struct Kicker: View {
 
 /// Detail header button: white fill, black icon, square corners, site nav padding
 /// (0.35rem x 0.8rem), so it reads over media.
+/// Detail header icon button: a white circle with a dark icon (the icon itself is not filled).
 struct FilledNavButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(Theme.font(.nav))
             .foregroundStyle(Theme.ink)
-            .padding(.vertical, 0.35 * Theme.rem).padding(.horizontal, 0.8 * Theme.rem)
-            .background(Rectangle().fill(Theme.paper))
+            .frame(width: 36, height: 36)
+            .background(Circle().fill(Theme.paper).shadow(color: .black.opacity(0.18), radius: 3, y: 1))
             .opacity(configuration.isPressed ? 0.7 : 1)
-            .contentShape(Rectangle())
+            .contentShape(Circle())
+    }
+}
+
+extension ToolbarContent {
+    /// Drops the system's shared glass pill behind a toolbar item (iOS 26+), so our own white circle shows.
+    @ToolbarContentBuilder func plainToolbarBackground() -> some ToolbarContent {
+        if #available(iOS 26.0, *) { self.sharedBackgroundVisibility(.hidden) } else { self }
     }
 }
 

@@ -25,6 +25,7 @@ struct DetailView: View {
                 .buttonStyle(FilledNavButtonStyle())
                 .accessibilityLabel("Share")
             }
+            .plainToolbarBackground()
         }
     }
 
@@ -45,13 +46,12 @@ struct DetailView: View {
 
                 if p.kind == .pair, let r = p.researcher, let a = p.artist {
                     VStack(alignment: .leading, spacing: 16) {
-                        HStack(alignment: .top, spacing: 16) {
-                            PairColumn(label: "Research", side: r)
-                            PairColumn(label: "Art", side: a)
+                        PairCarousel(sides: [("Research", r), ("Art", a)])
+                        if let e = p.evidence {
+                            Text(e).textStyle(.deck, color: Theme.muted).frame(maxWidth: Theme.measure, alignment: .leading)
+                                .padding(.horizontal, Theme.gutter)
                         }
-                        if let e = p.evidence { Text(e).textStyle(.deck, color: Theme.muted).frame(maxWidth: Theme.measure, alignment: .leading) }
                     }
-                    .padding(.horizontal, Theme.gutter)
                 }
 
                 VStack(alignment: .leading, spacing: 1.15 * Theme.body) {   // p margin-top 1.15em
@@ -166,23 +166,59 @@ private struct MetaGrid: View {
     }
 }
 
-private struct PairColumn: View {
+/// Researcher and artist as full-width cards, swiped one at a time. Every line in a card is body size.
+private struct PairCarousel: View {
+    var sides: [(String, Plate.PairSide)]
+    @State private var page: Int? = 0
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(alignment: .top, spacing: 0) {
+                    ForEach(Array(sides.enumerated()), id: \.offset) { i, s in
+                        PairCard(label: s.0, side: s.1)
+                            .padding(.horizontal, Theme.gutter)
+                            .containerRelativeFrame(.horizontal)
+                            .id(i)
+                    }
+                }
+                .scrollTargetLayout()
+            }
+            .scrollTargetBehavior(.paging)
+            .scrollPosition(id: $page)
+            HStack(spacing: 8) {
+                ForEach(sides.indices, id: \.self) { i in
+                    Circle().fill(i == (page ?? 0) ? Theme.ink : Theme.ink.opacity(0.25)).frame(width: 7, height: 7)
+                }
+                Text("\((page ?? 0) + 1) / \(sides.count)").textStyle(.body, color: Theme.muted).monospacedDigit()
+            }
+            .padding(.horizontal, Theme.gutter)
+            .accessibilityHidden(true)
+        }
+    }
+}
+
+private struct PairCard: View {
     var label: String
     var side: Plate.PairSide
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Kicker(text: label)
+            Text(label.uppercased()).textStyle(.body, color: Theme.muted)
             Group {
-                if let s = side.url, let u = URL(string: s) { Link(side.work ?? "", destination: u) }
+                if let s = side.url, let u = URL(string: s) { Link(side.work ?? "", destination: u).underline() }
                 else { Text(side.work ?? "") }
             }
-            .textStyle(.heading).multilineTextAlignment(.leading).accessibilityAddTraits(.isHeader)
-            Text([side.name, side.year].compactMap { $0 }.joined(separator: ", ")).textStyle(.deck, color: Theme.muted)
+            .textStyle(.body).fontWeight(.semibold).multilineTextAlignment(.leading).accessibilityAddTraits(.isHeader)
+            let by = [side.name, side.year].compactMap { $0 }.joined(separator: ", ")
+            if !by.isEmpty { Text(by).textStyle(.body) }
             if let h = side.handle, side.handleVerified == true, let u = URL(string: "https://x.com/\(h)") {
-                Link("@\(h)", destination: u).textStyle(.deck, color: Theme.muted)
+                Link("@\(h)", destination: u).textStyle(.body, color: Theme.muted)
             }
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .padding(Theme.gutter * 0.75)
+        .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
+        .background(Theme.paper2)
+        .accessibilityElement(children: .combine)
     }
 }
 
