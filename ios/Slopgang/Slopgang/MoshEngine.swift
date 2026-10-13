@@ -316,6 +316,7 @@ final class MoshView: MTKView, MTKViewDelegate {
         done = completion
         frozenField = false
         if case .pdup(let a, let b, _) = motion, let mt = motionTex {
+            let captureStart = CACurrentMediaTime()
             // Capture ONE field from a short real step of the flight: the thumbnail moved 24 pt
             // toward the hero and grown 10%, measured by block matching like a P-frame.
             let dx = b.midX - a.midX, dy = b.midY - a.midY, len = max(1, hypot(dx, dy))
@@ -361,6 +362,8 @@ final class MoshView: MTKView, MTKViewDelegate {
             matching = true
             generation += 1
             SGTrace.mark("pdup field captured")
+            // Count the field capture against the budget so tap -> clean detail stays on time.
+            params.duration = max(p.duration * 0.6, p.duration - (CACurrentMediaTime() - captureStart))
             start = CACurrentMediaTime()
             isPaused = false
             return true
