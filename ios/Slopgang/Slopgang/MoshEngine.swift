@@ -89,16 +89,39 @@ nonisolated final class BlockMatcher: @unchecked Sendable {   // used only on Mo
         cur.withUnsafeBufferPointer { c in ref.withUnsafeBufferPointer { r in sadP(c, r, w, h, x0, y0, bs, dx, dy) } }
     }
 
+    // Plain while loops over raw pointers: Range iteration and clamping dominate in -Onone builds.
     @_optimize(speed) @inline(__always)
     private func sadP(_ curB: UnsafeBufferPointer<UInt8>, _ refB: UnsafeBufferPointer<UInt8>, _ w: Int, _ h: Int, _ x0: Int, _ y0: Int, _ bs: Int, _ dx: Int, _ dy: Int) -> Int {
         let cur = curB.baseAddress!, ref = refB.baseAddress!
+        let x1 = min(w, x0 + bs), y1 = min(h, y0 + bs)
         var s = 0
-        for y in y0..<min(h, y0 + bs) {
-            let ry = min(h - 1, max(0, y + dy))
-            for x in x0..<min(w, x0 + bs) {
-                let rx = min(w - 1, max(0, x + dx))
-                s += abs(Int(cur[y * w + x]) - Int(ref[ry * w + rx]))
+        if x0 + dx >= 0, x1 + dx <= w, y0 + dy >= 0, y1 + dy <= h {
+            // Fast path: the shifted block is fully inside the frame, no clamping.
+            var y = y0
+            while y < y1 {
+                var c = cur + (y * w + x0)
+                var r = ref + ((y + dy) * w + x0 + dx)
+                let end = cur + (y * w + x1)
+                while c < end {
+                    let d = Int(c.pointee) - Int(r.pointee)
+                    s += d < 0 ? -d : d
+                    c += 1; r += 1
+                }
+                y += 1
             }
+            return s
+        }
+        var y = y0
+        while y < y1 {
+            let ry = min(h - 1, max(0, y + dy))
+            var x = x0
+            while x < x1 {
+                let rx = min(w - 1, max(0, x + dx))
+                let d = Int(cur[y * w + x]) - Int(ref[ry * w + rx])
+                s += d < 0 ? -d : d
+                x += 1
+            }
+            y += 1
         }
         return s
     }
