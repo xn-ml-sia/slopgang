@@ -333,8 +333,11 @@ final class MoshView: MTKView, MTKViewDelegate {
                 let c = SIMD2((Float(bx) + 0.5) / Float(m.gw), (Float(by) + 0.5) / Float(m.gh))
                 let r1 = Float(rng.next()), r2 = Float(rng.next())
                 let toward = (tc - c) * (p.pdupPull * (0.6 + 0.8 * r1))
-                let back = -fdir * Float(12) * (0.5 + r2)        // ~6-18 pt back along the flight
-                field[by * m.gw + bx] += toward + back
+                // A light slant along the flight, only for blocks ahead of the thumbnail (behind it the
+                // slant would pull in black from past the source).
+                let ahead = simd_dot(c - tc, fdir) > 0
+                let slant = ahead ? fdir * Float(8) * (0.5 + r2) : .zero
+                field[by * m.gw + bx] = field[by * m.gw + bx] * 0.35 + toward + slant
                 // The thumbnail's own blocks hold still: they are the source the rest of the screen
                 // keeps copying from, so the bloom fills with its pixels instead of decaying to black.
                 let pt = CGPoint(x: CGFloat(c.x) * sz.width, y: CGFloat(c.y) * sz.height)
