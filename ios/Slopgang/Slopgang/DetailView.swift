@@ -30,6 +30,7 @@ struct DetailView: View {
     }
 
     @ViewBuilder private func content(_ p: Plate) -> some View {
+        ScrollViewReader { proxy in
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.layoutGap) {
                 MediaPlate(plate: p)
@@ -98,6 +99,7 @@ struct DetailView: View {
                                         ("Register", p.register), ("Logged by", p.loggedBy ?? p.author ?? "")])
                     }
                     .padding(.top, 8)
+                    .id("sg-caption")
                 }
                 .frame(maxWidth: Theme.measure, alignment: .leading)
                 .padding(.horizontal, Theme.gutter)
@@ -105,8 +107,15 @@ struct DetailView: View {
                 .padding(.bottom, Theme.essayBottom)
             }
         }
-        // DEBUG screenshots: -scrollEnd opens the page scrolled to the caption.
-        .defaultScrollAnchor(ProcessInfo.processInfo.arguments.contains("-scrollEnd") ? .bottom : .top)
+        #if DEBUG
+        // Screenshots: -scrollEnd scrolls to the caption once the page has settled.
+        .task {
+            guard ProcessInfo.processInfo.arguments.contains("-scrollEnd") else { return }
+            try? await Task.sleep(for: .seconds(2.5))
+            proxy.scrollTo("sg-caption", anchor: .bottom)
+        }
+        #endif
+        }
     }
 }
 
