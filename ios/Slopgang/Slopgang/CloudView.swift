@@ -183,10 +183,12 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
         autoTapArmed = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
             guard let self, self.window != nil else { return }
-            let front = self.blocks.filter { $0.placed }.max { $0.layer.zPosition < $1.layer.zPosition }
+            // Frontmost plate that has its image and is big enough to see.
+            let front = self.blocks.filter { $0.placed && $0.layer.contents != nil && $0.layer.bounds.width > 24 }
+                .max { $0.layer.zPosition < $1.layer.zPosition }
             guard let b = front else { print("[sg] autoTap: no plate"); return }
             let f = (b.layer.presentation() ?? b.layer).frame
-            SGTrace.mark("tap received (autoTap)", reset: true)
+            SGTrace.mark("tap received (autoTap) \(b.plate.slugValue) \(self.convert(f, to: nil).integral)", reset: true)
             self.handleTap(CGPoint(x: f.midX, y: f.midY))
         }
     }
