@@ -125,14 +125,7 @@ fragment float4 moshPDup(VOut in [[stage_in]],
     if (u.keyframe > 0.5) return newTex.sample(lin, in.uv);
     float2 cell = floor(in.uv * u.grid / u.blockScale) * u.blockScale;
     float2 mv = motion.sample(nn, (cell + 0.5 * u.blockScale) / u.grid).xy * u.smear;
-    float4 a, b;
-    if (u.seeding > 0.5) {
-        // First frame: the Home screen with the thumbnail filling its (block-aligned) source blocks.
-        a = seedAt(in.uv + mv, oldTex, u, nn);
-        b = seedAt(in.uv + mv, oldTex, u, lin);
-    } else {
-        a = prev.sample(nn, in.uv + mv);
-        b = prev.sample(lin, in.uv + mv);             // a little bilinear bloom
-    }
+    float4 a = prev.sample(nn, in.uv + mv);
+    float4 b = prev.sample(lin, in.uv + mv);          // a little bilinear bloom
     return mix(a, b, u.diffusion);
 }

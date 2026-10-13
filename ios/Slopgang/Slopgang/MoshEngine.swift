@@ -26,7 +26,6 @@ struct MoshParams {
     var pdupGain: Float = 1          // P-frame duplication: how much of the frozen field is applied per frame...
     var pdupGainFrom: Float = 0.3    // ...starting at this fraction, ramping (rampPower) to full
     var pdupReach: Float = 6         // field dilation falloff, in blocks
-    var pdupPull: Float = 0          // per-frame pull toward the thumbnail (fraction of the distance)
 }
 
 /// How the new screen enters the input frame. Its motion is what drags the old pixels.
@@ -229,8 +228,7 @@ final class MoshView: MTKView, MTKViewDelegate {
     private var latest: [SIMD2<Float>]?
     private var matching = false
     private var fieldLive = true
-    private var frozenField = false
-    private var pdupSource = CGRect.null   // P-frame duplication: still source blocks (points)   // P-frame duplication: the motion texture is fixed for the run
+    private var frozenField = false   // P-frame duplication: the motion texture is fixed for the run
     private var generation = 0
     private var liveSource: (() -> CGImage?)?
     private var liveImage: CGImage?
@@ -324,34 +322,6 @@ final class MoshView: MTKView, MTKViewDelegate {
             _ = m.estimate(m.frame(card: a), threshold: 0, melt: 0)
             var field = m.estimate(m.frame(card: step), threshold: 0.5, melt: 0)
             field = Self.dilate(field, gw: m.gw, gh: m.gh, reach: p.pdupReach)
-            // Full screen: every block also carries motion derived from the flight. Each block copies
-            // from a point back along the flight and toward the thumbnail by a per-block random
-            // amount, so, reapplied every frame, the thumbnail's pixels bloom over the whole screen.
-            let sz = bounds.size
-            let tc = SIMD2(Float(a.midX / sz.width), Float(a.midY / sz.height))
-            let fdir = SIMD2(Float(dx / len), Float(dy / len)) * SIMD2(Float(1 / sz.width), Float(1 / sz.height))
-            let rng = SeededRandom(seed: 0x5106)
-            pdupSource = .null
-            for by in 0..<m.gh { for bx in 0..<m.gw {
-                let c = SIMD2((Float(bx) + 0.5) / Float(m.gw), (Float(by) + 0.5) / Float(m.gh))
-                let r1 = Float(rng.next()), r2 = Float(rng.next())
-                let toward = (tc - c) * (p.pdupPull * (0.6 + 0.8 * r1))
-                // A light slant along the flight, only for blocks ahead of the thumbnail (behind it the
-                // slant would pull in black from past the source).
-                let ahead = simd_dot(c - tc, fdir) > 0
-                let slant = ahead ? -fdir * Float(8) * (0.5 + r2) : .zero
-                field[by * m.gw + bx] = field[by * m.gw + bx] * 0.15 + toward + slant
-                // The thumbnail's own blocks hold still: they are the source the rest of the screen
-                // keeps copying from, so the bloom fills with its pixels instead of decaying to black.
-                let pt = CGPoint(x: CGFloat(c.x) * sz.width, y: CGFloat(c.y) * sz.height)
-                if a.insetBy(dx: -4, dy: -4).contains(pt) {
-                    field[by * m.gw + bx] = .zero
-                    // Grow the source rect to whole blocks; the first frame fills it with the thumbnail.
-                    let bw = sz.width / CGFloat(m.gw), bh = sz.height / CGFloat(m.gh)
-                    let cell = CGRect(x: CGFloat(bx) * bw, y: CGFloat(by) * bh, width: bw, height: bh)
-                    pdupSource = pdupSource.isNull ? cell : pdupSource.union(cell)
-                }
-            } }
             field.withUnsafeBytes { raw in
                 mt.replace(region: MTLRegionMake2D(0, 0, m.gw, m.gh), mipmapLevel: 0,
                            withBytes: raw.baseAddress!, bytesPerRow: m.gw * MemoryLayout<SIMD2<Float>>.stride)
@@ -498,7 +468,6 @@ final class MoshView: MTKView, MTKViewDelegate {
         var seedFrom = CGRect.zero, seedTo = CGRect.zero
         var flyFlag: Float = 0
         if case .fly(_, _, let crop) = motionKind { seedFrom = crop; flyFlag = 1 }
-        else if case .pdup(_, _, let crop) = motionKind, !pdupSource.isNull { seedFrom = crop; seedTo = pdupSource }
         else if params.seedScale > 0, case .grow(let from, _) = motionKind {
             seedFrom = from
             let w = from.width * params.seedScale, h = from.height * params.seedScale

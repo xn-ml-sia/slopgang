@@ -36,11 +36,10 @@ final class GlitchDirector: ObservableObject {
         // Fresh P-frame duplication effect (no stacked smear/drift/heal tuning).
         var p = MoshParams()
         p.duration = Self.pushDuration
-        p.pdupGain = 1.0
+        p.pdupGain = 1.15
         p.pdupGainFrom = 0.25
         p.rampPower = 1.4
-        p.pdupReach = 7
-        p.pdupPull = 0.14          // whole screen fills with the thumbnail's pixels by the late phase
+        p.pdupReach = 10
         p.diffusion = 0.12
         p.blockSchedule = [(1, 1)]
         let top = keyWindow()?.safeAreaInsets.top ?? 59
