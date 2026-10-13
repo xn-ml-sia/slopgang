@@ -13,6 +13,11 @@ struct AboutView: View {
                         Text(a.title ?? "").font(Theme.heading).accessibilityAddTraits(.isHeader)
                         if let lead = a.lead { Text(rich(lead)).font(Theme.body).lineSpacing(6) }
                     }
+                    // Hero artwork, same as the site About page (DotForge cellular, 420px square there).
+                    DotForgeView()
+                        .aspectRatio(1, contentMode: .fit)
+                        .frame(maxWidth: 420)
+                        .accessibilityHidden(true)
                     ForEach(a.sections ?? []) { s in
                         VStack(alignment: .leading, spacing: 14) {
                             Text(s.title ?? "").font(Theme.heading).accessibilityAddTraits(.isHeader)

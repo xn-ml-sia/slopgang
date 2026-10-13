@@ -51,7 +51,7 @@ Run one of them again after you add or remove a Swift file.
 
 - **Home:** the colour cloud. Each plate sits where its thumbnail's mean colour puts it in an HSL double cone. Drag to turn the cloud, and flick to make it coast.
 - **Tap** a plate to open it.
-- **Press and hold** a plate to preview it. This replaces hover on the site. The background switches to the full image at once, with no fade. Video plates play. Slide your finger to move the preview to other plates, and lift your finger to close it.
+- **Press and hold** a plate to preview it. This replaces hover on the site. The background switches to the full image at once, with no fade. Video plates play. Slide your finger to move the preview to other plates. Lift your finger over a plate to open it, or over empty space to close the preview.
 - **Detail:** the media, the metadata, the essay, the research and art header for pairs, sources, and links to related plates.
 - **Deep links:** `slopgang://specimen/sg-123` opens a plate.
 
@@ -63,6 +63,7 @@ Run one of them again after you add or remove a Swift file.
 | `CloudView.swift` | The colour cloud: CALayers, CADisplayLink, gestures, preview |
 | `DetailView.swift` | The plate page |
 | `AboutView.swift` | The About page, from about.json |
+| `DotForgeView.swift` | The animated About artwork (DotForge cellular), drawn with Core Animation |
 | `PlayerView.swift` | AVPlayerLayer video for plates |
 | `ArchiveStore.swift` | Loads archive.json and about.json and keeps them on disk for offline use |
 | `ImageLoader.swift` | Image download and cache, mean colour with Core Image |

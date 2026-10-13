@@ -37,9 +37,6 @@ struct DetailView: View {
                         }
                     }
                     Text(p.shortTitle).font(Theme.heading).accessibilityAddTraits(.isHeader)
-                    if let c = p.caption { Text(c).font(Theme.meta) }
-                    MetaGrid(rows: [("Logged", p.loggedDate), ("Catalogue", p.catalogue),
-                                    ("Register", p.register), ("Logged by", p.loggedBy ?? p.author ?? "")])
                 }
                 .padding(.horizontal, Theme.pad)
 
@@ -87,6 +84,13 @@ struct DetailView: View {
                     if let s = p.url, let u = URL(string: s) {
                         Link("Source →", destination: u).font(.system(size: 17, weight: .semibold))
                     }
+                    // Caption and metadata sit at the end of the page.
+                    VStack(alignment: .leading, spacing: 16) {
+                        if let c = p.caption { Text(c).font(Theme.meta).fixedSize(horizontal: false, vertical: true) }
+                        MetaGrid(rows: [("Logged", p.loggedDate), ("Catalogue", p.catalogue),
+                                        ("Register", p.register), ("Logged by", p.loggedBy ?? p.author ?? "")])
+                    }
+                    .padding(.top, 8)
                 }
                 .padding(.horizontal, Theme.pad)
                 .padding(.bottom, 40)
@@ -133,26 +137,23 @@ struct RemoteImage: View {
     }
 }
 
-/// Logged / Catalogue / Register / Logged by, as a 2 x 2 grid (site mobile layout).
+/// Logged / Catalogue / Register / Logged by: two equal columns that span the full width.
 private struct MetaGrid: View {
     var rows: [(String, String)]
+    private let columns = [GridItem(.flexible(), spacing: 16, alignment: .topLeading),
+                           GridItem(.flexible(), spacing: 16, alignment: .topLeading)]
     var body: some View {
-        Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 12) {
-            ForEach(0..<(rows.count + 1) / 2, id: \.self) { r in
-                GridRow {
-                    ForEach(0..<2, id: \.self) { c in
-                        let i = r * 2 + c
-                        if i < rows.count {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Kicker(text: rows[i].0)
-                                Text(rows[i].1).font(Theme.meta)
-                            }
-                            .accessibilityElement(children: .combine)
-                        }
-                    }
+        LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                VStack(alignment: .leading, spacing: 2) {
+                    Kicker(text: row.0)
+                    Text(row.1).font(Theme.meta)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityElement(children: .combine)
             }
         }
+        .frame(maxWidth: .infinity)
     }
 }
 

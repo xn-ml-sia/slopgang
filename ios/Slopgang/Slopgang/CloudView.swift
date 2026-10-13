@@ -210,7 +210,13 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
         let w = Double(bounds.width), h = Double(bounds.height)
         guard w > 0, h > 0 else { return }
         let fpx = h / 2 / tan(FOV / 2)
-        let fit = min(1, w / h / 1.2) * 1.15   // phones are tall; site scales the same way
+        let fit = min(1, w / h / 1.2) * 1.15   // horizontal fit, same rule as the site
+        // Vertical: stretch so the cloud spans the safe-area height on tall phones, not only the width.
+        let safeTop = Double(safeAreaInsets.top) + 44, safeBottom = Double(safeAreaInsets.bottom) + 12
+        let safeH = max(100, h - safeTop - safeBottom)
+        let cyScreen = safeTop + safeH / 2
+        let extent = LY / 2 + R * 0.55       // half-height of the bicone as seen at the default tilt
+        let yFit = (safeH * 0.48) / (extent * fpx / DIST)
         let cyw = cos(yaw), syw = sin(yaw), cp = cos(pitch), sp = sin(pitch)
 
         CATransaction.begin(); CATransaction.setDisableActions(true)
@@ -234,7 +240,7 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
             let depth = DIST - z2
             let k = (fpx / depth) * fit
             let sx = w / 2 + x1 * k
-            let sy = h / 2 - y2 * k
+            let sy = cyScreen - y2 * (fpx / depth) * max(fit, yFit)
             let sz = max(1, b.size * k)
             let fog = min(1, max(0.25, 1 - (depth - DIST + 60) / 260))
             b.layer.bounds = CGRect(x: 0, y: 0, width: sz, height: sz)
@@ -300,6 +306,11 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
         case .began, .changed:
             let b = hit(g.location(in: self))
             if b !== active { setActive(b) }
+        case .ended:
+            // Release over a plate opens it; release over empty space just closes the preview.
+            let target = hit(g.location(in: self))
+            clearActive()
+            if let t = target { onOpen?(t.plate) }
         default:
             clearActive()
         }
