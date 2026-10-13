@@ -26,6 +26,7 @@ struct MoshParams {
     var pdupGain: Float = 1          // P-frame duplication: how much of the frozen field is applied per frame...
     var pdupGainFrom: Float = 0.3    // ...starting at this fraction, ramping (rampPower) to full
     var pdupReach: Float = 6         // field dilation falloff, in blocks
+    var pdupPull: Float = 0          // per-frame pull toward the thumbnail (fraction of the distance)
 }
 
 /// How the new screen enters the input frame. Its motion is what drags the old pixels.
@@ -321,6 +322,20 @@ final class MoshView: MTKView, MTKViewDelegate {
             _ = m.estimate(m.frame(card: a), threshold: 0, melt: 0)
             var field = m.estimate(m.frame(card: step), threshold: 0.5, melt: 0)
             field = Self.dilate(field, gw: m.gw, gh: m.gh, reach: p.pdupReach)
+            // Full screen: every block also carries motion derived from the flight. Each block copies
+            // from a point back along the flight and toward the thumbnail by a per-block random
+            // amount, so, reapplied every frame, the thumbnail's pixels bloom over the whole screen.
+            let sz = bounds.size
+            let tc = SIMD2(Float(a.midX / sz.width), Float(a.midY / sz.height))
+            let fdir = SIMD2(Float(dx / len), Float(dy / len)) * SIMD2(Float(1 / sz.width), Float(1 / sz.height))
+            let rng = SeededRandom(seed: 0x5106)
+            for by in 0..<m.gh { for bx in 0..<m.gw {
+                let c = SIMD2((Float(bx) + 0.5) / Float(m.gw), (Float(by) + 0.5) / Float(m.gh))
+                let r1 = Float(rng.next()), r2 = Float(rng.next())
+                let toward = (tc - c) * (p.pdupPull * (0.6 + 0.8 * r1))
+                let back = -fdir * Float(12) * (0.5 + r2)        // ~6-18 pt back along the flight
+                field[by * m.gw + bx] += toward + back
+            } }
             field.withUnsafeBytes { raw in
                 mt.replace(region: MTLRegionMake2D(0, 0, m.gw, m.gh), mipmapLevel: 0,
                            withBytes: raw.baseAddress!, bytesPerRow: m.gw * MemoryLayout<SIMD2<Float>>.stride)

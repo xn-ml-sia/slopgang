@@ -40,6 +40,7 @@ final class GlitchDirector: ObservableObject {
         p.pdupGainFrom = 0.25
         p.rampPower = 1.4
         p.pdupReach = 7
+        p.pdupPull = 0.085          // whole screen fills with the thumbnail's pixels by the late phase
         p.diffusion = 0.12
         p.blockSchedule = [(1, 1)]
         let top = keyWindow()?.safeAreaInsets.top ?? 59
