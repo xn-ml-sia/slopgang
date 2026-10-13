@@ -95,6 +95,7 @@ final class GlitchDirector: ObservableObject {
         token += 1
         let my = token
         SGTrace.mark("push begin")
+        let began = CACurrentMediaTime()
         let from = snapshot(w, after: false)
         SGTrace.mark("snapshot 1 (old screen)")
         let (o, hold, mosh) = overlayViews(scene: scene, frame: w.bounds)
@@ -130,7 +131,10 @@ final class GlitchDirector: ObservableObject {
             mosh.frame = o.bounds
             mosh.drawableSize = CGSize(width: o.bounds.width * w.screen.scale, height: o.bounds.height * w.screen.scale)
             mosh.onFirstFrame = { SGTrace.mark("mosh first frame on screen"); if self.token == my { hold.isHidden = true } }
-            let started = mosh.run(old: from, new: to, motion: motion(o.bounds), params: params) {
+            // Count the snapshot/setup time against the budget so tap -> clean detail stays ~duration.
+            var timed = params
+            timed.duration = max(params.duration * 0.6, params.duration - (CACurrentMediaTime() - began))
+            let started = mosh.run(old: from, new: to, motion: motion(o.bounds), params: timed) {
                 SGTrace.mark("mosh normal finish")
                 if self.token == my { self.finish() }
             }

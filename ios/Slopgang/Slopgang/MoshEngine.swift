@@ -43,8 +43,17 @@ final class BlockMatcher {
         w = max(8, Int(size.width * scale)); h = max(8, Int(size.height * scale))
         b = max(2, Int(blockPt * scale))
         gw = (w + b - 1) / b; gh = (h + b - 1) / b
-        oldGray = old.cgImage; newGray = new.cgImage
+        // Downscale both screens to the motion grid once; per-frame renders then touch ~1/16 of the pixels.
+        oldGray = Self.small(old.cgImage, w, h); newGray = Self.small(new.cgImage, w, h)
         lastVectors = Array(repeating: .zero, count: gw * gh)
+    }
+
+    private static func small(_ img: CGImage?, _ w: Int, _ h: Int) -> CGImage? {
+        guard let img, let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w,
+                                           space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return nil }
+        ctx.interpolationQuality = .medium
+        ctx.draw(img, in: CGRect(x: 0, y: 0, width: w, height: h))
+        return ctx.makeImage()
     }
 
     /// Renders the low-res grey input frame: old screen, new screen as a card in `card` (points).
@@ -66,14 +75,20 @@ final class BlockMatcher {
     private func half(_ a: [UInt8], _ w: Int, _ h: Int) -> [UInt8] {
         let hw = w / 2, hh = h / 2
         var o = [UInt8](repeating: 0, count: hw * hh)
-        for y in 0..<hh { for x in 0..<hw {
-            let i = 2 * y * w + 2 * x
-            o[y * hw + x] = UInt8((Int(a[i]) + Int(a[i + 1]) + Int(a[i + w]) + Int(a[i + w + 1])) / 4)
+        a.withUnsafeBufferPointer { a in o.withUnsafeMutableBufferPointer { o in
+            for y in 0..<hh { for x in 0..<hw {
+                let i = 2 * y * w + 2 * x
+                o[y * hw + x] = UInt8((Int(a[i]) + Int(a[i + 1]) + Int(a[i + w]) + Int(a[i + w + 1])) / 4)
+            } }
         } }
         return o
     }
 
     private func sad(_ cur: [UInt8], _ ref: [UInt8], _ w: Int, _ h: Int, _ x0: Int, _ y0: Int, _ bs: Int, _ dx: Int, _ dy: Int) -> Int {
+        cur.withUnsafeBufferPointer { c in ref.withUnsafeBufferPointer { r in sadP(c, r, w, h, x0, y0, bs, dx, dy) } }
+    }
+
+    private func sadP(_ cur: UnsafeBufferPointer<UInt8>, _ ref: UnsafeBufferPointer<UInt8>, _ w: Int, _ h: Int, _ x0: Int, _ y0: Int, _ bs: Int, _ dx: Int, _ dy: Int) -> Int {
         var s = 0
         for y in y0..<min(h, y0 + bs) {
             let ry = min(h - 1, max(0, y + dy))
