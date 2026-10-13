@@ -24,7 +24,7 @@ for f in swift: w(f'\t\t{oid("b"+f)} /* {f} in Sources */ = {{isa = PBXBuildFile
 w(f'\t\t{ASSETB} /* Assets.xcassets in Resources */ = {{isa = PBXBuildFile; fileRef = {ASSET} /* Assets.xcassets */; }};\n')
 for d, fs in extras.items():
     for f in fs:
-       : w(f'\t\t{oid("b"+d+f)} /* {f} in Resources */ = {{isa = PBXBuildFile; fileRef = {oid("f"+d+f)} /* {f} */; }};\n')
+        w(f'\t\t{oid("b"+d+f)} /* {f} in Resources */ = {{isa = PBXBuildFile; fileRef = {oid("f"+d+f)} /* {f} */; }};\n')
 w('/* End PBXBuildFile section */\n\n/* Begin PBXFileReference section */\n')
 for f in swift: w(f'\t\t{oid("f"+f)} /* {f} */ = {{isa = PBXFileReference; lastKnownFileType = {ftype(f)}; path = {f}; sourceTree = "<group>"; }};\n')
 for d, fs in extras.items():

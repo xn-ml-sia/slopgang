@@ -24,9 +24,11 @@
 		67AD8B4FFD1ED43852CFC2CA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 32BB636196F91ED59D7A4919 /* Assets.xcassets */; };
 		270B87870DF5B9AF6F30939F /* Inter-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 500226E9B457668B618BA53D /* Inter-ExtraBold.ttf */; };
 		8E397227DA9B50801A4B1433 /* Inter-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CF78D50039C7F191DFD28E49 /* Inter-Medium.ttf */; };
+		7789AAE5F229185F4D7F1C0F /* Inter-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 8B433102831C2B92139F97EF /* Inter-OFL.txt */; };
 		C5CAED0B09EE8618F65870A0 /* Inter-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2527CEF5B85506BD78844818 /* Inter-Regular.ttf */; };
 		2E1BAE8A8FF4CC3E78091ACD /* Inter-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D63DC16321250F57E0E4048D /* Inter-SemiBold.ttf */; };
 		4D146561369B03BD78A0C23E /* JetBrainsMono-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CAFE7F6110BC6DFFEE73C5CF /* JetBrainsMono-Medium.ttf */; };
+		CC3F6F0A2FF56ADC98B52248 /* JetBrainsMono-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 127005F38D8F9A57EDD1F806 /* JetBrainsMono-OFL.txt */; };
 		7DEDC0BB16247E9EBA30F262 /* JetBrainsMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6D458937EB9DAFEA03F6DFDF /* JetBrainsMono-Regular.ttf */; };
 		264864D9F803E1A69497EB85 /* glitch-in.wav in Resources */ = {isa = PBXBuildFile; fileRef = A2C83DD05F829076495CA2E2 /* glitch-in.wav */; };
 		365DEA498C0630D71C69A639 /* glitch-out.wav in Resources */ = {isa = PBXBuildFile; fileRef = 6352101B36A2E47C6E617B5B /* glitch-out.wav */; };
@@ -205,9 +207,11 @@
 				67AD8B4FFD1ED43852CFC2CA /* Assets.xcassets in Resources */,
 				270B87870DF5B9AF6F30939F /* Inter-ExtraBold.ttf in Resources */,
 				8E397227DA9B50801A4B1433 /* Inter-Medium.ttf in Resources */,
+				7789AAE5F229185F4D7F1C0F /* Inter-OFL.txt in Resources */,
 				C5CAED0B09EE8618F65870A0 /* Inter-Regular.ttf in Resources */,
 				2E1BAE8A8FF4CC3E78091ACD /* Inter-SemiBold.ttf in Resources */,
 				4D146561369B03BD78A0C23E /* JetBrainsMono-Medium.ttf in Resources */,
+				CC3F6F0A2FF56ADC98B52248 /* JetBrainsMono-OFL.txt in Resources */,
 				7DEDC0BB16247E9EBA30F262 /* JetBrainsMono-Regular.ttf in Resources */,
 				264864D9F803E1A69497EB85 /* glitch-in.wav in Resources */,
 				365DEA498C0630D71C69A639 /* glitch-out.wav in Resources */,
