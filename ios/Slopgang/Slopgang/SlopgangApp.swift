@@ -30,9 +30,9 @@ struct HeaderBrand: ToolbarContent {
             HStack(spacing: 4) {
                 // Custom back so going back runs the reverse glitch (the system back button cannot).
                 Button { goHome.back() } label: {
-                    Image(systemName: "chevron.left").font(.system(size: 17, weight: .semibold)).foregroundStyle(Theme.ink)
-                        .frame(width: 32, height: 44, alignment: .leading)
+                    Image(systemName: "chevron.left").font(.system(size: 15, weight: .semibold))
                 }
+                .buttonStyle(FilledNavButtonStyle())
                 .accessibilityLabel("Back")
                 Button { goHome.run() } label: { Brand(color: Theme.ink) }.buttonStyle(.plain)
             }
@@ -92,9 +92,13 @@ struct HomeView: View {
                 .ignoresSafeArea()
                 .accessibilityHidden(true)
             HStack {
-                Brand(color: Theme.homeInk)
+                Brand(color: Theme.homeInk, wordmark: false)
                 Spacer()
-                Button("About", action: about).buttonStyle(TextButtonStyle(color: Theme.homeInk))
+                Button(action: about) {
+                    Image(systemName: "questionmark.circle").font(.system(size: 22, weight: .regular))
+                }
+                .buttonStyle(TextButtonStyle(color: Theme.homeInk))
+                .accessibilityLabel("About")
             }
             .padding(.horizontal, Theme.navPadding).padding(.top, 6)   // site mobile .feed-nav: 14px sides
             if store.plates.isEmpty {

@@ -9,13 +9,20 @@ final class SFX {
 
     private init() {
         let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
-        try? session.setActive(true, options: [])
+        do {
+            try session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+            try session.setActive(true, options: [])
+        } catch {
+            // Sound is decoration: if the session fails, the transition still runs, silently.
+            #if DEBUG
+            print("SFX audio session:", error)
+            #endif
+        }
         for name in ["glitch-in", "glitch-out"] {
             guard let url = Bundle.main.url(forResource: name, withExtension: "wav"),
                   let p = try? AVAudioPlayer(contentsOf: url) else { continue }
             p.volume = 0.7
-            p.prepareToPlay()
+            _ = p.prepareToPlay()
             players[name] = p
         }
     }

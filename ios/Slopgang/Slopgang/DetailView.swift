@@ -20,8 +20,10 @@ struct DetailView: View {
             HeaderBrand()
             ToolbarItem(placement: .topBarTrailing) {
                 ShareLink(item: URL(string: "https://slopgang.org/specimen/\(slug)") ?? ArchiveStore.base) {
-                    Image(systemName: "square.and.arrow.up")
+                    Image(systemName: "square.and.arrow.up").font(.system(size: 15, weight: .semibold))
                 }
+                .buttonStyle(FilledNavButtonStyle())
+                .accessibilityLabel("Share")
             }
         }
     }

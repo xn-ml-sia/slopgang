@@ -188,6 +188,20 @@ struct Kicker: View {
     var body: some View { Text(text).textStyle(.label) }
 }
 
+/// Detail header button: white fill, black icon, square corners, site nav padding
+/// (0.35rem x 0.8rem), so it reads over media.
+struct FilledNavButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Theme.font(.nav))
+            .foregroundStyle(Theme.ink)
+            .padding(.vertical, 0.35 * Theme.rem).padding(.horizontal, 0.8 * Theme.rem)
+            .background(Rectangle().fill(Theme.paper))
+            .opacity(configuration.isPressed ? 0.7 : 1)
+            .contentShape(Rectangle())
+    }
+}
+
 /// Text-only nav button (site nav links: --t-1, weight 600, no fill, no stroke).
 struct TextButtonStyle: ButtonStyle {
     var color: Color
@@ -205,6 +219,7 @@ struct TextButtonStyle: ButtonStyle {
 /// gap 0.6rem (9.6px), wordmark --t0 (17px), weight 850. White on home, black elsewhere.
 struct Brand: View {
     var color: Color
+    var wordmark = true
     var body: some View {
         HStack(spacing: Theme.brandGap) {
             Image("SpiralLogo")
@@ -212,7 +227,7 @@ struct Brand: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: Theme.brandMark, height: Theme.brandMark)
-            Text("slopgang").font(Theme.font(.brand)).foregroundStyle(color)
+            if wordmark { Text("slopgang").font(Theme.font(.brand)).foregroundStyle(color) }
         }
         .foregroundStyle(color)
         .frame(height: Theme.brandHeight)
