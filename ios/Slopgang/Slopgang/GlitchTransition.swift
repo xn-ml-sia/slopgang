@@ -46,37 +46,59 @@ final class GlitchDirector: ObservableObject {
     private func snapshot(_ w: UIWindow, after: Bool) -> UIImage {
         let fmt = UIGraphicsImageRendererFormat(for: w.traitCollection)
         fmt.opaque = true
+        fmt.preferredRange = .standard   // plain 8-bit sRGB, not extended range
+        fmt.scale = w.screen.scale
         return UIGraphicsImageRenderer(bounds: w.bounds, format: fmt).image { _ in
             _ = w.drawHierarchy(in: w.bounds, afterScreenUpdates: after)
         }
     }
 
+    private var token = 0
+
     private func run(params: MoshParams, sound: String, motion: @escaping (CGRect) -> MoshMotion, _ change: @escaping () -> Void) {
-        guard !busy, let w = keyWindow(), let scene = w.windowScene else { noAnimation(change); return }
+        guard !busy, let w = keyWindow(), let scene = w.windowScene, w.bounds.width > 0, w.bounds.height > 0 else {
+            noAnimation(change); return
+        }
         busy = true
+        token += 1
+        let my = token
         let from = snapshot(w, after: false)
         let (o, hold, mosh) = overlayViews(scene: scene, frame: w.bounds)
         hold.image = from
         hold.alpha = 1
         hold.isHidden = false
         mosh.isHidden = true
-        o.isHidden = false              // also swallows taps while the transition runs
+        o.isHidden = false              // swallows taps while the transition runs (at most ~1 s)
         noAnimation(change)
         SFX.shared.play(sound)
+        // Hard safety: whatever happens, the overlay is gone shortly after the transition should end.
+        DispatchQueue.main.asyncAfter(deadline: .now() + params.duration + 0.5) { [weak self] in
+            guard let self, self.token == my, self.busy else { return }
+            #if DEBUG
+            print("[sg] transition watchdog fired")
+            #endif
+            self.finish()
+        }
         let reduce = UIAccessibility.isReduceMotionEnabled
         // Give the new screen two frames to lay out, then capture it.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-            guard let self else { return }
-            if reduce || !mosh.isReady {
-                UIView.animate(withDuration: 0.25, delay: 0, options: [.curveEaseOut]) { hold.alpha = 0 } completion: { _ in self.finish() }
-                return
+            guard let self, self.token == my, self.busy else { return }
+            let crossfade = {
+                UIView.animate(withDuration: 0.25, delay: 0, options: [.curveEaseOut, .allowUserInteraction]) { hold.alpha = 0 }
+                    completion: { _ in if self.token == my { self.finish() } }
             }
+            if reduce { crossfade(); return }
             let to = self.snapshot(w, after: true)
             mosh.frame = o.bounds
             mosh.drawableSize = CGSize(width: o.bounds.width * w.screen.scale, height: o.bounds.height * w.screen.scale)
-            mosh.isHidden = false
-            mosh.onFirstFrame = { hold.isHidden = true }
-            mosh.run(old: from, new: to, motion: motion(o.bounds), params: params) { self.finish() }
+            mosh.onFirstFrame = { if self.token == my { hold.isHidden = true } }
+            let started = mosh.run(old: from, new: to, motion: motion(o.bounds), params: params) {
+                if self.token == my { self.finish() }
+            }
+            #if DEBUG
+            print("[sg] mosh started:", started)
+            #endif
+            if started { mosh.isHidden = false } else { crossfade() }
         }
     }
 
@@ -107,8 +129,14 @@ final class GlitchDirector: ObservableObject {
     }
 
     private func finish() {
+        mosh?.cancel()
+        mosh?.isHidden = true
         overlay?.isHidden = true
+        hold?.layer.removeAllAnimations()
         hold?.image = nil
         busy = false
+        #if DEBUG
+        print("[sg] transition finished")
+        #endif
     }
 }

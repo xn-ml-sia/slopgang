@@ -163,31 +163,70 @@ final class MoshView: MTKView, MTKViewDelegate {
 
     var isReady: Bool { displacePSO != nil && presentPSO != nil }
 
-    func run(old: UIImage, new: UIImage, motion: MoshMotion, params p: MoshParams, completion: @escaping () -> Void) {
-        guard let dev = device, let o = old.cgImage, let n = new.cgImage else { completion(); return }
-        let loader = MTKTextureLoader(device: dev)
-        let opts: [MTKTextureLoader.Option: Any] = [.SRGB: false, .textureUsage: MTLTextureUsage.shaderRead.rawValue]
-        oldTex = try? loader.newTexture(cgImage: o, options: opts)
-        newTex = try? loader.newTexture(cgImage: n, options: opts)
+    /// Builds a BGRA8 texture by drawing the image into a plain 8-bit buffer. Snapshots can come
+    /// back in a wide-colour / extended-range format that MTKTextureLoader fails to decode
+    /// (ImageIO error -17102), so the loader is not used.
+    private static func texture(_ cg: CGImage, device: MTLDevice) -> MTLTexture? {
+        let w = cg.width, h = cg.height
+        guard w > 0, h > 0 else { return nil }
+        let rowBytes = w * 4
+        var bytes = [UInt8](repeating: 0, count: rowBytes * h)
+        let ok: Bool = bytes.withUnsafeMutableBytes { buf in
+            guard let ctx = CGContext(data: buf.baseAddress, width: w, height: h, bitsPerComponent: 8, bytesPerRow: rowBytes,
+                                      space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)
+            else { return false }
+            ctx.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
+            return true
+        }
+        guard ok else { return nil }
+        let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: w, height: h, mipmapped: false)
+        d.usage = .shaderRead
+        guard let t = device.makeTexture(descriptor: d) else { return nil }
+        bytes.withUnsafeBytes { t.replace(region: MTLRegionMake2D(0, 0, w, h), mipmapLevel: 0, withBytes: $0.baseAddress!, bytesPerRow: rowBytes) }
+        return t
+    }
+
+    /// Starts the mosh. Returns false (and never calls `completion`) if it cannot run,
+    /// so the caller can fall back to a crossfade.
+    @discardableResult
+    func run(old: UIImage, new: UIImage, motion: MoshMotion, params p: MoshParams, completion: @escaping () -> Void) -> Bool {
+        guard isReady, let dev = device, let o = old.cgImage, let n = new.cgImage,
+              bounds.width > 0, bounds.height > 0, drawableSize.width > 0, drawableSize.height > 0,
+              let ot = Self.texture(o, device: dev), let nt = Self.texture(n, device: dev) else { return false }
+        oldTex = ot
+        newTex = nt
         params = p
         motionKind = motion
-        matcher = BlockMatcher(size: bounds.size, blockPt: p.blockSize, old: old, new: new)
-        let md = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rg32Float, width: matcher!.gw, height: matcher!.gh, mipmapped: false)
+        let m = BlockMatcher(size: bounds.size, blockPt: p.blockSize, old: old, new: new)
+        matcher = m
+        let md = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rg32Float, width: m.gw, height: m.gh, mipmapped: false)
         md.usage = .shaderRead
         motionTex = dev.makeTexture(descriptor: md)
         let size = drawableSize
-        let fd = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: max(1, Int(size.width)), height: max(1, Int(size.height)), mipmapped: false)
+        let fd = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: Int(size.width), height: Int(size.height), mipmapped: false)
         fd.usage = [.renderTarget, .shaderRead]
         fd.storageMode = .private
         ping = [dev.makeTexture(descriptor: fd), dev.makeTexture(descriptor: fd)].compactMap { $0 }
+        guard motionTex != nil, ping.count == 2 else { return false }
         firstFrame = true
         frameIndex = 0
         finished = false
         done = completion
         // Prime the matcher with the first input frame so the first estimate has a reference.
-        _ = matcher?.estimate(matcher!.frame(card: card(at: 0)), threshold: p.threshold, melt: p.melt)
+        _ = m.estimate(m.frame(card: card(at: 0)), threshold: p.threshold, melt: p.melt)
         start = CACurrentMediaTime()
         isPaused = false
+        return true
+    }
+
+    /// Stops drawing and drops the textures. Safe to call more than once.
+    func cancel() {
+        isPaused = true
+        done = nil
+        onFirstFrame = nil
+        finished = true
+        oldTex = nil; newTex = nil; motionTex = nil; ping = []; matcher = nil
     }
 
     private func easeOutCubic(_ t: Double) -> Double { 1 - pow(1 - min(1, max(0, t)), 3) }
@@ -213,7 +252,16 @@ final class MoshView: MTKView, MTKViewDelegate {
     func draw(in view: MTKView) {
         guard let queue, let displacePSO, let presentPSO, ping.count == 2,
               let oldTex, let newTex, let motionTex, let matcher,
-              let drawable = currentDrawable, let cb = queue.makeCommandBuffer() else { return }
+              let drawable = currentDrawable, let cb = queue.makeCommandBuffer() else {
+            // Never spin forever on a missing resource or drawable: end the transition.
+            if !finished, CACurrentMediaTime() - start > params.duration + 0.2 {
+                finished = true
+                isPaused = true
+                let d = done; done = nil
+                d?()
+            }
+            return
+        }
         let p = min(1, (CACurrentMediaTime() - start) / params.duration)
         let keyframe = p >= 1
         let r = card(at: p)
@@ -272,7 +320,7 @@ final class MoshView: MTKView, MTKViewDelegate {
         if keyframe && !finished {
             finished = true
             isPaused = true
-            let d = done
+            let d = done; done = nil
             cb.addCompletedHandler { _ in DispatchQueue.main.async { d?() } }
         }
         cb.commit()
