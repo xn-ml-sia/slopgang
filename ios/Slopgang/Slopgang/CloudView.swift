@@ -96,9 +96,10 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
 
     #if DEBUG
     /// -autoTap: after the cloud settles, drive the real tap handler at the centre of the frontmost plate.
-    override func didMoveToWindow() {
-        super.didMoveToWindow()
-        guard window != nil, ProcessInfo.processInfo.arguments.contains("-autoTap") else { return }
+    private var autoTapArmed = false
+    private func armAutoTap() {
+        guard !autoTapArmed, window != nil, ProcessInfo.processInfo.arguments.contains("-autoTap") else { return }
+        autoTapArmed = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
             guard let self, self.window != nil else { return }
             let front = self.blocks.filter { $0.placed }.max { $0.layer.zPosition < $1.layer.zPosition }
@@ -114,6 +115,9 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        #if DEBUG
+        armAutoTap()
+        #endif
         CATransaction.begin(); CATransaction.setDisableActions(true)
         background.frame = bounds
         bgPlayerLayer.frame = bounds
