@@ -1,5 +1,6 @@
 import UIKit
 import CoreImage
+import ImageIO
 
 /// Downloads images (WebP decodes natively on iOS 14+) and computes the mean color with Core Image.
 actor ImageLoader {
@@ -12,10 +13,18 @@ actor ImageLoader {
         if let i = cache[url] { return i }
         guard let (d, r) = try? await ArchiveStore.session.data(from: url),
               (r as? HTTPURLResponse)?.statusCode == 200,
-              let img = UIImage(data: d) else { return nil }
-        let ready = img.preparingForDisplay() ?? img
+              let ready = Self.decode(d) else { return nil }
         cache[url] = ready
         return ready
+    }
+
+    /// Decodes with ImageIO into a plain 8-bit bitmap up front. UIImage.preparingForDisplay()
+    /// logged "Error -17102 decompressing image" for these WebP files on iOS 27, so it is not used.
+    nonisolated static func decode(_ data: Data) -> UIImage? {
+        guard let src = CGImageSourceCreateWithData(data as CFData, nil),
+              let cg = CGImageSourceCreateImageAtIndex(src, 0, [kCGImageSourceShouldCacheImmediately: true] as CFDictionary)
+        else { return nil }
+        return UIImage(cgImage: cg)
     }
 
     /// Mean RGB of the image via CIAreaAverage, returned as HSL (h 0-360, s 0-1, l 0-1).
