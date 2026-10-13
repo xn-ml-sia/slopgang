@@ -10,8 +10,11 @@ struct MoshParams {
     var smear: Float = 1.6          // overdriven past the measured motion
     var blockSize: CGFloat = 16     // macroblock, in points
     var melt: Float = 0             // 0 = vectors stop with the motion, 1 = they keep flowing
-    var healStart: Float = 0.01     // heal chance per block per frame at the start...
-    var healEnd: Float = 0.3        // ...rising to this, so the picture rebuilds in blocks
+    var healStart: Float = 0.0      // heal chance per block per frame, held until healFrom...
+    var healFrom: Double = 0.6      // ...then ramps (quadratic) to healEnd at the keyframe
+    var healEnd: Float = 0.35
+    var blockSchedule: [(until: Double, scale: Float)] = [(0.25, 2), (0.5, 1.5), (1, 1)]   // 32 -> 24 -> 16 pt
+    var seedScale: CGFloat = 0      // >0: enlarge the tapped plate by this much in the first feedback frame
     var threshold: Float = 1        // SAD gain per pixel needed to accept a vector
     var diffusion: Float = 0.15
     var duration: Double = 0.52
@@ -19,7 +22,7 @@ struct MoshParams {
 
 /// How the new screen enters the input frame. Its motion is what drags the old pixels.
 enum MoshMotion {
-    case grow(from: CGRect)     // card grows from the tapped plate to full screen
+    case grow(from: CGRect, via: CGRect) // card grows from the tapped plate to the detail media rect, then full screen
     case settle(scale: CGFloat) // full-screen new frame zooms from `scale` to 1
 }
 
@@ -235,10 +238,13 @@ final class MoshView: MTKView, MTKViewDelegate {
     private func card(at p: Double) -> CGRect {
         let full = bounds
         switch motionKind {
-        case .grow(let from):
-            let k = CGFloat(easeOutCubic(p / 0.75))
-            return CGRect(x: from.minX + (full.minX - from.minX) * k, y: from.minY + (full.minY - from.minY) * k,
-                          width: from.width + (full.width - from.width) * k, height: from.height + (full.height - from.height) * k)
+        case .grow(let from, let via):
+            func lerp(_ a: CGRect, _ b: CGRect, _ k: CGFloat) -> CGRect {
+                CGRect(x: a.minX + (b.minX - a.minX) * k, y: a.minY + (b.minY - a.minY) * k,
+                       width: a.width + (b.width - a.width) * k, height: a.height + (b.height - a.height) * k)
+            }
+            if p < 0.5 { return lerp(from, via, CGFloat(easeOutCubic(p / 0.5))) }
+            return lerp(via, full, CGFloat(easeOutCubic((p - 0.5) / 0.3)))
         case .settle(let s):
             let k = CGFloat(easeOutCubic(p / 0.8))
             let sc = s + (1 - s) * k
@@ -263,6 +269,19 @@ final class MoshView: MTKView, MTKViewDelegate {
             return
         }
         let p = min(1, (CACurrentMediaTime() - start) / params.duration)
+        let healK = Float(max(0, (p - params.healFrom) / max(0.01, 1 - params.healFrom)))
+        let blockScale = params.blockSchedule.first { p < $0.until }?.scale ?? 1
+        let sz0 = bounds.size
+        var seedFrom = CGRect.zero, seedTo = CGRect.zero
+        if params.seedScale > 0, case .grow(let from, _) = motionKind {
+            seedFrom = from
+            let w = from.width * params.seedScale, h = from.height * params.seedScale
+            seedTo = CGRect(x: from.midX - w / 2, y: from.midY - h / 2, width: w, height: h)
+        }
+        func uv(_ r: CGRect) -> (SIMD2<Float>, SIMD2<Float>) {
+            (SIMD2(Float(r.minX / sz0.width), Float(r.minY / sz0.height)), SIMD2(Float(r.width / sz0.width), Float(r.height / sz0.height)))
+        }
+        let (sfo, sfs) = uv(seedFrom), (sto, sts) = uv(seedTo)
         let keyframe = p >= 1
         let r = card(at: p)
 
@@ -279,11 +298,14 @@ final class MoshView: MTKView, MTKViewDelegate {
             cardSize: SIMD2(Float(max(1, r.width) / sz.width), Float(max(1, r.height) / sz.height)),
             grid: SIMD2(Float(matcher.gw), Float(matcher.gh)),
             smear: params.smear,
-            heal: params.healStart + (params.healEnd - params.healStart) * Float(p * p),
+            heal: params.healStart + (params.healEnd - params.healStart) * healK * healK,
             diffusion: params.diffusion,
             intensity: params.intensity,
             seed: Float(frameIndex % 997),
-            keyframe: keyframe ? 1 : 0)
+            keyframe: keyframe ? 1 : 0,
+            blockScale: blockScale,
+            seeding: firstFrame ? 1 : 0,
+            seedFromO: sfo, seedFromS: sfs, seedToO: sto, seedToS: sts)
         frameIndex += 1
 
         // Pass 1: displacement into the next feedback texture.
@@ -326,7 +348,7 @@ final class MoshView: MTKView, MTKViewDelegate {
         cb.commit()
     }
 
-    /// Must match MoshUniforms in Glitch.metal (float2 x3, float x6; 8-byte aligned).
+    /// Must match MoshUniforms in Glitch.metal: float2 x3, float x8, float2 x4 = 88 bytes, 8-byte aligned.
     private struct Uniforms {
         var cardOrigin: SIMD2<Float>
         var cardSize: SIMD2<Float>
@@ -337,5 +359,11 @@ final class MoshView: MTKView, MTKViewDelegate {
         var intensity: Float
         var seed: Float
         var keyframe: Float
+        var blockScale: Float
+        var seeding: Float
+        var seedFromO: SIMD2<Float>
+        var seedFromS: SIMD2<Float>
+        var seedToO: SIMD2<Float>
+        var seedToS: SIMD2<Float>
     }
 }

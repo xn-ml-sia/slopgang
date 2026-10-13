@@ -28,7 +28,21 @@ struct MoshUniforms {
     float intensity;     // 0 = clean input, 1 = full mosh
     float seed;          // changes every frame
     float keyframe;      // 1 = clean frame lands
+    float blockScale;    // 2 = 32pt blocks, 1.5 = 24pt, 1 = 16pt (merges motion cells early on)
+    float seeding;       // 1 on the first frame: build the feedback from the old screen + enlarged plate
+    float2 seedFromO;    // tapped plate rect in the old screen (uv)
+    float2 seedFromS;
+    float2 seedToO;      // where the enlarged plate sits in the seeded feedback (uv)
+    float2 seedToS;
 };
+
+// First feedback frame: the old screen with the tapped plate blown up over it, so the
+// stale pixels the motion drags are mostly the plate's own.
+static float4 seedAt(float2 uv, texture2d<float> oldTex, constant MoshUniforms& u, sampler s) {
+    float2 q = (uv - u.seedToO) / max(u.seedToS, float2(1e-4));
+    if (u.seedToS.x > 0.0 && all(q >= 0.0) && all(q <= 1.0)) return oldTex.sample(s, u.seedFromO + q * u.seedFromS);
+    return oldTex.sample(s, uv);
+}
 
 static float hash2(float2 p, float s) {
     return fract(sin(dot(p, float2(12.9898, 78.233)) + s * 37.719) * 43758.5453);
@@ -54,14 +68,19 @@ fragment float4 moshDisplace(VOut in [[stage_in]],
     if (u.keyframe > 0.5) return truth;
 
     // One vector per macroblock (nearest lookup), so blocks move as hard rectangles.
-    float2 cell = floor(in.uv * u.grid);
-    float2 mv = motion.sample(nn, (cell + 0.5) / u.grid).xy * u.smear;
+    float2 cell = floor(in.uv * u.grid / u.blockScale) * u.blockScale;
+    float2 mv = motion.sample(nn, (cell + 0.5 * u.blockScale) / u.grid).xy * u.smear;
 
     // P-frame: copy the previous output from where this block's content came from.
-    float4 moshed = prev.sample(nn, in.uv + mv);
-    // Diffusion: a little bilinear bleed from a nearby source position.
     float2 jitter = (float2(hash2(cell, u.seed + 1.0), hash2(cell, u.seed + 2.0)) - 0.5) / u.grid * 0.5;
-    moshed = mix(moshed, prev.sample(lin, in.uv + mv + jitter), u.diffusion);
+    float4 moshed;
+    if (u.seeding > 0.5) {
+        moshed = mix(seedAt(in.uv + mv, oldTex, u, nn), seedAt(in.uv + mv + jitter, oldTex, u, lin), u.diffusion);
+    } else {
+        moshed = prev.sample(nn, in.uv + mv);
+        // Diffusion: a little bilinear bleed from a nearby source position.
+        moshed = mix(moshed, prev.sample(lin, in.uv + mv + jitter), u.diffusion);
+    }
 
     // Heal: some blocks get their correction and show the true image again.
     if (hash2(cell, u.seed) < u.heal) moshed = truth;

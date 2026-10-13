@@ -55,9 +55,14 @@ struct RootView: View {
     @StateObject private var fx = GlitchDirector()
     @Environment(\.scenePhase) private var phase
 
+    static func aspect(_ p: Plate) -> CGFloat {
+        guard let w = p.media?.width, let h = p.media?.height, w > 0 else { return 0.75 }
+        return CGFloat(h / w)
+    }
+
     var body: some View {
         NavigationStack(path: $path) {
-            HomeView(open: { p, rect in fx.push(from: rect) { path.append(Route.plate(p.slugValue)) } },
+            HomeView(open: { p, rect in fx.push(from: rect, mediaAspect: Self.aspect(p)) { path.append(Route.plate(p.slugValue)) } },
                      about: { fx.push(from: nil) { path.append(Route.about) } })
                 .navigationDestination(for: Route.self) { r in
                     switch r {
@@ -81,7 +86,7 @@ struct RootView: View {
                   let p = store.plate(args[i + 1]) else { return }
             try? await Task.sleep(for: .seconds(2))
             print("[sg] autoOpen", p.slugValue)
-            fx.push(from: CGRect(x: 150, y: 400, width: 40, height: 40)) { path.append(Route.plate(p.slugValue)) }
+            fx.push(from: CGRect(x: 150, y: 400, width: 40, height: 40), mediaAspect: Self.aspect(p)) { path.append(Route.plate(p.slugValue)) }
             if args.contains("-autoBack") {
                 try? await Task.sleep(for: .seconds(3))
                 print("[sg] autoBack")

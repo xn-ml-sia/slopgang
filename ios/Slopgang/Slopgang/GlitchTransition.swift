@@ -19,11 +19,25 @@ final class GlitchDirector: ObservableObject {
     private var busy = false
 
     /// Forward: home -> detail. `rect` is the tapped plate in window points, if known.
-    func push(from rect: CGRect?, _ change: @escaping () -> Void) {
+    /// `mediaAspect` is the plate's height / width, used to aim the motion at the detail media rect.
+    func push(from rect: CGRect?, mediaAspect: CGFloat = 0.75, _ change: @escaping () -> Void) {
         var p = MoshParams()
         p.duration = Self.pushDuration
+        p.smear = 2.8
+        p.melt = 0.5
+        p.healStart = 0
+        p.healFrom = 0.6
+        p.healEnd = 0.35
+        p.diffusion = 0.2
+        p.seedScale = 3
+        p.blockSchedule = [(0.25, 2), (0.5, 1.5), (1, 1)]
+        let top = keyWindow()?.safeAreaInsets.top ?? 59
         run(params: p, sound: "glitch-in", motion: { bounds in
-            .grow(from: rect ?? CGRect(x: bounds.midX - 40, y: bounds.midY - 40, width: 80, height: 80))
+            let from = rect ?? CGRect(x: bounds.midX - 40, y: bounds.midY - 40, width: 80, height: 80)
+            // Detail media: full width under the nav bar, at the plate's aspect (capped like the site).
+            let mh = min(bounds.height * 0.6, bounds.width * max(0.3, mediaAspect))
+            let media = CGRect(x: 0, y: top + 44, width: bounds.width, height: mh)
+            return .grow(from: from, via: media)
         }, change)
     }
 
@@ -56,6 +70,12 @@ final class GlitchDirector: ObservableObject {
     private var token = 0
 
     private func run(params: MoshParams, sound: String, motion: @escaping (CGRect) -> MoshMotion, _ change: @escaping () -> Void) {
+        var params = params
+        #if DEBUG
+        // -moshSlow 8 stretches the transition 8x so simulator screenshots can catch mid frames.
+        let args = ProcessInfo.processInfo.arguments
+        if let i = args.firstIndex(of: "-moshSlow"), i + 1 < args.count, let k = Double(args[i + 1]), k > 0 { params.duration *= k }
+        #endif
         guard !busy, let w = keyWindow(), let scene = w.windowScene, w.bounds.width > 0, w.bounds.height > 0 else {
             noAnimation(change); return
         }
