@@ -313,16 +313,13 @@ final class MoshView: MTKView, MTKViewDelegate {
         finished = false
         done = completion
         frozenField = false
-        if case .pdup(let a, _, _) = motion, let mt = motionTex {
-            // Capture ONE field from a short real step (centre moves ~24 pt), then freeze it.
-            var p1 = 0.02
-            while p1 < 0.5 {
-                let c = card(at: p1)
-                if hypot(c.midX - a.midX, c.midY - a.midY) >= 24 { break }
-                p1 += 0.01
-            }
-            _ = m.estimate(m.frame(card: card(at: 0)), threshold: 0, melt: 0)
-            var field = m.estimate(m.frame(card: card(at: p1)), threshold: 0.5, melt: 0)
+        if case .pdup(let a, let b, _) = motion, let mt = motionTex {
+            // Capture ONE field from a short real step of the flight: the thumbnail moved 24 pt
+            // toward the hero and grown 10%, measured by block matching like a P-frame.
+            let dx = b.midX - a.midX, dy = b.midY - a.midY, len = max(1, hypot(dx, dy))
+            let step = a.offsetBy(dx: dx / len * 24, dy: dy / len * 24).insetBy(dx: -a.width * 0.05, dy: -a.height * 0.05)
+            _ = m.estimate(m.frame(card: a), threshold: 0, melt: 0)
+            var field = m.estimate(m.frame(card: step), threshold: 0.5, melt: 0)
             field = Self.dilate(field, gw: m.gw, gh: m.gh, reach: p.pdupReach)
             field.withUnsafeBytes { raw in
                 mt.replace(region: MTLRegionMake2D(0, 0, m.gw, m.gh), mipmapLevel: 0,
@@ -333,7 +330,7 @@ final class MoshView: MTKView, MTKViewDelegate {
             latest = nil
             matching = true
             generation += 1
-            SGTrace.mark("pdup field captured (step to p=\(p1))")
+            SGTrace.mark("pdup field captured")
             start = CACurrentMediaTime()
             isPaused = false
             return true
