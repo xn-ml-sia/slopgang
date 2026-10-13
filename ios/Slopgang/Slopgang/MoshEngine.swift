@@ -88,7 +88,8 @@ nonisolated final class BlockMatcher: @unchecked Sendable {   // used only on Mo
         cur.withUnsafeBufferPointer { c in ref.withUnsafeBufferPointer { r in sadP(c, r, w, h, x0, y0, bs, dx, dy) } }
     }
 
-    private func sadP(_ cur: UnsafeBufferPointer<UInt8>, _ ref: UnsafeBufferPointer<UInt8>, _ w: Int, _ h: Int, _ x0: Int, _ y0: Int, _ bs: Int, _ dx: Int, _ dy: Int) -> Int {
+    private func sadP(_ curB: UnsafeBufferPointer<UInt8>, _ refB: UnsafeBufferPointer<UInt8>, _ w: Int, _ h: Int, _ x0: Int, _ y0: Int, _ bs: Int, _ dx: Int, _ dy: Int) -> Int {
+        let cur = curB.baseAddress!, ref = refB.baseAddress!
         var s = 0
         for y in y0..<min(h, y0 + bs) {
             let ry = min(h - 1, max(0, y + dy))
@@ -105,22 +106,26 @@ nonisolated final class BlockMatcher: @unchecked Sendable {   // used only on Mo
         defer { prev = cur }
         guard let ref = prev else { return lastVectors }
         let cw = w / 2, ch = h / 2
-        let c0 = half(cur, w, h), r0 = half(ref, w, h)
+        let c0a = half(cur, w, h), r0a = half(ref, w, h)
         let hb = max(1, b / 2)
         var out = [SIMD2<Float>](repeating: .zero, count: gw * gh)
+        // One set of raw pointers for the whole search: no per-SAD closure or bounds-check cost.
+        c0a.withUnsafeBufferPointer { c0 in r0a.withUnsafeBufferPointer { r0 in
+        cur.withUnsafeBufferPointer { c1 in ref.withUnsafeBufferPointer { r1 in
+        out.withUnsafeMutableBufferPointer { out in lastVectors.withUnsafeBufferPointer { last in
         for by in 0..<gh { for bx in 0..<gw {
             // Level 0: half resolution, search +-4 (+-8 px at level 1).
             var best = (dx: 0, dy: 0, s: Int.max)
             for dy in -4...4 { for dx in -4...4 {
-                let s = sad(c0, r0, cw, ch, bx * hb, by * hb, hb, dx, dy)
+                let s = sadP(c0, r0, cw, ch, bx * hb, by * hb, hb, dx, dy)
                 if s < best.s { best = (dx, dy, s) }
             } }
             // Level 1: refine +-1 around the doubled coarse vector.
-            var fine = (dx: 0, dy: 0, s: sad(cur, ref, w, h, bx * b, by * b, b, 0, 0))
+            var fine = (dx: 0, dy: 0, s: sadP(c1, r1, w, h, bx * b, by * b, b, 0, 0))
             let zero = fine.s
             for dy in -1...1 { for dx in -1...1 {
                 let ddx = best.dx * 2 + dx, ddy = best.dy * 2 + dy
-                let s = sad(cur, ref, w, h, bx * b, by * b, b, ddx, ddy)
+                let s = sadP(c1, r1, w, h, bx * b, by * b, b, ddx, ddy)
                 if s < fine.s { fine = (ddx, ddy, s) }
             } }
             // Threshold: keep the vector only if it beats "no motion" by enough.
@@ -128,8 +133,11 @@ nonisolated final class BlockMatcher: @unchecked Sendable {   // used only on Mo
             let i = by * gw + bx
             var v = gain >= threshold ? SIMD2<Float>(Float(fine.dx) / Float(w), Float(fine.dy) / Float(h)) : .zero
             // Melt: vectors keep flowing after the motion stops.
-            if v == .zero { v = lastVectors[i] * melt }
+            if v == .zero { v = last[i] * melt }
             out[i] = v
+        } }
+        } }
+        } }
         } }
         lastVectors = out
         return out
