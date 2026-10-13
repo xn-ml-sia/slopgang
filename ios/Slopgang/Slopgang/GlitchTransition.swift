@@ -36,7 +36,7 @@ final class GlitchDirector: ObservableObject {
         var p = MoshParams()
         p.duration = Self.pushDuration
         // The thumbnail flies from its Home frame to the detail hero; its block motion drags pixels
-        // across the screen. Progressive: smear starts at 30% and feedback at 55%, full late (p^1.6).
+        // across the screen. Progressive: smear starts at 30% and feedback at 65%, full late (p^1.6); a screen-wide drift builds with them.
         // High melt keeps vectors flowing so trails spread; heal stays tiny so the smear never
         // dissolves; the clean detail page lands only at the keyframe.
         p.rampFrom = 0.3
