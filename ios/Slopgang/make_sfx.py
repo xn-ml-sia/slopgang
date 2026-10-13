@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Procedural glitch SFX for the home -> detail transition. No samples, no third-party audio.
-Writes Resources/Sounds/glitch-in.wav (300 ms) and glitch-out.wav (200 ms), 44.1 kHz mono 16-bit.
+Writes Resources/Sounds/glitch-in.wav (520 ms) and glitch-out.wav (200 ms), 44.1 kHz mono 16-bit.
 Seeded, so the output is the same on every run."""
 import math, os, random, struct, wave
 SR = 44100
@@ -74,6 +74,6 @@ glitch_out = [
     ('tone',    40, 200, 0.4, 260, 1600),  # rising: reverse of the falling sweep
     ('noise',  240,  50, 0.4, 6, 2),
 ]
-write('glitch-in.wav', build(300, glitch_in, 7, 300 / 520))
+write('glitch-in.wav', build(520, glitch_in, 7))
 write('glitch-out.wav', build(200, glitch_out, 11, 200 / 300))
 print('ok')

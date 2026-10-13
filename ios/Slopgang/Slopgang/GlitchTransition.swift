@@ -9,8 +9,20 @@ import UIKit
 ///    old screen's pixels, blocks heal, and a clean keyframe lands at the end.
 /// Reduce Motion, or no Metal, gets a plain 250 ms crossfade. The sound starts with the change.
 @MainActor
+/// DEBUG timeline for the tap -> detail transition. Prints ms since the last "tap".
+enum SGTrace {
+    static var t0 = CACurrentMediaTime()
+    static func mark(_ s: String, reset: Bool = false) {
+        #if DEBUG
+        let now = CACurrentMediaTime()
+        if reset { t0 = now }
+        print(String(format: "[sg][t] %7.1f ms  %@", (now - t0) * 1000, s))
+        #endif
+    }
+}
+
 final class GlitchDirector: ObservableObject {
-    static let pushDuration = 0.30   // matches glitch-in.wav
+    static let pushDuration = 0.52   // matches glitch-in.wav
     static let popDuration = 0.20    // matches glitch-out.wav
 
     private var overlay: UIWindow?
@@ -82,7 +94,9 @@ final class GlitchDirector: ObservableObject {
         busy = true
         token += 1
         let my = token
+        SGTrace.mark("push begin")
         let from = snapshot(w, after: false)
+        SGTrace.mark("snapshot 1 (old screen)")
         let (o, hold, mosh) = overlayViews(scene: scene, frame: w.bounds)
         hold.image = from
         hold.alpha = 1
@@ -90,12 +104,14 @@ final class GlitchDirector: ObservableObject {
         mosh.isHidden = true
         o.isHidden = false              // swallows taps while the transition runs (at most ~1 s)
         noAnimation(change)
+        SGTrace.mark("nav change applied")
         SFX.shared.play(sound)
+        SGTrace.mark("sfx play called")
         // Hard safety: whatever happens, the overlay is gone shortly after the transition should end.
         DispatchQueue.main.asyncAfter(deadline: .now() + params.duration + 0.5) { [weak self] in
             guard let self, self.token == my, self.busy else { return }
             #if DEBUG
-            print("[sg] transition watchdog fired")
+            SGTrace.mark("WATCHDOG finish")
             #endif
             self.finish()
         }
@@ -108,15 +124,18 @@ final class GlitchDirector: ObservableObject {
                     completion: { _ in if self.token == my { self.finish() } }
             }
             if reduce { crossfade(); return }
+            SGTrace.mark("snapshot 2 begin")
             let to = self.snapshot(w, after: true)
+            SGTrace.mark("snapshot 2 (new screen)")
             mosh.frame = o.bounds
             mosh.drawableSize = CGSize(width: o.bounds.width * w.screen.scale, height: o.bounds.height * w.screen.scale)
-            mosh.onFirstFrame = { if self.token == my { hold.isHidden = true } }
+            mosh.onFirstFrame = { SGTrace.mark("mosh first frame on screen"); if self.token == my { hold.isHidden = true } }
             let started = mosh.run(old: from, new: to, motion: motion(o.bounds), params: params) {
+                SGTrace.mark("mosh normal finish")
                 if self.token == my { self.finish() }
             }
             #if DEBUG
-            print("[sg] mosh started:", started)
+            print("[sg] mosh started:", started); SGTrace.mark("mosh run returned")
             #endif
             if started { mosh.isHidden = false } else { crossfade() }
         }

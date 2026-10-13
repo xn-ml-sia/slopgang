@@ -94,6 +94,22 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
 
     required init?(coder: NSCoder) { fatalError() }
 
+    #if DEBUG
+    /// -autoTap: after the cloud settles, drive the real tap handler at the centre of the frontmost plate.
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        guard window != nil, ProcessInfo.processInfo.arguments.contains("-autoTap") else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+            guard let self, self.window != nil else { return }
+            let front = self.blocks.filter { $0.placed }.max { $0.layer.zPosition < $1.layer.zPosition }
+            guard let b = front else { print("[sg] autoTap: no plate"); return }
+            let f = (b.layer.presentation() ?? b.layer).frame
+            SGTrace.mark("tap received (autoTap)", reset: true)
+            self.handleTap(CGPoint(x: f.midX, y: f.midY))
+        }
+    }
+    #endif
+
     func gestureRecognizer(_ g: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith o: UIGestureRecognizer) -> Bool { true }
 
     override func layoutSubviews() {
@@ -273,7 +289,12 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
     }
 
     @objc private func onTap(_ g: UITapGestureRecognizer) {
-        guard let b = hit(g.location(in: self)) else { return }
+        SGTrace.mark("tap received", reset: true)
+        handleTap(g.location(in: self))
+    }
+
+    private func handleTap(_ pt: CGPoint) {
+        guard let b = hit(pt) else { return }
         onOpen?(b.plate, screenRect(b))
     }
 
@@ -316,6 +337,7 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
             let b = hit(g.location(in: self))
             if b !== active { setActive(b) }
         case .ended:
+            SGTrace.mark("long-press release", reset: true)
             // Release over a plate opens it; release over empty space just closes the preview.
             let target = hit(g.location(in: self))
             clearActive()
