@@ -5,7 +5,12 @@ On a Mac you can instead run `xcodegen generate` from this folder."""
 import hashlib, os, glob
 here = os.path.dirname(os.path.abspath(__file__))
 def oid(s): return hashlib.md5(s.encode()).hexdigest()[:24].upper()
-swift = sorted(os.path.basename(p) for p in glob.glob(os.path.join(here, 'Slopgang', '*.swift')))
+swift = sorted(os.path.basename(p) for p in glob.glob(os.path.join(here, 'Slopgang', '*.swift')) + glob.glob(os.path.join(here, 'Slopgang', '*.metal')))
+# Bundle resources outside the asset catalog: fonts (+ OFL licenses) and sounds.
+extras = {d: sorted(os.path.basename(p) for p in glob.glob(os.path.join(here, 'Slopgang', 'Resources', d, '*')) if not p.endswith('.DS_Store'))
+          for d in ('Fonts', 'Sounds')}
+def ftype(f):
+    return {'.swift': 'sourcecode.swift', '.metal': 'sourcecode.metal', '.ttf': 'file', '.wav': 'audio.wav', '.txt': 'text'}[os.path.splitext(f)[1]]
 P = oid('project'); T = oid('target'); MAIN = oid('maingroup'); APPG = oid('appgroup'); RESG = oid('resgroup')
 PRODG = oid('products'); PROD = oid('product.app'); SRC = oid('sources'); RES = oid('resources'); FW = oid('frameworks')
 ASSET = oid('assets'); ASSETB = oid('assets.build')
@@ -17,8 +22,13 @@ w('// !$*UTF8*$!\n{\n\tarchiveVersion = 1;\n\tclasses = {\n\t};\n\tobjectVersion
 w('\n/* Begin PBXBuildFile section */\n')
 for f in swift: w(f'\t\t{oid("b"+f)} /* {f} in Sources */ = {{isa = PBXBuildFile; fileRef = {oid("f"+f)} /* {f} */; }};\n')
 w(f'\t\t{ASSETB} /* Assets.xcassets in Resources */ = {{isa = PBXBuildFile; fileRef = {ASSET} /* Assets.xcassets */; }};\n')
+for d, fs in extras.items():
+    for f in fs:
+       : w(f'\t\t{oid("b"+d+f)} /* {f} in Resources */ = {{isa = PBXBuildFile; fileRef = {oid("f"+d+f)} /* {f} */; }};\n')
 w('/* End PBXBuildFile section */\n\n/* Begin PBXFileReference section */\n')
-for f in swift: w(f'\t\t{oid("f"+f)} /* {f} */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = {f}; sourceTree = "<group>"; }};\n')
+for f in swift: w(f'\t\t{oid("f"+f)} /* {f} */ = {{isa = PBXFileReference; lastKnownFileType = {ftype(f)}; path = {f}; sourceTree = "<group>"; }};\n')
+for d, fs in extras.items():
+    for f in fs: w(f'\t\t{oid("f"+d+f)} /* {f} */ = {{isa = PBXFileReference; lastKnownFileType = {ftype(f)}; path = "{f}"; sourceTree = "<group>"; }};\n')
 w(f'\t\t{ASSET} /* Assets.xcassets */ = {{isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; }};\n')
 w(f'\t\t{PROD} /* Slopgang.app */ = {{isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Slopgang.app; sourceTree = BUILT_PRODUCTS_DIR; }};\n')
 w('/* End PBXFileReference section */\n\n/* Begin PBXFrameworksBuildPhase section */\n')
@@ -27,14 +37,19 @@ w('/* End PBXFrameworksBuildPhase section */\n\n/* Begin PBXGroup section */\n')
 w(f'\t\t{MAIN} = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n\t\t\t\t{APPG} /* Slopgang */,\n\t\t\t\t{PRODG} /* Products */,\n\t\t\t);\n\t\t\tsourceTree = "<group>";\n\t\t}};\n')
 kids = ''.join(f'\t\t\t\t{oid("f"+f)} /* {f} */,\n' for f in swift)
 w(f'\t\t{APPG} /* Slopgang */ = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n{kids}\t\t\t\t{RESG} /* Resources */,\n\t\t\t);\n\t\t\tpath = Slopgang;\n\t\t\tsourceTree = "<group>";\n\t\t}};\n')
-w(f'\t\t{RESG} /* Resources */ = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n\t\t\t\t{ASSET} /* Assets.xcassets */,\n\t\t\t);\n\t\t\tpath = Resources;\n\t\t\tsourceTree = "<group>";\n\t\t}};\n')
+sub = ''.join(f'\t\t\t\t{oid("group"+d)} /* {d} */,\n' for d in extras)
+for d, fs in extras.items():
+    ch = ''.join(f'\t\t\t\t{oid("f"+d+f)} /* {f} */,\n' for f in fs)
+    w(f'\t\t{oid("group"+d)} /* {d} */ = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n{ch}\t\t\t);\n\t\t\tpath = {d};\n\t\t\tsourceTree = "<group>";\n\t\t}};\n')
+w(f'\t\t{RESG} /* Resources */ = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n\t\t\t\t{ASSET} /* Assets.xcassets */,\n{sub}\t\t\t);\n\t\t\tpath = Resources;\n\t\t\tsourceTree = "<group>";\n\t\t}};\n')
 w(f'\t\t{PRODG} /* Products */ = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n\t\t\t\t{PROD} /* Slopgang.app */,\n\t\t\t);\n\t\t\tname = Products;\n\t\t\tsourceTree = "<group>";\n\t\t}};\n')
 w('/* End PBXGroup section */\n\n/* Begin PBXNativeTarget section */\n')
 w(f'\t\t{T} /* Slopgang */ = {{\n\t\t\tisa = PBXNativeTarget;\n\t\t\tbuildConfigurationList = {TCL};\n\t\t\tbuildPhases = (\n\t\t\t\t{SRC} /* Sources */,\n\t\t\t\t{FW} /* Frameworks */,\n\t\t\t\t{RES} /* Resources */,\n\t\t\t);\n\t\t\tbuildRules = (\n\t\t\t);\n\t\t\tdependencies = (\n\t\t\t);\n\t\t\tname = Slopgang;\n\t\t\tproductName = Slopgang;\n\t\t\tproductReference = {PROD} /* Slopgang.app */;\n\t\t\tproductType = "com.apple.product-type.application";\n\t\t}};\n')
+resfiles = ''.join(f'\t\t\t\t{oid("b"+d+f)} /* {f} in Resources */,\n' for d, fs in extras.items() for f in fs)
 w('/* End PBXNativeTarget section */\n\n/* Begin PBXProject section */\n')
 w(f'\t\t{P} /* Project object */ = {{\n\t\t\tisa = PBXProject;\n\t\t\tattributes = {{\n\t\t\t\tBuildIndependentTargetsInParallel = 1;\n\t\t\t\tLastSwiftUpdateCheck = 1500;\n\t\t\t\tLastUpgradeCheck = 1500;\n\t\t\t\tTargetAttributes = {{\n\t\t\t\t\t{T} = {{\n\t\t\t\t\t\tCreatedOnToolsVersion = 15.0;\n\t\t\t\t\t}};\n\t\t\t\t}};\n\t\t\t}};\n\t\t\tbuildConfigurationList = {PCL};\n\t\t\tcompatibilityVersion = "Xcode 14.0";\n\t\t\tdevelopmentRegion = en;\n\t\t\thasScannedForEncodings = 0;\n\t\t\tknownRegions = (\n\t\t\t\ten,\n\t\t\t\tBase,\n\t\t\t);\n\t\t\tmainGroup = {MAIN};\n\t\t\tproductRefGroup = {PRODG} /* Products */;\n\t\t\tprojectDirPath = "";\n\t\t\tprojectRoot = "";\n\t\t\ttargets = (\n\t\t\t\t{T} /* Slopgang */,\n\t\t\t);\n\t\t}};\n')
 w('/* End PBXProject section */\n\n/* Begin PBXResourcesBuildPhase section */\n')
-w(f'\t\t{RES} /* Resources */ = {{\n\t\t\tisa = PBXResourcesBuildPhase;\n\t\t\tbuildActionMask = 2147483647;\n\t\t\tfiles = (\n\t\t\t\t{ASSETB} /* Assets.xcassets in Resources */,\n\t\t\t);\n\t\t\trunOnlyForDeploymentPostprocessing = 0;\n\t\t}};\n')
+w(f'\t\t{RES} /* Resources */ = {{\n\t\t\tisa = PBXResourcesBuildPhase;\n\t\t\tbuildActionMask = 2147483647;\n\t\t\tfiles = (\n\t\t\t\t{ASSETB} /* Assets.xcassets in Resources */,\n{resfiles}\t\t\t);\n\t\t\trunOnlyForDeploymentPostprocessing = 0;\n\t\t}};\n')
 w('/* End PBXResourcesBuildPhase section */\n\n/* Begin PBXSourcesBuildPhase section */\n')
 files = ''.join(f'\t\t\t\t{oid("b"+f)} /* {f} in Sources */,\n' for f in swift)
 w(f'\t\t{SRC} /* Sources */ = {{\n\t\t\tisa = PBXSourcesBuildPhase;\n\t\t\tbuildActionMask = 2147483647;\n\t\t\tfiles = (\n{files}\t\t\t);\n\t\t\trunOnlyForDeploymentPostprocessing = 0;\n\t\t}};\n')

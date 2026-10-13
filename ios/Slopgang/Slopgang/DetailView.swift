@@ -9,12 +9,13 @@ struct DetailView: View {
     var body: some View {
         Group {
             if let p = store.plate(slug) { content(p) }
-            else { Text("This plate is not in the archive.").font(Theme.body).padding(Theme.pad) }
+            else { Text("This plate is not in the archive.").textStyle(.body).padding(Theme.gutter) }
         }
         .background(Theme.paper)
         .foregroundStyle(Theme.ink)
         .preferredColorScheme(.light)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .toolbar {
             HeaderBrand()
             ToolbarItem(placement: .topBarTrailing) {
@@ -27,18 +28,18 @@ struct DetailView: View {
 
     @ViewBuilder private func content(_ p: Plate) -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: Theme.layoutGap) {
                 MediaPlate(plate: p)
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 16) {   // .glitch-tags margin-bottom 16
                     if let g = p.glitchTypeLabel {
-                        HStack(spacing: 8) {
+                        HStack(spacing: Theme.tagsGap) {
                             if p.kind == .pair, let l = p.pairLabel { Chip(text: "\(l) pair") }
                             Chip(text: g)
                         }
                     }
-                    Text(p.shortTitle).font(Theme.heading).accessibilityAddTraits(.isHeader)
+                    Text(p.shortTitle).textStyle(.heading).accessibilityAddTraits(.isHeader)
                 }
-                .padding(.horizontal, Theme.pad)
+                .padding(.horizontal, Theme.gutter)
 
                 if p.kind == .pair, let r = p.researcher, let a = p.artist {
                     VStack(alignment: .leading, spacing: 16) {
@@ -46,28 +47,28 @@ struct DetailView: View {
                             PairColumn(label: "Research", side: r)
                             PairColumn(label: "Art", side: a)
                         }
-                        if let e = p.evidence { Text(e).font(Theme.meta) }
+                        if let e = p.evidence { Text(e).textStyle(.deck, color: Theme.muted).frame(maxWidth: Theme.measure, alignment: .leading) }
                     }
-                    .padding(.horizontal, Theme.pad)
+                    .padding(.horizontal, Theme.gutter)
                 }
 
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 1.15 * Theme.body) {   // p margin-top 1.15em
                     if p.paragraphs.isEmpty {
-                        Text("Essay forthcoming. The plate is logged; the sleeve note is still on the bench.").font(Theme.body)
+                        Text("Essay forthcoming. The plate is logged; the sleeve note is still on the bench.").textStyle(.body)
                     }
                     ForEach(Array(p.paragraphs.enumerated()), id: \.offset) { _, para in
-                        Text(para).font(Theme.body).lineSpacing(6).fixedSize(horizontal: false, vertical: true)
+                        Text(para).textStyle(.body).fixedSize(horizontal: false, vertical: true)
                     }
                     if let img = p.image {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text([img.credit, img.license].compactMap { $0 }.joined(separator: " ")).font(Theme.meta).foregroundStyle(.secondary)
-                            if let l = img.link, let u = URL(string: l) { Link("See the work →", destination: u).font(Theme.meta) }
+                            Text([img.credit, img.license].compactMap { $0 }.joined(separator: " ")).textStyle(.credit)
+                            if let l = img.link, let u = URL(string: l) { Link("See the work →", destination: u).textStyle(.credit) }
                         }
                     }
                     RelatedSection(plate: p, open: open)
                     if let s = p.sources, !s.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Sources").font(Theme.heading).accessibilityAddTraits(.isHeader)
+                            Text("Sources").textStyle(.heading).accessibilityAddTraits(.isHeader)
                             ForEach(Array(s.enumerated()), id: \.offset) { i, u in
                                 if let url = URL(string: u) {
                                     Link(destination: url) {
@@ -75,25 +76,31 @@ struct DetailView: View {
                                             Text("\(i + 1).").monospacedDigit()
                                             Text(u.replacingOccurrences(of: #"^https?://(www\.)?"#, with: "", options: .regularExpression))
                                                 .multilineTextAlignment(.leading)
-                                        }.font(Theme.meta)
+                                        }.textStyle(.sources)
                                     }
                                 }
                             }
                         }
                     }
                     if let s = p.url, let u = URL(string: s) {
-                        Link("Source →", destination: u).font(.system(size: 17, weight: .semibold))
+                        Link(destination: u) {
+                            Text("Source →").font(Theme.inter(Theme.tMinus1, .medium)).foregroundStyle(Theme.ink)
+                                .padding(.bottom, 2)
+                                .overlay(alignment: .bottom) { Rectangle().fill(Theme.rule).frame(height: 1) }   // .link-arrow
+                        }
                     }
                     // Caption and metadata sit at the end of the page.
                     VStack(alignment: .leading, spacing: 16) {
-                        if let c = p.caption { Text(c).font(Theme.meta).fixedSize(horizontal: false, vertical: true) }
+                        if let c = p.caption { Text(c).textStyle(.deck).fixedSize(horizontal: false, vertical: true) }
                         MetaGrid(rows: [("Logged", p.loggedDate), ("Catalogue", p.catalogue),
                                         ("Register", p.register), ("Logged by", p.loggedBy ?? p.author ?? "")])
                     }
                     .padding(.top, 8)
                 }
-                .padding(.horizontal, Theme.pad)
-                .padding(.bottom, 40)
+                .frame(maxWidth: Theme.measure, alignment: .leading)
+                .padding(.horizontal, Theme.gutter)
+                .padding(.top, Theme.essayTop - Theme.layoutGap)
+                .padding(.bottom, Theme.essayBottom)
             }
         }
     }
@@ -112,7 +119,7 @@ private struct MediaPlate: View {
         }
         .aspectRatio(CGFloat(w / max(h, 1)), contentMode: .fit)
         .frame(maxWidth: .infinity)
-        .background(Color.black)
+        .background(Theme.mediaBackground)
         .accessibilityLabel(plate.media?.alt ?? plate.shortTitle)
     }
 }
@@ -140,14 +147,14 @@ struct RemoteImage: View {
 /// Logged / Catalogue / Register / Logged by: two equal columns that span the full width.
 private struct MetaGrid: View {
     var rows: [(String, String)]
-    private let columns = [GridItem(.flexible(), spacing: 16, alignment: .topLeading),
-                           GridItem(.flexible(), spacing: 16, alignment: .topLeading)]
+    private let columns = [GridItem(.flexible(), spacing: Theme.specsGap.col, alignment: .topLeading),
+                           GridItem(.flexible(), spacing: Theme.specsGap.col, alignment: .topLeading)]
     var body: some View {
-        LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
+        LazyVGrid(columns: columns, alignment: .leading, spacing: Theme.specsGap.row) {
             ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Kicker(text: row.0)
-                    Text(row.1).font(Theme.meta)
+                    Text(row.1).textStyle(.meta)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityElement(children: .combine)
@@ -167,10 +174,10 @@ private struct PairColumn: View {
                 if let s = side.url, let u = URL(string: s) { Link(side.work ?? "", destination: u) }
                 else { Text(side.work ?? "") }
             }
-            .font(Theme.heading).multilineTextAlignment(.leading).accessibilityAddTraits(.isHeader)
-            Text([side.name, side.year].compactMap { $0 }.joined(separator: ", ")).font(Theme.meta)
+            .textStyle(.heading).multilineTextAlignment(.leading).accessibilityAddTraits(.isHeader)
+            Text([side.name, side.year].compactMap { $0 }.joined(separator: ", ")).textStyle(.deck, color: Theme.muted)
             if let h = side.handle, side.handleVerified == true, let u = URL(string: "https://x.com/\(h)") {
-                Link("@\(h)", destination: u).font(Theme.meta)
+                Link("@\(h)", destination: u).textStyle(.deck, color: Theme.muted)
             }
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -188,13 +195,13 @@ private struct RelatedSection: View {
         let links = forward.isEmpty ? reverse : forward
         if !links.isEmpty {
             VStack(alignment: .leading, spacing: 14) {
-                Text(forward.isEmpty ? "Glitch pair" : "Related plates").font(Theme.heading).accessibilityAddTraits(.isHeader)
+                Text(forward.isEmpty ? "Glitch pair" : "Related plates").textStyle(.heading).accessibilityAddTraits(.isHeader)
                 ForEach(links, id: \.0.id) { link in
                     let p = link.0, reason = link.1
                     Button { open(p) } label: {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("\(p.catalogue) \(p.shortTitle)").font(.system(size: 17, weight: .semibold)).underline()
-                            if !reason.isEmpty { Text(reason).font(Theme.meta).foregroundStyle(.secondary) }
+                            Text("\(p.catalogue) \(p.shortTitle)").textStyle(.linkTitle).underline()
+                            if !reason.isEmpty { Text(reason).textStyle(.deck, color: Theme.muted) }
                         }
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)

@@ -6,7 +6,7 @@ import QuartzCore
 /// SwiftUI wrapper for the native HSL point cloud.
 struct CloudView: UIViewRepresentable {
     var plates: [Plate]
-    var onOpen: (Plate) -> Void
+    var onOpen: (Plate, CGRect) -> Void
 
     func makeUIView(context: Context) -> CloudUIView {
         let v = CloudUIView()
@@ -27,7 +27,7 @@ struct CloudView: UIViewRepresentable {
 /// hue = angle, chroma = radius, lightness = height. A CADisplayLink projects the
 /// points through a perspective orbit camera every frame.
 final class CloudUIView: UIView, UIGestureRecognizerDelegate {
-    var onOpen: ((Plate) -> Void)?
+    var onOpen: ((Plate, CGRect) -> Void)?
 
     // Same constants as the site.
     private let R: Double = 230
@@ -259,6 +259,11 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
 
     // MARK: Gestures
 
+    /// The block's frame in window points, the focus point of the datamosh smear.
+    private func screenRect(_ b: Block) -> CGRect {
+        convert((b.layer.presentation() ?? b.layer).frame, to: nil)
+    }
+
     private func hit(_ pt: CGPoint) -> Block? {
         let pad: CGFloat = 6   // small blocks are hard to hit with a finger
         return blocks
@@ -269,7 +274,7 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
 
     @objc private func onTap(_ g: UITapGestureRecognizer) {
         guard let b = hit(g.location(in: self)) else { return }
-        onOpen?(b.plate)
+        onOpen?(b.plate, screenRect(b))
     }
 
     @objc private func onPan(_ g: UIPanGestureRecognizer) {
@@ -314,7 +319,7 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
             // Release over a plate opens it; release over empty space just closes the preview.
             let target = hit(g.location(in: self))
             clearActive()
-            if let t = target { onOpen?(t.plate) }
+            if let t = target { onOpen?(t.plate, screenRect(t)) }
         default:
             clearActive()
         }
@@ -407,7 +412,7 @@ final class TipView: UIView {
     private let playerLayer = AVPlayerLayer()
     private let title = UILabel()
     private let caption = UILabel()
-    private let width: CGFloat = 200
+    private let width: CGFloat = 220   // .cloud-tip width 220px
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -416,9 +421,9 @@ final class TipView: UIView {
         imageView.clipsToBounds = true
         playerLayer.videoGravity = .resizeAspectFill
         imageView.layer.addSublayer(playerLayer)
-        title.font = .systemFont(ofSize: 14, weight: .semibold)
+        title.font = UIFont(name: "Inter-SemiBold", size: Theme.tMinus1) ?? .systemFont(ofSize: Theme.tMinus1, weight: .semibold)
         title.textColor = .black
-        caption.font = .systemFont(ofSize: 13)
+        caption.font = UIFont(name: "Inter-Regular", size: Theme.tMinus1) ?? .systemFont(ofSize: Theme.tMinus1)
         caption.textColor = .black
         caption.numberOfLines = 2
         [imageView, title, caption].forEach(addSubview)
@@ -433,8 +438,9 @@ final class TipView: UIView {
     func setPlayer(_ p: AVPlayer?) { playerLayer.player = p; playerLayer.isHidden = p == nil }
 
     override func sizeThatFits(_ size: CGSize) -> CGSize {
-        let ch = caption.sizeThatFits(CGSize(width: width - 20, height: 100)).height
-        return CGSize(width: width, height: width + 8 + 18 + 2 + ch + 10)
+        let ch = caption.sizeThatFits(CGSize(width: width - 19.2, height: 100)).height
+        let th = ceil(Theme.tMinus1 * Theme.tipLineHeight)
+        return CGSize(width: width, height: width + 6.4 + th + 1.6 + ch + 8)   // label padding 0.4rem 0.6rem 0.5rem, gap 0.1rem
     }
 
     override func layoutSubviews() {
@@ -443,8 +449,9 @@ final class TipView: UIView {
         CATransaction.begin(); CATransaction.setDisableActions(true)
         playerLayer.frame = imageView.bounds
         CATransaction.commit()
-        title.frame = CGRect(x: 10, y: width + 8, width: width - 20, height: 18)
-        let ch = caption.sizeThatFits(CGSize(width: width - 20, height: 100)).height
-        caption.frame = CGRect(x: 10, y: width + 28, width: width - 20, height: ch)
+        let th = ceil(Theme.tMinus1 * Theme.tipLineHeight)
+        title.frame = CGRect(x: 9.6, y: width + 6.4, width: width - 19.2, height: th)
+        let ch = caption.sizeThatFits(CGSize(width: width - 19.2, height: 100)).height
+        caption.frame = CGRect(x: 9.6, y: width + 6.4 + th + 1.6, width: width - 19.2, height: ch)
     }
 }

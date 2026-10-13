@@ -12,8 +12,8 @@ struct SlopgangApp: App {
     }
 }
 
-/// The brand in the header goes home, as the site logo links to "/".
-struct GoHome { var run: () -> Void = {} }
+/// The brand in the header goes home, as the site logo links to "/". `back` pops one page.
+struct GoHome { var run: () -> Void = {}; var back: () -> Void = {} }
 private struct GoHomeKey: EnvironmentKey { static let defaultValue = GoHome() }
 extension EnvironmentValues {
     var goHome: GoHome {
@@ -27,7 +27,15 @@ struct HeaderBrand: ToolbarContent {
     @Environment(\.goHome) private var goHome
     var body: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            Button { goHome.run() } label: { Brand(color: .black) }.buttonStyle(.plain)
+            HStack(spacing: 4) {
+                // Custom back so going back runs the reverse glitch (the system back button cannot).
+                Button { goHome.back() } label: {
+                    Image(systemName: "chevron.left").font(.system(size: 17, weight: .semibold)).foregroundStyle(Theme.ink)
+                        .frame(width: 32, height: 44, alignment: .leading)
+                }
+                .accessibilityLabel("Back")
+                Button { goHome.run() } label: { Brand(color: Theme.ink) }.buttonStyle(.plain)
+            }
         }
     }
 }
@@ -40,21 +48,25 @@ enum Route: Hashable {
 struct RootView: View {
     @EnvironmentObject var store: ArchiveStore
     @State private var path = NavigationPath()
+    @StateObject private var fx = GlitchDirector()
     @Environment(\.scenePhase) private var phase
 
     var body: some View {
         NavigationStack(path: $path) {
-            HomeView(open: { path.append(Route.plate($0.slugValue)) }, about: { path.append(Route.about) })
+            HomeView(open: { p, rect in fx.push(from: rect) { path.append(Route.plate(p.slugValue)) } },
+                     about: { fx.push(from: nil) { path.append(Route.about) } })
                 .navigationDestination(for: Route.self) { r in
                     switch r {
                     case .plate(let slug):
-                        DetailView(slug: slug, open: { path.append(Route.plate($0.slugValue)) })
+                        DetailView(slug: slug, open: { p in fx.push(from: nil) { path.append(Route.plate(p.slugValue)) } })
                     case .about:
                         AboutView()
                     }
                 }
         }
-        .environment(\.goHome, GoHome { path = NavigationPath() })
+        .environment(\.goHome, GoHome(
+            run: { if !path.isEmpty { fx.pop { path = NavigationPath() } } },
+            back: { if !path.isEmpty { fx.pop { path.removeLast() } } }))
         .tint(.black)
         .onChange(of: phase) { _, p in if p == .active { Task { await store.load() } } }
         .onOpenURL { url in
@@ -69,33 +81,33 @@ struct RootView: View {
 
 struct HomeView: View {
     @EnvironmentObject var store: ArchiveStore
-    var open: (Plate) -> Void
+    var open: (Plate, CGRect?) -> Void
     var about: () -> Void
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
 
     var body: some View {
         ZStack(alignment: .top) {
-            Color.black.ignoresSafeArea()
-            CloudView(plates: store.plates, onOpen: open)
+            Theme.homeBackground.ignoresSafeArea()
+            CloudView(plates: store.plates, onOpen: { p, r in open(p, r) })
                 .ignoresSafeArea()
                 .accessibilityHidden(true)
             HStack {
-                Brand(color: .white)
+                Brand(color: Theme.homeInk)
                 Spacer()
-                Button("About", action: about).buttonStyle(TextButtonStyle(color: .white))
+                Button("About", action: about).buttonStyle(TextButtonStyle(color: Theme.homeInk))
             }
-            .padding(.horizontal, 14).padding(.top, 6)   // site mobile .feed-nav: 14px sides
+            .padding(.horizontal, Theme.navPadding).padding(.top, 6)   // site mobile .feed-nav: 14px sides
             if store.plates.isEmpty {
-                VStack { Spacer(); Text(store.status ?? "Loading the archive.").foregroundStyle(.white).font(Theme.meta); Spacer() }
+                VStack { Spacer(); Text(store.status ?? "Loading the archive.").textStyle(.meta, color: Theme.homeInk); Spacer() }
             } else if let s = store.status {
-                VStack { Spacer(); Text(s).font(Theme.small).foregroundStyle(.white.opacity(0.7)).padding(.bottom, 12) }
+                VStack { Spacer(); Text(s).textStyle(.meta, color: Theme.homeInk.opacity(0.7)).padding(.bottom, 12) }
             }
         }
         .toolbar(.hidden, for: .navigationBar)
         .statusBarHidden(false)
         .preferredColorScheme(.dark)
         // VoiceOver users get a plain list over the cloud; the cloud is a visual.
-        .overlay { if voiceOver { AccessibleList(open: open) } }
+        .overlay { if voiceOver { AccessibleList(open: { open($0, nil) }) } }
     }
 }
 
