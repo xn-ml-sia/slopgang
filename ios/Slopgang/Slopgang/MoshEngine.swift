@@ -336,7 +336,7 @@ final class MoshView: MTKView, MTKViewDelegate {
                 // A light slant along the flight, only for blocks ahead of the thumbnail (behind it the
                 // slant would pull in black from past the source).
                 let ahead = simd_dot(c - tc, fdir) > 0
-                let slant = ahead ? fdir * Float(8) * (0.5 + r2) : .zero
+                let slant = ahead ? -fdir * Float(8) * (0.5 + r2) : .zero
                 field[by * m.gw + bx] = field[by * m.gw + bx] * 0.35 + toward + slant
                 // The thumbnail's own blocks hold still: they are the source the rest of the screen
                 // keeps copying from, so the bloom fills with its pixels instead of decaying to black.
