@@ -335,6 +335,10 @@ final class MoshView: MTKView, MTKViewDelegate {
                 let toward = (tc - c) * (p.pdupPull * (0.6 + 0.8 * r1))
                 let back = -fdir * Float(12) * (0.5 + r2)        // ~6-18 pt back along the flight
                 field[by * m.gw + bx] += toward + back
+                // The thumbnail's own blocks hold still: they are the source the rest of the screen
+                // keeps copying from, so the bloom fills with its pixels instead of decaying to black.
+                let pt = CGPoint(x: CGFloat(c.x) * sz.width, y: CGFloat(c.y) * sz.height)
+                if a.insetBy(dx: -4, dy: -4).contains(pt) { field[by * m.gw + bx] = .zero }
             } }
             field.withUnsafeBytes { raw in
                 mt.replace(region: MTLRegionMake2D(0, 0, m.gw, m.gh), mipmapLevel: 0,
