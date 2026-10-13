@@ -29,7 +29,7 @@ enum MoshMotion {
 /// CPU block matching between consecutive low-res input frames, two levels (coarse then refine),
 /// like an encoder's hierarchical motion search. Output: one vector per macroblock in uv units,
 /// pointing to where the block's content was in the previous frame.
-final class BlockMatcher {
+nonisolated final class BlockMatcher: @unchecked Sendable {   // used only on MoshView.matchQueue
     let w: Int, h: Int, b: Int, gw: Int, gh: Int
     private let sizePt: CGSize
     private let oldGray: CGImage?
@@ -154,7 +154,13 @@ final class MoshView: MTKView, MTKViewDelegate {
     private var finished = false
     /// Called once the first moshed frame is on screen.
     var onFirstFrame: (() -> Void)?
-    private var matchMs = 0.0, matchMax = 0.0
+    private var matchMs = 0.0, matchMax = 0.0, matchCount = 0
+    // Motion search runs off the main thread; draw() always uses the newest finished field.
+    private let matchQueue = DispatchQueue(label: "org.slopgang.mosh.match", qos: .userInteractive)
+    private var latest: [SIMD2<Float>]?
+    private var matching = false
+    private var fieldLive = true
+    private var generation = 0
 
     init() {
         let dev = MTLCreateSystemDefaultDevice()
@@ -233,7 +239,14 @@ final class MoshView: MTKView, MTKViewDelegate {
         finished = false
         done = completion
         // Prime the matcher with the first input frame so the first estimate has a reference.
-        _ = m.estimate(m.frame(card: card(at: 0)), threshold: p.threshold, melt: p.melt)
+        generation += 1
+        latest = nil
+        matching = true
+        let gen = generation, c0 = card(at: 0), th = p.threshold, mt = p.melt
+        matchQueue.async { [weak self] in
+            _ = m.estimate(m.frame(card: c0), threshold: th, melt: mt)
+            DispatchQueue.main.async { if self?.generation == gen { self?.matching = false } }
+        }
         SGTrace.mark("mosh setup done (textures + matcher prime)")
         start = CACurrentMediaTime()
         isPaused = false
@@ -243,8 +256,13 @@ final class MoshView: MTKView, MTKViewDelegate {
     /// Stops drawing and drops the textures. Safe to call more than once.
     func cancel() {
         #if DEBUG
-        if frameIndex > 0 { print(String(format: "[sg][t] mosh frames %d, match total %.1f ms, max %.1f ms", frameIndex, matchMs, matchMax)) }
-        matchMs = 0; matchMax = 0
+        if frameIndex > 0 { print(String(format: "[sg][t] mosh frames %d, motion fields %d, match total %.1f ms (off main), max %.1f ms", frameIndex, matchCount, matchMs, matchMax)) }
+        matchMs = 0; matchMax = 0; matchCount = 0
+        #endif
+        generation += 1
+        matching = false
+        latest = nil
+        #if DEBUG
         #endif
         isPaused = true
         done = nil
@@ -307,16 +325,35 @@ final class MoshView: MTKView, MTKViewDelegate {
         let r = card(at: p)
 
         // Motion estimation between the previous and current input frames.
-        let tm0 = CACurrentMediaTime()
-        let vectors = matcher.estimate(matcher.frame(card: r), threshold: params.threshold, melt: params.melt)
-        vectors.withUnsafeBytes { raw in
-            motionTex.replace(region: MTLRegionMake2D(0, 0, matcher.gw, matcher.gh), mipmapLevel: 0,
-                              withBytes: raw.baseAddress!, bytesPerRow: matcher.gw * MemoryLayout<SIMD2<Float>>.stride)
+        if !matching {
+            matching = true
+            let gen = generation, th = params.threshold, mt = params.melt
+            matchQueue.async { [weak self] in
+                let tm0 = CACurrentMediaTime()
+                let v = matcher.estimate(matcher.frame(card: r), threshold: th, melt: mt)
+                let dt = (CACurrentMediaTime() - tm0) * 1000
+                DispatchQueue.main.async {
+                    guard let self, self.generation == gen else { return }
+                    self.latest = v; self.matching = false
+                    #if DEBUG
+                    self.matchMs += dt; self.matchMax = max(self.matchMax, dt); self.matchCount += 1
+                    #endif
+                }
+            }
+        }
+        // Each field is applied once; between fields a zero field makes the feedback just hold,
+        // so total displacement tracks real motion whatever the match rate is.
+        let fresh = latest
+        latest = nil
+        if fresh != nil || fieldLive {
+            fieldLive = fresh != nil
+            let vectors = fresh ?? [SIMD2<Float>](repeating: .zero, count: matcher.gw * matcher.gh)
+            vectors.withUnsafeBytes { raw in
+                motionTex.replace(region: MTLRegionMake2D(0, 0, matcher.gw, matcher.gh), mipmapLevel: 0,
+                                  withBytes: raw.baseAddress!, bytesPerRow: matcher.gw * MemoryLayout<SIMD2<Float>>.stride)
+            }
         }
 
-        #if DEBUG
-        let dt = (CACurrentMediaTime() - tm0) * 1000; matchMs += dt; matchMax = max(matchMax, dt)
-        #endif
         let sz = bounds.size
         var u = Uniforms(
             cardOrigin: SIMD2(Float(r.minX / sz.width), Float(r.minY / sz.height)),
