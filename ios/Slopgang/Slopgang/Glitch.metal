@@ -1,60 +1,75 @@
 #include <metal_stdlib>
-#include <SwiftUI/SwiftUI_Metal.h>
 using namespace metal;
 
-// Home -> detail glitch / datamosh transition, used as a SwiftUI layerEffect (iOS 17+).
-// `layer` is the new screen (snapshot), `from` is the old screen (snapshot) as a texture.
-// p runs 0 -> 1. Intensity g falls from 1 to 0, so the last frame is the clean new screen.
+// Datamosh as a simulated decoder, reimplemented from Modulate's public description of the
+// technique (not their code): a feedback buffer holds the last output; each frame the
+// previous output is displaced along per-macroblock motion vectors measured between the
+// last two input frames (block matching, done on the CPU in MoshEngine.swift), so stale
+// pixels are dragged by new motion. "Heal" re-anchors random blocks to the true input,
+// and a keyframe at the end replaces everything with the clean frame.
 
-static float h21(float2 p) {
-    p = fract(p * float2(123.34, 456.21));
-    p += dot(p, p + 45.32);
-    return fract(p.x * p.y);
+struct VOut { float4 pos [[position]]; float2 uv; };
+
+vertex VOut moshVertex(uint vid [[vertex_id]]) {
+    float2 p = float2((vid << 1) & 2, vid & 2);        // full-screen triangle
+    VOut o;
+    o.pos = float4(p * 2.0 - 1.0, 0.0, 1.0);
+    o.uv = float2(p.x, 1.0 - p.y);                     // top-left origin
+    return o;
 }
 
-[[ stitchable ]] half4 glitchTransition(float2 pos, SwiftUI::Layer layer, texture2d<half> from,
-                                        float2 size, float2 tap, float p, float mosh, float seed) {
-    constexpr sampler s(coord::normalized, address::clamp_to_edge, filter::nearest);
-    float g = pow(clamp(1.0 - p, 0.0, 1.0), 1.6);      // glitch intensity
-    float frame = floor(p * 24.0);                    // stepped like dropped frames
-    float bs = mix(56.0, 16.0, p);                    // macroblock size shrinks as it settles
-    float2 b = floor(pos / bs);
-    float2 bc = (b + 0.5) * bs;                       // block centre: one motion vector per block
-    float hb = h21(b + seed);                         // per-block, fixed
-    float hf = h21(b + frame + seed);                 // per-block, per step
+struct MoshUniforms {
+    float2 cardOrigin;   // where the new screen sits in the input frame (uv)
+    float2 cardSize;
+    float2 grid;         // macroblock grid size (columns, rows)
+    float smear;         // multiplies the measured vectors (can overdrive)
+    float heal;          // chance per block per frame to snap back to the true input
+    float diffusion;     // colour bleed between neighbouring source pixels
+    float intensity;     // 0 = clean input, 1 = full mosh
+    float seed;          // changes every frame
+    float keyframe;      // 1 = clean frame lands
+};
 
-    // Block displacement: some macroblocks jump sideways.
-    float2 disp = float2(0.0);
-    if (hf > 1.0 - 0.35 * g) disp.x = (h21(b * 1.7 + frame) - 0.5) * 120.0 * g;
+static float hash2(float2 p, float s) {
+    return fract(sin(dot(p, float2(12.9898, 78.233)) + s * 37.719) * 43758.5453);
+}
 
-    // Scanline tearing: thin rows inside random 40pt bands shear.
-    float band = floor(pos.y / 40.0);
-    if (h21(float2(band, frame + seed)) > 1.0 - 0.5 * g) disp.x += sin(floor(pos.y / 3.0) * 0.9 + frame) * 28.0 * g;
+// The true input frame: the new screen as a card over the old screen.
+static float4 inputAt(float2 uv, texture2d<float> oldTex, texture2d<float> newTex,
+                      constant MoshUniforms& u, sampler s) {
+    float2 q = (uv - u.cardOrigin) / u.cardSize;
+    if (all(q >= 0.0) && all(q <= 1.0)) return newTex.sample(s, q);
+    return oldTex.sample(s, uv);
+}
 
-    // RGB channel split.
-    float split = 10.0 * g;
-    float2 q = pos + disp;
+fragment float4 moshDisplace(VOut in [[stage_in]],
+                             texture2d<float> prev   [[texture(0)]],
+                             texture2d<float> motion [[texture(1)]],
+                             texture2d<float> oldTex [[texture(2)]],
+                             texture2d<float> newTex [[texture(3)]],
+                             constant MoshUniforms& u [[buffer(0)]]) {
+    constexpr sampler lin(coord::normalized, address::clamp_to_edge, filter::linear);
+    constexpr sampler nn(coord::normalized, address::clamp_to_edge, filter::nearest);
+    float4 truth = inputAt(in.uv, oldTex, newTex, u, lin);
+    if (u.keyframe > 0.5) return truth;
 
-    // Datamosh: the old frame is never refreshed (no I-frame). Each block keeps copying pixels from
-    // nearer the tapped plate, so the plate's pixels bleed and smear outward over the new page.
-    float k = mosh * clamp(p * 1.5, 0.0, 1.0) * (0.4 + 0.6 * hb);
-    float2 src = q - (bc - tap) * k;
+    // One vector per macroblock (nearest lookup), so blocks move as hard rectangles.
+    float2 cell = floor(in.uv * u.grid);
+    float2 mv = motion.sample(nn, (cell + 0.5) / u.grid).xy * u.smear;
 
-    // Per-block switch from old to new. Some old blocks stay longer as residue.
-    bool showNew = (p * 1.5 - hb) > 0.25 && !(hf < 0.25 * g * mosh);
+    // P-frame: copy the previous output from where this block's content came from.
+    float4 moshed = prev.sample(nn, in.uv + mv);
+    // Diffusion: a little bilinear bleed from a nearby source position.
+    float2 jitter = (float2(hash2(cell, u.seed + 1.0), hash2(cell, u.seed + 2.0)) - 0.5) / u.grid * 0.5;
+    moshed = mix(moshed, prev.sample(lin, in.uv + mv + jitter), u.diffusion);
 
-    half4 c;
-    if (showNew) {
-        c.r = layer.sample(q + float2(split, 0.0)).r;
-        c.g = layer.sample(q).g;
-        c.b = layer.sample(q - float2(split, 0.0)).b;
-    } else {
-        float2 uv = src / size;
-        float2 du = float2(split / size.x, 0.0);
-        c.r = from.sample(s, uv + du).r;
-        c.g = from.sample(s, uv).g;
-        c.b = from.sample(s, uv - du).b;
-    }
-    c.a = 1.0h;
-    return c;
+    // Heal: some blocks get their correction and show the true image again.
+    if (hash2(cell, u.seed) < u.heal) moshed = truth;
+
+    return mix(truth, moshed, u.intensity);
+}
+
+fragment float4 moshPresent(VOut in [[stage_in]], texture2d<float> src [[texture(0)]]) {
+    constexpr sampler nn(coord::normalized, address::clamp_to_edge, filter::nearest);
+    return src.sample(nn, in.uv);
 }
