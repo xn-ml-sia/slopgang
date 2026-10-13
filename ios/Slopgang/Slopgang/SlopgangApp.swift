@@ -73,6 +73,22 @@ struct RootView: View {
             back: { if !path.isEmpty { fx.pop { path.removeLast() } } }))
         .tint(.black)
         .onChange(of: phase) { _, p in if p == .active { Task { await store.load() } } }
+        #if DEBUG
+        // Headless repro: -autoOpen sg-123 runs the same push transition as a tap; -autoBack also goes back.
+        .task(id: store.plates.count) {
+            let args = ProcessInfo.processInfo.arguments
+            guard !store.plates.isEmpty, path.isEmpty, let i = args.firstIndex(of: "-autoOpen"), i + 1 < args.count,
+                  let p = store.plate(args[i + 1]) else { return }
+            try? await Task.sleep(for: .seconds(2))
+            print("[sg] autoOpen", p.slugValue)
+            fx.push(from: CGRect(x: 150, y: 400, width: 40, height: 40)) { path.append(Route.plate(p.slugValue)) }
+            if args.contains("-autoBack") {
+                try? await Task.sleep(for: .seconds(3))
+                print("[sg] autoBack")
+                fx.pop { path.removeLast() }
+            }
+        }
+        #endif
         .onOpenURL { url in
             // slopgang://specimen/sg-123 or https://slopgang.org/specimen/sg-123
             let parts = url.pathComponents.filter { $0 != "/" }
