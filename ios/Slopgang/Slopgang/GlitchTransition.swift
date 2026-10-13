@@ -23,7 +23,10 @@ enum SGTrace {
 
 final class GlitchDirector: ObservableObject {
     static let pushDuration = 1.4    // tap -> clean detail; matches glitch-in.wav
-    static let popDuration = 0.20    // matches glitch-out.wav
+    static let popDuration = 0.70    // detail -> Home; matches glitch-out.wav
+
+    /// (thumbnail rect on Home, hero rect on detail) for each open, so back can fly the hero home.
+    private var flights: [(thumb: CGRect?, hero: CGRect)] = []
 
     private var overlay: UIWindow?
     private var hold: UIImageView?
@@ -47,6 +50,10 @@ final class GlitchDirector: ObservableObject {
         p.healFrom = 0.65
         p.healEnd = 1.0
         let top = keyWindow()?.safeAreaInsets.top ?? 59
+        if let wb = keyWindow()?.bounds {
+            let mh = min(wb.height * 0.6, wb.width * max(0.3, mediaAspect))
+            flights.append((rect, CGRect(x: 0, y: top + 44, width: wb.width, height: mh)))
+        }
         run(params: p, sound: "glitch-in", motion: { bounds in
             // Detail hero: full width under the nav bar, at the plate's aspect (capped like the site).
             let mh = min(bounds.height * 0.6, bounds.width * max(0.3, mediaAspect))
@@ -64,15 +71,27 @@ final class GlitchDirector: ObservableObject {
         }, change)
     }
 
-    /// Back: shorter, gentler, with motion that keeps flowing (melt).
+    /// Back: reverse mosh. The detail hero flies back toward its thumbnail rect on Home, a P-frame
+    /// wedge smears along that path, then blocks heal into Home (pixel-identical last frame).
     func pop(_ change: @escaping () -> Void) {
         var p = MoshParams()
         p.duration = Self.popDuration
-        p.smear = 1.35
-        p.melt = 0.5
-        p.healStart = 0.03
-        p.healEnd = 0.45
-        run(params: p, sound: "glitch-out", motion: { _ in .settle(scale: 1.18) }, change)
+        p.pdupGain = 1.1
+        p.pdupGainFrom = 0.3
+        p.rampPower = 1.3
+        p.pdupReach = 10
+        p.diffusion = 0.12
+        p.blockSchedule = [(1, 1)]
+        p.healStart = 0
+        p.healFrom = 0.5
+        p.healEnd = 1.0
+        let flight = flights.popLast()
+        run(params: p, sound: "glitch-out", motion: { bounds in
+            let top = self.keyWindow()?.safeAreaInsets.top ?? 59
+            let hero = flight?.hero ?? CGRect(x: 0, y: top + 44, width: bounds.width, height: bounds.width * 0.75)
+            let thumb = flight?.thumb ?? CGRect(x: bounds.midX - 30, y: bounds.midY - 30, width: 60, height: 60)
+            return .pdup(from: hero, to: thumb, crop: hero)
+        }, change)
     }
 
     private func keyWindow() -> UIWindow? {
@@ -156,10 +175,12 @@ final class GlitchDirector: ObservableObject {
                 mosh.isHidden = false
                 // Re-snapshot the full detail page just before the blocks start to heal, so they
                 // resolve into the page as it will be when the overlay goes (images loaded).
-                DispatchQueue.main.asyncAfter(deadline: .now() + timed.duration * 0.6) {
-                    guard self.token == my, self.busy else { return }
-                    mosh.updateNew(self.snapshot(w, after: false))
-                    SGTrace.mark("heal target refreshed")
+                for at in [0.6, 0.88] {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + timed.duration * at) {
+                        guard self.token == my, self.busy else { return }
+                        mosh.updateNew(self.snapshot(w, after: false))
+                        SGTrace.mark("heal target refreshed")
+                    }
                 }
             } else { crossfade() }
         }

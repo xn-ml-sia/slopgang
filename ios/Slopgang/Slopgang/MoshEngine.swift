@@ -26,6 +26,7 @@ struct MoshParams {
     var pdupGain: Float = 1          // P-frame duplication: how much of the frozen field is applied per frame...
     var pdupGainFrom: Float = 0.3    // ...starting at this fraction, ramping (rampPower) to full
     var pdupReach: Float = 6         // field dilation falloff, in blocks
+    var shatter = false              // P-frame duplication with a random per-block field (refresh glitch)
 }
 
 /// How the new screen enters the input frame. Its motion is what drags the old pixels.
@@ -228,7 +229,16 @@ final class MoshView: MTKView, MTKViewDelegate {
     private var latest: [SIMD2<Float>]?
     private var matching = false
     private var fieldLive = true
-    private var frozenField = false   // P-frame duplication: the motion texture is fixed for the run
+    private var frozenField = false
+    private var healOutStart: CFTimeInterval?
+    private var healOutDuration = 0.5
+
+    /// Ends a long-running mosh early: blocks heal into the (refreshed) new image over `d` seconds,
+    /// then the keyframe lands and the completion runs.
+    func healOut(over d: Double) {
+        healOutDuration = d
+        healOutStart = CACurrentMediaTime()
+    }   // P-frame duplication: the motion texture is fixed for the run
     private var generation = 0
     private var liveSource: (() -> CGImage?)?
     private var liveImage: CGImage?
@@ -309,6 +319,7 @@ final class MoshView: MTKView, MTKViewDelegate {
         ping = [dev.makeTexture(descriptor: fd), dev.makeTexture(descriptor: fd)].compactMap { $0 }
         guard motionTex != nil, ping.count == 2 else { return false }
         firstFrame = true
+        healOutStart = nil
         frameIndex = 0
         finished = false
         done = completion
@@ -322,6 +333,15 @@ final class MoshView: MTKView, MTKViewDelegate {
             _ = m.estimate(m.frame(card: a), threshold: 0, melt: 0)
             var field = m.estimate(m.frame(card: step), threshold: 0.5, melt: 0)
             field = Self.dilate(field, gw: m.gw, gh: m.gh, reach: p.pdupReach)
+            if p.shatter {
+                // Shatter: every block gets its own fixed random drift (the cloud breaks into blocks).
+                let rng = SeededRandom(seed: UInt32.random(in: 1...UInt32.max))
+                let sz = bounds.size
+                for i in field.indices {
+                    let ang = rng.next() * 2 * .pi, mag = 2 + rng.next() * 7   // pt per frame
+                    field[i] = SIMD2(Float(cos(ang) * mag / Double(sz.width)), Float(sin(ang) * mag / Double(sz.height)))
+                }
+            }
             field.withUnsafeBytes { raw in
                 mt.replace(region: MTLRegionMake2D(0, 0, m.gw, m.gh), mipmapLevel: 0,
                            withBytes: raw.baseAddress!, bytesPerRow: m.gw * MemoryLayout<SIMD2<Float>>.stride)
@@ -484,7 +504,9 @@ final class MoshView: MTKView, MTKViewDelegate {
             (SIMD2(Float(r.minX / sz0.width), Float(r.minY / sz0.height)), SIMD2(Float(r.width / sz0.width), Float(r.height / sz0.height)))
         }
         let (sfo, sfs) = uv(seedFrom), (sto, sts) = uv(seedTo)
-        let keyframe = p >= 1
+        var healOutK: Float = 0
+        if let hs = healOutStart { healOutK = Float(min(1, (CACurrentMediaTime() - hs) / max(0.05, healOutDuration))) }
+        let keyframe = p >= 1 || healOutK >= 1
         let r = card(at: p)
         // Thumbnail velocity (uv per 60 Hz frame), for the screen-wide drift in fly mode.
         let rPrev = card(at: max(0, p - (1.0 / 60) / max(0.05, params.duration)))
@@ -538,7 +560,7 @@ final class MoshView: MTKView, MTKViewDelegate {
             cardSize: SIMD2(Float(max(1, r.width) / sz.width), Float(max(1, r.height) / sz.height)),
             grid: SIMD2(Float(matcher.gw), Float(matcher.gh)),
             smear: frozenField ? params.pdupGain * (params.pdupGainFrom + (1 - params.pdupGainFrom) * ramp) : smearNow,
-            heal: params.healStart + (params.healEnd - params.healStart) * healK * healK,
+            heal: max(params.healStart + (params.healEnd - params.healStart) * healK * healK, healOutK * healOutK * 1.02),
             diffusion: params.diffusion,
             intensity: intensityNow,
             seed: Float(frameIndex % 997),

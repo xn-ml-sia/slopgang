@@ -98,6 +98,16 @@ struct RootView: View {
             }
         }
         #endif
+        #if DEBUG
+        // -autoTapBack: after a tap opens a plate, go back 3 s later (times the reverse mosh).
+        .onChange(of: path.count) { old, new in
+            guard new == 1, old == 0, ProcessInfo.processInfo.arguments.contains("-autoTapBack") else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                SGTrace.mark("back tapped (autoTapBack)", reset: true)
+                fx.pop { path.removeLast() }
+            }
+        }
+        #endif
         .onOpenURL { url in
             // slopgang://specimen/sg-123 or https://slopgang.org/specimen/sg-123
             let parts = url.pathComponents.filter { $0 != "/" }
@@ -117,7 +127,8 @@ struct HomeView: View {
     var body: some View {
         ZStack(alignment: .top) {
             Theme.homeBackground.ignoresSafeArea()
-            CloudView(plates: store.plates, onOpen: { p, r in open(p, r) })
+            CloudView(plates: store.plates, onOpen: { p, r in open(p, r) },
+                      onRefresh: { done in Task { await store.load(); done() } })
                 .ignoresSafeArea()
                 .accessibilityHidden(true)
             HStack {

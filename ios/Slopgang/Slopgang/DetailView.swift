@@ -126,22 +126,76 @@ private struct MediaPlate: View {
     }
 }
 
-/// Shows the 256px thumbnail at once, then swaps to full resolution with no fade.
+/// Glitch loading: the 256px thumbnail shows at once as coarse macroblocks (quantized colour);
+/// when the full image arrives it sharpens in block by block, like a broken JPEG filling in.
+/// Reduce Motion: the plain thumbnail, then a short fade to the full image.
 struct RemoteImage: View {
     var url: URL?
     var placeholder: URL?
-    @State private var image: UIImage?
+    @State private var coarse: UIImage?
+    @State private var thumb: UIImage?
+    @State private var full: UIImage?
+    @State private var revealStart: Date?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private let cols = 18
+    private let revealDuration = 0.5
+
     var body: some View {
         ZStack {
-            if let image { Image(uiImage: image).resizable().scaledToFit() }
+            if reduceMotion {
+                if let thumb { Image(uiImage: thumb).resizable().scaledToFit() }
+                if let full { Image(uiImage: full).resizable().scaledToFit().transition(.opacity) }
+            } else {
+                if let coarse, full == nil || revealStart != nil {
+                    Image(uiImage: coarse).resizable().interpolation(.none).scaledToFit()
+                }
+                if let full {
+                    TimelineView(.animation(paused: revealDone)) { tl in
+                        let k = progress(tl.date)
+                        Image(uiImage: full).resizable().scaledToFit()
+                            .mask { BlockMask(cols: cols, aspect: full.size.height / max(1, full.size.width), k: k) }
+                    }
+                }
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task(id: url) {
-            if image == nil, let ph = await ImageLoader.shared.image(placeholder) { image = ph }
-            if let full = await ImageLoader.shared.image(url) {
-                var t = Transaction(); t.disablesAnimations = true
-                withTransaction(t) { image = full }
+            if full == nil, let ph = await ImageLoader.shared.image(placeholder) {
+                thumb = ph
+                coarse = Macroblock.coarse(ph, cols: cols)
             }
+            if let f = await ImageLoader.shared.image(url) {
+                if reduceMotion { withAnimation(.easeOut(duration: 0.25)) { full = f } }
+                else { revealStart = thumb == nil ? nil : Date(); full = f }
+            }
+        }
+    }
+
+    private var revealDone: Bool { revealStart.map { Date().timeIntervalSince($0) > revealDuration } ?? true }
+    private func progress(_ d: Date) -> Double {
+        guard let s = revealStart else { return 1 }
+        return min(1, d.timeIntervalSince(s) / revealDuration)
+    }
+}
+
+/// Mask of the blocks revealed so far (fixed random order).
+private struct BlockMask: View {
+    var cols: Int
+    var aspect: CGFloat
+    var k: Double
+    var body: some View {
+        Canvas { ctx, size in
+            guard k < 1 else { ctx.fill(Path(CGRect(origin: .zero, size: size)), with: .color(.black)); return }
+            // The image is aspect-fit inside `size`; lay the grid over the fitted rect.
+            let fw = min(size.width, size.height / max(0.01, aspect)), fh = fw * aspect
+            let r = CGRect(x: (size.width - fw) / 2, y: (size.height - fh) / 2, width: fw, height: fh)
+            let rows = max(1, Int((CGFloat(cols) * aspect).rounded()))
+            let bw = r.width / CGFloat(cols), bh = r.height / CGFloat(rows)
+            var p = Path()
+            for y in 0..<rows { for x in 0..<cols where Macroblock.order(x, y) < k {
+                p.addRect(CGRect(x: r.minX + CGFloat(x) * bw, y: r.minY + CGFloat(y) * bh, width: bw + 0.5, height: bh + 0.5))
+            } }
+            ctx.fill(p, with: .color(.black))
         }
     }
 }
