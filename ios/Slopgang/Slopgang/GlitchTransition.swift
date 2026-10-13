@@ -10,8 +10,8 @@ import UIKit
 /// Reduce Motion, or no Metal, gets a plain 250 ms crossfade. The sound starts with the change.
 @MainActor
 final class GlitchDirector: ObservableObject {
-    static let pushDuration = 0.52   // matches glitch-in.wav
-    static let popDuration = 0.30    // matches glitch-out.wav
+    static let pushDuration = 0.30   // matches glitch-in.wav
+    static let popDuration = 0.20    // matches glitch-out.wav
 
     private var overlay: UIWindow?
     private var hold: UIImageView?
@@ -23,7 +23,7 @@ final class GlitchDirector: ObservableObject {
     func push(from rect: CGRect?, mediaAspect: CGFloat = 0.75, _ change: @escaping () -> Void) {
         var p = MoshParams()
         p.duration = Self.pushDuration
-        p.smear = 2.8
+        p.smear = 3.0
         p.melt = 0.5
         p.healStart = 0
         p.healFrom = 0.6
@@ -45,7 +45,7 @@ final class GlitchDirector: ObservableObject {
     func pop(_ change: @escaping () -> Void) {
         var p = MoshParams()
         p.duration = Self.popDuration
-        p.smear = 1.2
+        p.smear = 1.35
         p.melt = 0.5
         p.healStart = 0.03
         p.healEnd = 0.45
