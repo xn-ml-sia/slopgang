@@ -41,31 +41,22 @@ struct TextButtonStyle: ButtonStyle {
     }
 }
 
-/// The spiral mark, drawn natively (site: public/logo-spiral.svg is approximated, not traced).
-struct SpiralMark: Shape {
-    func path(in r: CGRect) -> Path {
-        var p = Path()
-        let c = CGPoint(x: r.midX, y: r.midY)
-        let turns = 3.0, steps = 180
-        let maxR = Double(min(r.width, r.height)) / 2
-        for i in 0...steps {
-            let t = Double(i) / Double(steps)
-            let a = t * turns * 2 * .pi
-            let rad = maxR * t
-            let pt = CGPoint(x: c.x + rad * cos(a), y: c.y + rad * sin(a))
-            if i == 0 { p.move(to: pt) } else { p.addLine(to: pt) }
-        }
-        return p
-    }
-}
-
+/// Site header brand: the Spiral mark (public/logo-spiral.svg, the same path the site's SiteNav
+/// draws in currentColor) plus the wordmark. Site CSS: .brand__logo height 1.9rem (30.4px),
+/// gap 0.6rem (9.6px), wordmark --t0 (17px), weight 850. White on home, black elsewhere.
 struct Brand: View {
     var color: Color
     var body: some View {
-        HStack(spacing: 8) {
-            SpiralMark().stroke(color, lineWidth: 2).frame(width: 22, height: 22)
-            Text("slopgang").font(.system(size: 19, weight: .semibold)).foregroundStyle(color)
+        HStack(spacing: 9.6) {
+            Image("SpiralLogo")
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 30.4, height: 30.4)
+            Text("slopgang").font(.system(size: 17, weight: .heavy)).foregroundStyle(color)
         }
+        .foregroundStyle(color)
+        .frame(height: 40)          // .brand height 2.5rem
         .accessibilityElement(children: .combine)
         .accessibilityLabel("slopgang")
     }

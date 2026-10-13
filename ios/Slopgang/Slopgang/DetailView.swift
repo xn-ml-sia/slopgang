@@ -16,7 +16,7 @@ struct DetailView: View {
         .preferredColorScheme(.light)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .principal) { Brand(color: .black) }
+            HeaderBrand()
             ToolbarItem(placement: .topBarTrailing) {
                 ShareLink(item: URL(string: "https://slopgang.org/specimen/\(slug)") ?? ArchiveStore.base) {
                     Image(systemName: "square.and.arrow.up")

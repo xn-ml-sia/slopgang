@@ -53,7 +53,7 @@ struct AboutView: View {
         .foregroundStyle(Theme.ink)
         .preferredColorScheme(.light)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .principal) { Brand(color: .black) } }
+        .toolbar { HeaderBrand() }
     }
 
     /// Turns "[5]" into a superscript number and "**x**" into bold.

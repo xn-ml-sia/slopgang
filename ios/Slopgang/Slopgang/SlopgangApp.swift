@@ -12,6 +12,26 @@ struct SlopgangApp: App {
     }
 }
 
+/// The brand in the header goes home, as the site logo links to "/".
+struct GoHome { var run: () -> Void = {} }
+private struct GoHomeKey: EnvironmentKey { static let defaultValue = GoHome() }
+extension EnvironmentValues {
+    var goHome: GoHome {
+        get { self[GoHomeKey.self] }
+        set { self[GoHomeKey.self] = newValue }
+    }
+}
+
+/// Header brand for paper pages: left side, after the back button, like the site header.
+struct HeaderBrand: ToolbarContent {
+    @Environment(\.goHome) private var goHome
+    var body: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            Button { goHome.run() } label: { Brand(color: .black) }.buttonStyle(.plain)
+        }
+    }
+}
+
 enum Route: Hashable {
     case plate(String)
     case about
@@ -34,6 +54,7 @@ struct RootView: View {
                     }
                 }
         }
+        .environment(\.goHome, GoHome { path = NavigationPath() })
         .tint(.black)
         .onChange(of: phase) { _, p in if p == .active { Task { await store.load() } } }
         .onOpenURL { url in
@@ -63,7 +84,7 @@ struct HomeView: View {
                 Spacer()
                 Button("About", action: about).buttonStyle(TextButtonStyle(color: .white))
             }
-            .padding(.horizontal, Theme.pad).padding(.top, 8)
+            .padding(.horizontal, 14).padding(.top, 6)   // site mobile .feed-nav: 14px sides
             if store.plates.isEmpty {
                 VStack { Spacer(); Text(store.status ?? "Loading the archive.").foregroundStyle(.white).font(Theme.meta); Spacer() }
             } else if let s = store.status {
