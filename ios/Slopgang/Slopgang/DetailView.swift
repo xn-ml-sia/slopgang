@@ -17,7 +17,7 @@ struct DetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
-            HeaderBrand()
+            HeaderBrand(showBrand: false)
             ToolbarItem(placement: .topBarTrailing) {
                 ShareLink(item: URL(string: "https://slopgang.org/specimen/\(slug)") ?? ArchiveStore.base) {
                     Image(systemName: "square.and.arrow.up").font(.system(size: 15, weight: .semibold))

@@ -29,6 +29,7 @@ extension EnvironmentValues {
 /// Header brand for paper pages: left side, after the back button, like the site header.
 struct HeaderBrand: ToolbarContent {
     @Environment(\.goHome) private var goHome
+    var showBrand = true   // the detail page shows only the back button, no logo
     var body: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             HStack(spacing: 4) {
@@ -38,7 +39,9 @@ struct HeaderBrand: ToolbarContent {
                 }
                 .buttonStyle(FilledNavButtonStyle())
                 .accessibilityLabel("Back")
-                Button { goHome.run() } label: { Brand(color: Theme.ink) }.buttonStyle(.plain)
+                if showBrand {
+                    Button { goHome.run() } label: { Brand(color: Theme.ink) }.buttonStyle(.plain)
+                }
             }
         }
         .plainToolbarBackground()
