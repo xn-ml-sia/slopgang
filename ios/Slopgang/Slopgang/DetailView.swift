@@ -105,6 +105,8 @@ struct DetailView: View {
                 .padding(.bottom, Theme.essayBottom)
             }
         }
+        // DEBUG screenshots: -scrollEnd opens the page scrolled to the caption.
+        .defaultScrollAnchor(ProcessInfo.processInfo.arguments.contains("-scrollEnd") ? .bottom : .top)
     }
 }
 

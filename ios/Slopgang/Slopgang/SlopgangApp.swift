@@ -99,6 +99,14 @@ struct RootView: View {
         }
         #endif
         #if DEBUG
+        // -autoAbout: open About 2 s after launch (screenshots).
+        .task {
+            guard ProcessInfo.processInfo.arguments.contains("-autoAbout") else { return }
+            try? await Task.sleep(for: .seconds(2))
+            fx.push(from: nil) { path.append(Route.about) }
+        }
+        #endif
+        #if DEBUG
         // -autoTapBack: after a tap opens a plate, go back 3 s later (times the reverse mosh).
         .onChange(of: path.count) { old, new in
             guard new == 1, old == 0, ProcessInfo.processInfo.arguments.contains("-autoTapBack") else { return }
