@@ -22,7 +22,7 @@ enum SGTrace {
 }
 
 final class GlitchDirector: ObservableObject {
-    static let pushDuration = 1.0    // tap -> clean detail; matches glitch-in.wav
+    static let pushDuration = 1.4    // tap -> clean detail; matches glitch-in.wav
     static let popDuration = 0.20    // matches glitch-out.wav
 
     private var overlay: UIWindow?
@@ -33,24 +33,15 @@ final class GlitchDirector: ObservableObject {
     /// Forward: home -> detail. `rect` is the tapped plate in window points, if known.
     /// `mediaAspect` is the plate's height / width, used to aim the motion at the detail media rect.
     func push(from rect: CGRect?, mediaAspect: CGFloat = 0.75, _ change: @escaping () -> Void) {
+        // Fresh P-frame duplication effect (no stacked smear/drift/heal tuning).
         var p = MoshParams()
         p.duration = Self.pushDuration
-        // The thumbnail flies from its Home frame to the detail hero; its block motion drags pixels
-        // across the screen. Progressive: smear starts at 30% and feedback at 65%, full late (p^1.6); a screen-wide drift builds with them.
-        // High melt keeps vectors flowing so trails spread; heal stays tiny so the smear never
-        // dissolves; the clean detail page lands only at the keyframe.
-        p.rampFrom = 0.3
-        p.rampPower = 1.6
-        p.smear = 3.4
-        p.intensityFrom = 0.65
-        p.drift = 1.0                // screen-wide block drift, building with the ramp
-        p.melt = 0.9
-        p.healStart = 0
-        p.healFrom = 0.92
-        p.healEnd = 0.08
-        p.diffusion = 0.2
-        p.seedScale = 3
-        p.blockSchedule = [(0.25, 2), (0.5, 1.5), (1, 1)]
+        p.pdupGain = 1.0
+        p.pdupGainFrom = 0.25
+        p.rampPower = 1.4
+        p.pdupReach = 7
+        p.diffusion = 0.12
+        p.blockSchedule = [(1, 1)]
         let top = keyWindow()?.safeAreaInsets.top ?? 59
         run(params: p, sound: "glitch-in", motion: { bounds in
             // Detail hero: full width under the nav bar, at the plate's aspect (capped like the site).
@@ -65,7 +56,7 @@ final class GlitchDirector: ObservableObject {
             var crop = from
             if from.height / from.width > ha { crop.size.height = from.width * ha; crop.origin.y = from.midY - crop.height / 2 }
             else { crop.size.width = from.height / ha; crop.origin.x = from.midX - crop.width / 2 }
-            return .fly(from: from, to: hero, crop: crop)
+            return .pdup(from: from, to: hero, crop: crop)
         }, change)
     }
 

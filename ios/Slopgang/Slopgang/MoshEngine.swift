@@ -23,6 +23,9 @@ struct MoshParams {
     var intensityFrom: Float? = nil  // feedback strength at p = 0 (nil = `intensity` throughout)
     var rampPower: Double = 1.5      // > 1: stronger late
     var drift: Float = 0             // fly mode: screen-wide block drift strength at full ramp
+    var pdupGain: Float = 1          // P-frame duplication: how much of the frozen field is applied per frame...
+    var pdupGainFrom: Float = 0.3    // ...starting at this fraction, ramping (rampPower) to full
+    var pdupReach: Float = 6         // field dilation falloff, in blocks
 }
 
 /// How the new screen enters the input frame. Its motion is what drags the old pixels.
@@ -30,6 +33,10 @@ enum MoshMotion {
     case grow(from: CGRect, via: CGRect) // card grows from the tapped plate to the detail media rect, then full screen
     case settle(scale: CGFloat) // full-screen new frame zooms from `scale` to 1
     case fly(from: CGRect, to: CGRect, crop: CGRect) // `crop` of the old screen flies from `from` to `to`; new screen only at the keyframe
+    /// P-frame duplication (after tiberiuiancu/datamoshing's `-d` effect, public domain / Unlicense):
+    /// one motion field is measured from a short real step of the thumbnail's flight, then reapplied
+    /// every frame to the accumulating image with no I-frame refresh; the detail page lands at the end.
+    case pdup(from: CGRect, to: CGRect, crop: CGRect)
     case live                   // full-screen live input (home entrance): its own motion drives the smear
 }
 
@@ -200,6 +207,7 @@ nonisolated final class BlockMatcher: @unchecked Sendable {   // used only on Mo
 final class MoshView: MTKView, MTKViewDelegate {
     private var queue: MTLCommandQueue?
     private var displacePSO: MTLRenderPipelineState?
+    private var pdupPSO: MTLRenderPipelineState?
     private var presentPSO: MTLRenderPipelineState?
     private var oldTex: MTLTexture?, newTex: MTLTexture?, motionTex: MTLTexture?
     private var ping: [MTLTexture] = []
@@ -220,6 +228,7 @@ final class MoshView: MTKView, MTKViewDelegate {
     private var latest: [SIMD2<Float>]?
     private var matching = false
     private var fieldLive = true
+    private var frozenField = false   // P-frame duplication: the motion texture is fixed for the run
     private var generation = 0
     private var liveSource: (() -> CGImage?)?
     private var liveImage: CGImage?
@@ -245,6 +254,7 @@ final class MoshView: MTKView, MTKViewDelegate {
         }
         displacePSO = pso("moshDisplace")
         presentPSO = pso("moshPresent")
+        pdupPSO = pso("moshPDup")
     }
     required init(coder: NSCoder) { fatalError() }
 
@@ -287,6 +297,7 @@ final class MoshView: MTKView, MTKViewDelegate {
         motionKind = motion
         let m = BlockMatcher(size: bounds.size, blockPt: p.blockSize, old: old, new: new)
         if case .fly(_, _, let crop) = motion { m.useOldCrop(crop) }
+        if case .pdup(_, _, let crop) = motion { m.useOldCrop(crop) }
         matcher = m
         let md = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rg32Float, width: m.gw, height: m.gh, mipmapped: false)
         md.usage = .shaderRead
@@ -301,6 +312,32 @@ final class MoshView: MTKView, MTKViewDelegate {
         frameIndex = 0
         finished = false
         done = completion
+        frozenField = false
+        if case .pdup(let a, _, _) = motion, let mt = motionTex {
+            // Capture ONE field from a short real step (centre moves ~24 pt), then freeze it.
+            var p1 = 0.02
+            while p1 < 0.5 {
+                let c = card(at: p1)
+                if hypot(c.midX - a.midX, c.midY - a.midY) >= 24 { break }
+                p1 += 0.01
+            }
+            _ = m.estimate(m.frame(card: card(at: 0)), threshold: 0, melt: 0)
+            var field = m.estimate(m.frame(card: card(at: p1)), threshold: 0.5, melt: 0)
+            field = Self.dilate(field, gw: m.gw, gh: m.gh, reach: p.pdupReach)
+            field.withUnsafeBytes { raw in
+                mt.replace(region: MTLRegionMake2D(0, 0, m.gw, m.gh), mipmapLevel: 0,
+                           withBytes: raw.baseAddress!, bytesPerRow: m.gw * MemoryLayout<SIMD2<Float>>.stride)
+            }
+            frozenField = true
+            fieldLive = false
+            latest = nil
+            matching = true
+            generation += 1
+            SGTrace.mark("pdup field captured (step to p=\(p1))")
+            start = CACurrentMediaTime()
+            isPaused = false
+            return true
+        }
         // Prime the matcher with the first input frame so the first estimate has a reference.
         generation += 1
         latest = nil
@@ -314,6 +351,28 @@ final class MoshView: MTKView, MTKViewDelegate {
         start = CACurrentMediaTime()
         isPaused = false
         return true
+    }
+
+    /// Spreads the measured vectors out from the moving blocks with a soft falloff (`reach` in
+    /// blocks), the way a codec's neighbouring macroblocks inherit predicted motion.
+    @_optimize(speed)
+    static func dilate(_ f: [SIMD2<Float>], gw: Int, gh: Int, reach: Float) -> [SIMD2<Float>] {
+        var src: [(x: Float, y: Float, v: SIMD2<Float>)] = []
+        for y in 0..<gh { for x in 0..<gw where simd_length(f[y * gw + x]) > 1e-5 { src.append((Float(x), Float(y), f[y * gw + x])) } }
+        guard !src.isEmpty, reach > 0 else { return f }
+        var out = f
+        for y in 0..<gh { for x in 0..<gw {
+            let i = y * gw + x
+            if simd_length(f[i]) > 1e-5 { continue }
+            var best = SIMD2<Float>.zero, bw: Float = 0
+            for s in src {
+                let d = ((s.x - Float(x)) * (s.x - Float(x)) + (s.y - Float(y)) * (s.y - Float(y))).squareRoot()
+                let wgt = exp(-d / reach)
+                if wgt > bw { bw = wgt; best = s.v }
+            }
+            out[i] = best * bw
+        } }
+        return out
     }
 
     /// Live mode (home entrance): `source` returns the current frame of the view under the mosh,
@@ -373,7 +432,7 @@ final class MoshView: MTKView, MTKViewDelegate {
             return lerp(via, full, CGFloat(easeOutCubic((p - 0.5) / 0.3)))
         case .live:
             return full
-        case .fly(let a, let b, _):
+        case .fly(let a, let b, _), .pdup(let a, let b, _):
             // Ease in-out, landing exactly on `to` at 92% and holding there for the keyframe.
             let t = min(1, p / 0.92)
             let k = CGFloat(t < 0.5 ? 4 * t * t * t : 1 - pow(-2 * t + 2, 3) / 2)
@@ -434,7 +493,7 @@ final class MoshView: MTKView, MTKViewDelegate {
         }
 
         // Motion estimation between the previous and current input frames.
-        if !matching {
+        if !matching && !frozenField {
             matching = true
             let gen = generation, th = params.threshold, mt = params.melt
             matchQueue.async { [weak self] in
@@ -457,7 +516,7 @@ final class MoshView: MTKView, MTKViewDelegate {
         // so total displacement tracks real motion whatever the match rate is.
         let fresh = latest
         latest = nil
-        if fresh != nil || fieldLive {
+        if !frozenField, fresh != nil || fieldLive {
             fieldLive = fresh != nil
             let vectors = fresh ?? [SIMD2<Float>](repeating: .zero, count: matcher.gw * matcher.gh)
             vectors.withUnsafeBytes { raw in
@@ -471,7 +530,7 @@ final class MoshView: MTKView, MTKViewDelegate {
             cardOrigin: SIMD2(Float(r.minX / sz.width), Float(r.minY / sz.height)),
             cardSize: SIMD2(Float(max(1, r.width) / sz.width), Float(max(1, r.height) / sz.height)),
             grid: SIMD2(Float(matcher.gw), Float(matcher.gh)),
-            smear: smearNow,
+            smear: frozenField ? params.pdupGain * (params.pdupGainFrom + (1 - params.pdupGainFrom) * ramp) : smearNow,
             heal: params.healStart + (params.healEnd - params.healStart) * healK * healK,
             diffusion: params.diffusion,
             intensity: intensityNow,
@@ -490,7 +549,7 @@ final class MoshView: MTKView, MTKViewDelegate {
         rp.colorAttachments[0].loadAction = .dontCare
         rp.colorAttachments[0].storeAction = .store
         if let enc = cb.makeRenderCommandEncoder(descriptor: rp) {
-            enc.setRenderPipelineState(displacePSO)
+            enc.setRenderPipelineState(frozenField ? (pdupPSO ?? displacePSO) : displacePSO)
             enc.setFragmentTexture(firstFrame ? oldTex : ping[current], index: 0)   // feedback starts as the old screen
             enc.setFragmentTexture(motionTex, index: 1)
             enc.setFragmentTexture(oldTex, index: 2)

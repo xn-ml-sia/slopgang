@@ -109,3 +109,23 @@ fragment float4 moshPresent(VOut in [[stage_in]], texture2d<float> src [[texture
     constexpr sampler nn(coord::normalized, address::clamp_to_edge, filter::nearest);
     return src.sample(nn, in.uv);
 }
+
+// P-frame duplication (method from tiberiuiancu/datamoshing, public domain / Unlicense; reimplemented
+// here, no code copied): the same motion field, captured once, is applied to the previous output
+// every frame. No heal, no I-frame: pixels keep sliding and blooming along the motion until the
+// keyframe, which is the clean detail page (new screen) with nothing blended in before it.
+fragment float4 moshPDup(VOut in [[stage_in]],
+                         texture2d<float> prev   [[texture(0)]],
+                         texture2d<float> motion [[texture(1)]],
+                         texture2d<float> oldTex [[texture(2)]],
+                         texture2d<float> newTex [[texture(3)]],
+                         constant MoshUniforms& u [[buffer(0)]]) {
+    constexpr sampler lin(coord::normalized, address::clamp_to_edge, filter::linear);
+    constexpr sampler nn(coord::normalized, address::clamp_to_edge, filter::nearest);
+    if (u.keyframe > 0.5) return newTex.sample(lin, in.uv);
+    float2 cell = floor(in.uv * u.grid / u.blockScale) * u.blockScale;
+    float2 mv = motion.sample(nn, (cell + 0.5 * u.blockScale) / u.grid).xy * u.smear;
+    float4 a = prev.sample(nn, in.uv + mv);
+    float4 b = prev.sample(lin, in.uv + mv);          // a little bilinear bloom
+    return mix(a, b, u.diffusion);
+}
