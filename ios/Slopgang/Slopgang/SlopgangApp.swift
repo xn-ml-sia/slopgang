@@ -102,7 +102,9 @@ struct RootView: View {
         // -autoTapBack: after a tap opens a plate, go back 3 s later (times the reverse mosh).
         .onChange(of: path.count) { old, new in
             guard new == 1, old == 0, ProcessInfo.processInfo.arguments.contains("-autoTapBack") else { return }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            let args = ProcessInfo.processInfo.arguments
+            let slow = args.firstIndex(of: "-moshSlow").flatMap { i in i + 1 < args.count ? Double(args[i + 1]) : nil } ?? 1
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3 + 1.4 * slow) {
                 SGTrace.mark("back tapped (autoTapBack)", reset: true)
                 fx.pop { path.removeLast() }
             }
