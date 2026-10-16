@@ -90,7 +90,8 @@ ABOUT = [
     ('url(/tpl/f0f63d00c430.png)', 'url(/tpl/tree-dither.png)'),
     ('>Make propaganda posters.</span></ol>', '>Make propaganda posters.</span>' + '<li class="grid gap-x-[var(--s3)] gap-y-[var(--s-h)] border-b-[length:var(--bw)] border-[var(--line)] border-solid py-[var(--s2)] @[720px]:grid-cols-[calc(var(--u)*16)_minmax(0,1fr)_minmax(0,1fr)] @[720px]:items-baseline"><span class="t-caption text-[color:var(--ink-2)]">To add (Mal)</span><span class=t-heading>Ausgang</span><span class="t-body text-[color:var(--ink-2)]">Talk to Buddha and get advice on your day.</span>' + '<li class="grid gap-x-[var(--s3)] gap-y-[var(--s-h)] border-b-[length:var(--bw)] border-[var(--line)] border-solid py-[var(--s2)] @[720px]:grid-cols-[calc(var(--u)*16)_minmax(0,1fr)_minmax(0,1fr)] @[720px]:items-baseline"><span class="t-caption text-[color:var(--ink-2)]">To add (Mal)</span><span class=t-heading>100 Objects</span><span class="t-body text-[color:var(--ink-2)]">Track the things that you own.</span>' + '</ol>'),
 ]
-ABOUT_SPLIT = [('I make complicated things feel calm.', 'We build calm, quiet things.'),
+ABOUT_SPLIT = [('Speaking and teaching', 'Speaker'),
+               ('I make complicated things feel calm.', 'We build calm, quiet things.'),
                ('Twelve years, briefly', 'Six projects, briefly'),
                ('Have something that should feel like an instrument?', 'Do you want to build quiet things with us?')]
 
