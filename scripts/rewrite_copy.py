@@ -100,14 +100,12 @@ def header(body, page):
     h0 = body.find('<header'); h1 = body.find('</header>', h0)
     h = body[h0:h1]
     cls = re.search(r'<li><a href="[^"]*" class="([^"]*)"', h).group(1)
-    cur = {'home': 'Home', 'about': 'About'}.get(page)
-    lis = ''.join(f'<li><a href="{href}" class="{cls}"' + (' aria-current=page' if cur == lab else '') + f'>{lab}</a>'
-                  for href, lab in [('/', 'Home'), ('/about', 'About')])
+    about = f'<a href="/about" class="{cls}"' + (' aria-current=page' if page == 'about' else '') + '>About</a>'
+    # no link list next to the logo; About sits at the far right, after the clock
     a = h.find('<div class="relative hidden @[1040px]:flex">'); b = h.find('</ul></div>', a) + len('</ul></div>')
-    h = h[:a] + f'<div class="relative flex"><ul class="flex items-center gap-[var(--s-h)]">{lis}</ul></div>' + h[b:]
-    # right side: keep status line and clock, drop icon buttons, Contact and the menu button
+    h = h[:a] + h[b:]
     c = h.find('<button type=button aria-pressed=false aria-label=Inspect'); d = h.find('</div></nav>', c)
-    h = h[:c] + h[d:]
+    h = h[:c] + about + h[d:]
     return body[:h0] + h + body[h1:]
 
 def rewrite(body, page, log):
