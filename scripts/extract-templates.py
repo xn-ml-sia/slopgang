@@ -73,6 +73,8 @@ def home(body):
 
 def case(body):
     body = kit_rise_title(body, 'case-title', 'title')
+    # the saved page was scrolled; start the cover in its initial state
+    body = body.replace('data-covered=true style=--p:1>', 'data-covered=false style=--p:0>', 1)
     body = re.sub(r'(<p class="max-w-\[40ch\] t-lead">)[^<]*(</p>)', r'\1{{summary}}\2', body, count=1)
     return body
 
