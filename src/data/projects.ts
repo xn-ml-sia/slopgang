@@ -8,6 +8,8 @@ export type Project = {
   /** Spots where Mal should add details before this goes live. */
   todo: string[]
   href: string
+  /** 'ios' uses the app case-study layout, 'web' the tool case-study layout. */
+  layout?: 'ios' | 'web'
   thumb?: string
 }
 
@@ -34,6 +36,7 @@ export const PROJECTS: Project[] = [
       'Link and screenshots.',
     ],
     href: '/project/ikebana',
+    layout: 'ios',
   },
   {
     slug: 'pet-cemetery',
@@ -43,6 +46,7 @@ export const PROJECTS: Project[] = [
     body: ['Pet Cemetery is an iOS app.', 'You add memories of your pet. A memory is a photo or a video.'],
     todo: ['Who the app is for and why you made it.', 'Status: in development, TestFlight, or App Store.', 'Link and screenshots.'],
     href: '/project/pet-cemetery',
+    layout: 'ios',
   },
   {
     slug: 'glitch-the-system',
@@ -52,6 +56,7 @@ export const PROJECTS: Project[] = [
     body: ['Glitch the System is a propaganda poster creator.', 'You use it to make posters.'],
     todo: ['Platform: web, iOS, or other.', 'How a poster is made.', 'Status, link, and sample posters.'],
     href: '/project/glitch-the-system',
+    layout: 'web',
   },
 ]
 

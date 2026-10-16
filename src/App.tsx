@@ -98,9 +98,6 @@ export default function App() {
 
   return (
     <div className="site" id="top">
-      <a className="skip" href="#projects">
-        Skip to projects
-      </a>
       <Projects />
     </div>
   )
