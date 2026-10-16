@@ -59,7 +59,7 @@ def home(body):
     body = kit_rise_title(body, 'top-title', 'hero_title')
     body = body.replace('Small tools from between projects. Each one started as a question I could not answer by looking at a static frame. They all work; take them apart.', '{{hero_lead}}', 1)
     cards = ['dither', 'easing', 'scale', 'grid', 'departures', 'moire']
-    for i, slug in enumerate(cards[:4], 1):
+    for i, slug in enumerate(cards, 1):
         a = body.find(f'href=#/lab/{slug} class="kit-hover group')
         assert a > 0, slug
         end = body.find('</a>', a)
@@ -67,6 +67,10 @@ def home(body):
         seg = seg.replace(f'href=#/lab/{slug}', f'href="{{{{card{i}_href}}}}"', 1)
         seg = re.sub(r'(<span class="kit-draw t-heading">)[^<]*(</span>)', r'\1{{card%d_title}}\2' % i, seg, count=1)
         seg = re.sub(r'(<span class="t-body text-\[color:var\(--ink-2\)\]">)[^<]*(</span>)$', r'\1{{card%d_summary}}\2' % i, seg + '', count=1) if seg.endswith('</span>') else seg
+        seg = re.sub(r'(\{\{card%d_title\}\}</span><span[^>]*>)20\d\d(</span>)' % i, r'\1{{card%d_kind}}\2' % i, seg, count=1)
+        if i == 5:  # Ausgang: the template's breathing rings (case-ios, Murmur) replace the departure board
+            seg = re.sub(r'(group-hover:border-\[var\(--ink\)\]">)(.*)(</div><span class="flex items-baseline)',
+                         lambda m: m.group(1) + '{{card5_visual}}' + m.group(3), seg, count=1, flags=re.S)
         if i == 1:  # Strange Fruit keeps a plate image as its thumbnail
             seg = re.sub(r'(group-hover:border-\[var\(--ink\)\]">)(.*)(</div><span class="flex items-baseline)',
                          lambda m: m.group(1) + '{{card1_visual}}' + m.group(3), seg, count=1, flags=re.S)

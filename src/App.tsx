@@ -58,8 +58,8 @@ function Route() {
   if (path === '/about') return <TplAbout />
   if (projectSlug) {
     const p = findProject(projectSlug)
-    if (p?.template === 'ios') return <TplCaseIos slug={p.slug as 'ikebana' | 'pet-cemetery'} />
-    if (p?.template === 'web') return <TplCaseWeb />
+    if (p?.template === 'ios') return <TplCaseIos slug={p.slug as 'ikebana' | 'pet-cemetery' | 'ausgang'} />
+    if (p?.template === 'web') return <TplCaseWeb slug={p.slug as 'glitch-the-system' | '100-objects'} />
   }
   return <TplHome />
 }
