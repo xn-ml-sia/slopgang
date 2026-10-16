@@ -126,6 +126,8 @@ def cleanup(body):
     # the saved page hid the native scrollbar for its custom rail; we keep the normal scrollbar
     body = re.sub(r'<style class=sf-hidden>html,body\{scrollbar-width:none\}.*?</style>', '', body, flags=re.S)
     body, _ = drop_div(body, '<div aria-hidden=true class="fixed inset-y-0 end-0 z-50 w-[var(--s2)]')
+    # Mal: no copyright bar and no 'Back to top' in the footer; the bar holds only those, so drop it whole
+    body = re.sub(r'<div class="[^"]*"><span>© [^<]*</span><span[^>]*><button type=button[^>]*><span class=kit-draw>Back to top</span>.*?</button></span></div>(?=</div></footer>)', '', body, flags=re.S)
     # no Inspect feature
     body = re.sub(r'<span class="hidden @\[720px\]:inline">Press <kbd[^>]*>I</kbd> to inspect any page</span>', '', body)
     return body
