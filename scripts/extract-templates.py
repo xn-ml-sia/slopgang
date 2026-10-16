@@ -4,6 +4,8 @@ Usage: python3 scripts/extract-templates.py <ref1> <ref2> <ref3> <ref4>
 The reference files are not committed. Output contains {{token}} slots filled from src/data/pages/*.ts.
 """
 import base64, hashlib, html, re, sys, urllib.parse
+sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parent))
+from rewrite_copy import rewrite
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -89,7 +91,7 @@ def build(src, name, fn):
     css = 'body{margin:0}\n' + css
     body = re.search(r'<body[^>]*>(.*?)(?:</body>|$)', s, flags=re.S).group(1)
     body = DATA.sub(save, body)
-    body = fn(common(body)).replace('<div id=root>', '<div class=tpl-root>', 1)
+    body = rewrite(fn(common(body)).replace('<div id=root>', '<div class=tpl-root>', 1), name, print)
     head = '<!-- PLACEHOLDER: template content from Mal\'s reference page. {{tokens}} come from src/data/pages. -->\n'
     (OUT_T / f'{name}.html').write_text(head + body)
     (OUT_T / f'{name}.css').write_text('/* PLACEHOLDER: template styles from Mal\'s reference page. */\n' + css)
@@ -100,3 +102,9 @@ build(r1, 'home', home)
 build(r2, 'case-ios', case)
 build(r3, 'case-web', case)
 build(r4, 'about', lambda b: b)
+
+# drop extracted assets no page uses (e.g. the replaced portrait)
+used = ''.join(p.read_text() for p in OUT_T.glob('*.*')) + ''.join(p.read_text() for p in (ROOT / 'src' / 'data').rglob('*.ts'))
+for f in OUT_A.iterdir():
+    if f.name not in used and f.name != 'tree-dither.png':
+        f.unlink(); print('removed unused', f.name)

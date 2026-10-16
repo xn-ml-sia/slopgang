@@ -16,5 +16,6 @@ export const home: PageValues = {
   hero_title: 'slopgang',
   hero_lead: HOME_LEAD,
   ...cards,
-  card1_visual: '<img src="/archive/sg-01.webp" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">',
+  // Strange Fruit card: the template's own blossom drawing (ref 1, Dither booth card).
+  card1_visual: '<img src="/tpl/blossom.png" alt="A spray of blossom, stippled" style="position:absolute;inset:0;width:100%;height:100%">',
 }
