@@ -126,8 +126,6 @@ def cleanup(body):
     # the saved page hid the native scrollbar for its custom rail; we keep the normal scrollbar
     body = re.sub(r'<style class=sf-hidden>html,body\{scrollbar-width:none\}.*?</style>', '', body, flags=re.S)
     body, _ = drop_div(body, '<div aria-hidden=true class="fixed inset-y-0 end-0 z-50 w-[var(--s2)]')
-    # Mal: no copyright bar and no 'Back to top' in the footer; the bar holds only those, so drop it whole
-    body = re.sub(r'<div class="[^"]*"><span>© [^<]*</span><span[^>]*><button type=button[^>]*><span class=kit-draw>Back to top</span>.*?</button></span></div>(?=</div></footer>)', '', body, flags=re.S)
     # no Inspect feature
     body = re.sub(r'<span class="hidden @\[720px\]:inline">Press <kbd[^>]*>I</kbd> to inspect any page</span>', '', body)
     return body
@@ -167,4 +165,9 @@ def rewrite(body, page, log):
     body = body.replace('Copenhagen', 'Berlin')
     body = body.replace('Noa Lindgren', 'slopgang').replace('noalindgren', 'slopgang').replace('noa-lindgren', 'slopgang').replace('Noa', 'slopgang')
     log(page, 'missed:', miss)
-    return body
+    return drop_footer_bar(body)
+
+
+def drop_footer_bar(body):
+    # Mal: no copyright bar and no 'Back to top' in the footer; the bar holds only those, so drop it whole
+    return re.sub(r'<div class="[^"]*"><span>© [^<]*</span><span[^>]*><button type=button[^>]*><span class=kit-draw>Back to top</span>.*?</button></span></div>(?=</div></footer>)', '', body, flags=re.S)
