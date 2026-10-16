@@ -90,7 +90,8 @@ ABOUT = [
     ('url(/tpl/f0f63d00c430.png)', 'url(/tpl/tree-dither.png)'),
     ('>Make propaganda posters.</span></ol>', '>Make propaganda posters.</span>' + '<li class="grid gap-x-[var(--s3)] gap-y-[var(--s-h)] border-b-[length:var(--bw)] border-[var(--line)] border-solid py-[var(--s2)] @[720px]:grid-cols-[calc(var(--u)*16)_minmax(0,1fr)_minmax(0,1fr)] @[720px]:items-baseline"><span class="t-caption text-[color:var(--ink-2)]">To add (Mal)</span><span class=t-heading>Ausgang</span><span class="t-body text-[color:var(--ink-2)]">Talk to Buddha and get advice on your day.</span>' + '<li class="grid gap-x-[var(--s3)] gap-y-[var(--s-h)] border-b-[length:var(--bw)] border-[var(--line)] border-solid py-[var(--s2)] @[720px]:grid-cols-[calc(var(--u)*16)_minmax(0,1fr)_minmax(0,1fr)] @[720px]:items-baseline"><span class="t-caption text-[color:var(--ink-2)]">To add (Mal)</span><span class=t-heading>100 Objects</span><span class="t-body text-[color:var(--ink-2)]">Track the things that you own.</span>' + '</ol>'),
 ]
-ABOUT_SPLIT = [('I make complicated things feel calm.', 'We build calm, quiet things.'),
+ABOUT_SPLIT = [('Speaking and teaching', 'Speaker'),
+               ('I make complicated things feel calm.', 'We build calm, quiet things.'),
                ('Twelve years, briefly', 'Six projects, briefly'),
                ('Have something that should feel like an instrument?', 'Do you want to build quiet things with us?')]
 
@@ -132,6 +133,12 @@ def cleanup(body):
 def rewrite(body, page, log):
     miss = []
     body = cleanup(body)
+    # Mal: drop the client quote + credits block ("Noa took things out...") wherever it appears
+    # Mal: also drop every 'In their words' quote section
+    for marker in ('Noa took things out', '>In their words<'):
+        while (i := body.find(marker)) > 0:
+            a = body.rfind('<section', 0, i); e = body.find('</section>', i) + len('</section>')
+            body = body[:a] + body[e:]
     body = header(body, page)
     # logo
     j = body.find('{{brand}}</span>')
@@ -158,4 +165,9 @@ def rewrite(body, page, log):
     body = body.replace('Copenhagen', 'Berlin')
     body = body.replace('Noa Lindgren', 'slopgang').replace('noalindgren', 'slopgang').replace('noa-lindgren', 'slopgang').replace('Noa', 'slopgang')
     log(page, 'missed:', miss)
-    return body
+    return drop_footer_bar(body)
+
+
+def drop_footer_bar(body):
+    # Mal: no copyright bar and no 'Back to top' in the footer; the bar holds only those, so drop it whole
+    return re.sub(r'<div class="[^"]*"><span>© [^<]*</span><span[^>]*><button type=button[^>]*><span class=kit-draw>Back to top</span>.*?</button></span></div>(?=</div></footer>)', '', body, flags=re.S)
