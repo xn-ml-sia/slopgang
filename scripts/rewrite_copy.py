@@ -133,10 +133,11 @@ def rewrite(body, page, log):
     miss = []
     body = cleanup(body)
     # Mal: drop the client quote + credits block ("Noa took things out...") wherever it appears
-    i = body.find('Noa took things out')
-    if i > 0:
-        a = body.rfind('<section', 0, i); e = body.find('</section>', i) + len('</section>')
-        body = body[:a] + body[e:]
+    # Mal: also drop every 'In their words' quote section
+    for marker in ('Noa took things out', '>In their words<'):
+        while (i := body.find(marker)) > 0:
+            a = body.rfind('<section', 0, i); e = body.find('</section>', i) + len('</section>')
+            body = body[:a] + body[e:]
     body = header(body, page)
     # logo
     j = body.find('{{brand}}</span>')

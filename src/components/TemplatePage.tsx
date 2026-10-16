@@ -3,7 +3,6 @@ import motionCss from '../templates/motion.css?raw'
 import { Motion } from '../demos/Motion.tsx'
 import { Pacer, SleepTimer, Compare } from '../demos/Murmur.tsx'
 import { TimeMachine } from '../demos/Atlas.tsx'
-import { Words } from '../demos/Words.tsx'
 
 export type PageValues = Record<string, string>
 
@@ -43,7 +42,6 @@ export function TemplatePage({ html, css, values, title }: { html: string; css: 
           <SleepTimer root={root} />
           <Compare root={root} />
           <TimeMachine root={root} />
-          <Words root={root} />
         </>
       )}
     </>
