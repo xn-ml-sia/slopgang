@@ -7,7 +7,7 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
         <div className="wrap">
           <div className="footer-bottom">
             <span>© {year} slopgang · specimens logged, not sold</span>
-            <a href="/about">About</a>
+            <a href="/strange-fruit/about">About</a>
           </div>
         </div>
       </footer>

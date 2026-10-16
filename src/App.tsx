@@ -6,6 +6,12 @@ import { findSpecimen } from './data/feed.ts'
 import { Projects } from './pages/Projects.tsx'
 import { Project } from './pages/Project.tsx'
 import { findProject } from './data/projects.ts'
+import { SlopAbout } from './pages/SlopAbout.tsx'
+
+/** Old About anchors (Strange Fruit manifesto) moved to /strange-fruit/about. */
+if (cleanPath() === '/about' && /^#(study|sources|src-\d+)$/.test(window.location.hash)) {
+  window.location.replace('/strange-fruit/about' + window.location.hash)
+}
 
 function cleanPath(pathname = window.location.pathname): string {
   return pathname.replace(/\/+$/, '') || '/'
@@ -17,7 +23,7 @@ function projectSlugFromPath(): string | null {
 }
 
 function isAboutPath(pathname = window.location.pathname): boolean {
-  return pathname.replace(/\/+$/, '') === '/about'
+  return pathname.replace(/\/+$/, '') === '/strange-fruit/about'
 }
 
 function specimenSlugFromPath(pathname = window.location.pathname): string | null {
@@ -31,6 +37,7 @@ export default function App() {
   const specimenSlug = specimenSlugFromPath()
   const specimen = specimenSlug ? findSpecimen(specimenSlug) : undefined
   const strangeFruit = cleanPath() === '/strange-fruit'
+  const slopAbout = cleanPath() === '/about'
   const projectSlug = projectSlugFromPath()
   const project = projectSlug ? findProject(projectSlug) : undefined
 
@@ -45,12 +52,16 @@ export default function App() {
         : 'slopgang — specimen not found'
       return
     }
+    if (slopAbout) {
+      document.title = 'slopgang — About'
+      return
+    }
     if (projectSlug) {
       document.title = project ? `slopgang — ${project.title}` : 'slopgang — project not found'
       return
     }
     document.title = strangeFruit ? 'slopgang — Strange Fruit' : 'slopgang'
-  }, [about, specimenSlug, specimen, projectSlug, project, strangeFruit])
+  }, [about, specimenSlug, specimen, projectSlug, project, strangeFruit, slopAbout])
 
   if (about) {
     return (
@@ -72,6 +83,10 @@ export default function App() {
         <Specimen slug={specimenSlug} record={specimen} />
       </div>
     )
+  }
+
+  if (slopAbout) {
+    return <SlopAbout />
   }
 
   if (projectSlug) {

@@ -12,7 +12,7 @@ export function Spiral() {
   )
 }
 
-export function KitHeader({ current }: { current: 'projects' | 'project' }) {
+export function KitHeader({ current }: { current: 'projects' | 'project' | 'about' }) {
   return (
     <div className="kit-sticky">
       <header className="kit-header">
@@ -24,7 +24,7 @@ export function KitHeader({ current }: { current: 'projects' | 'project' }) {
           <ul className="kit-links">
             <li><a className="t-label" href="/" aria-current={current === 'projects' ? 'page' : undefined}>Projects</a></li>
             <li><a className="t-label" href="/strange-fruit">Strange Fruit</a></li>
-            <li><a className="t-label" href="/about">About</a></li>
+            <li><a className="t-label" href="/about" aria-current={current === 'about' ? 'page' : undefined}>About</a></li>
           </ul>
           <div className="kit-right">
             <a className="kit-btn t-label" href={JOIN_HREF}>Join</a>

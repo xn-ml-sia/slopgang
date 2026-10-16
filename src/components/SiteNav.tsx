@@ -23,7 +23,7 @@ export function SiteNav({ current }: { current: Page }) {
             Strange Fruit
           </a>
         ) : null}
-        <a href="/about" aria-current={current === 'about' ? 'page' : undefined}>
+        <a href="/strange-fruit/about" aria-current={current === 'about' ? 'page' : undefined}>
           About
         </a>
       </nav>
