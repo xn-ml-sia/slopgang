@@ -2,11 +2,10 @@ import { useEffect } from 'react'
 import { $$, reduced } from './dom.ts'
 
 /* Ported from the reference About "In their words" rotator. The TESTIMONIALS data file is not in the source:
-   the three quotes below are the template's own placeholder quotes (About, Murmur and Atlas pages). */
+   the quotes below are the template's own placeholder quotes (About and Atlas pages). */
 const TODO = 'Quote to add (Mal).'
 const QUOTES: Record<string, { text: string; role: string; link: string; href: string }> = {
   'Astrid Kiel': { text: 'It looks like it was always ours. People ask who designed it, and then they ask to book a class, in that order.', role: 'Founder, Kiln Studio', link: 'The Kiln case study', href: '' },
-  'Nina Ferrer': { text: 'slopgang took things out until the app was almost nothing, and that was exactly what people needed at two in the morning.', role: 'Founder, Murmur Health', link: 'The Murmur case study', href: '/project/ikebana' },
   'Emil Brandt': { text: 'Before Atlas we argued about which file was the right one. Now we argue about what the land is doing, which is the argument we are paid for.', role: 'Chief Product Officer, Lumen Earth', link: 'The Atlas case study', href: '/project/glitch-the-system' },
 }
 
