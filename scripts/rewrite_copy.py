@@ -49,7 +49,7 @@ def footer(body):
             f'<span class=text-[color:var(--ink-2)]>Contact: {TODO}</span>'
             '<span class="tabular-nums text-[color:var(--ink-2)]">Berlin</span></div></div>')
     nav = ('<nav aria-label=Site class="grid grid-cols-2 gap-[var(--s4)]">'
-           + col('Projects', [('/strange-fruit', 'Strange Fruit'), ('/project/ikebana', 'Ikebana'), ('/project/pet-cemetery', 'Pet Cemetery'), ('/project/glitch-the-system', 'Glitch the System')], '')
+           + col('Projects', [('/strange-fruit', 'Strange Fruit'), ('/project/ikebana', 'Ikebana'), ('/project/pet-cemetery', 'Pet Cemetery'), ('/project/glitch-the-system', 'Glitch the System'), ('/project/ausgang', 'Ausgang'), ('/project/100-objects', '100 Objects')], '')
            + col('More', [('/about', 'About'), ('/strange-fruit/about', 'Strange Fruit About'), ('https://x.com/slopgang2020', 'X @slopgang2020'), ('{{join_href}}', 'Join')], '')
            + '</nav>')
     body = body[:a] + left + nav + body[b:]
@@ -65,7 +65,7 @@ ABOUT = [
     ('Noa Lindgren, printed in ink', 'A tree, dithered to 1 bit'),
     ('>Copenhagen, Nordvest<', '>Berlin<'),
     ('>Independent since<', '>Company<'), ('>2019<', '>AI GmbH<'),
-    ('>Languages<', '>Projects<'), ('>Swedish, Danish, English; Norwegian for reading<', '>Strange Fruit, Ikebana, Pet Cemetery, Glitch the System<'),
+    ('>Languages<', '>Projects<'), ('>Swedish, Danish, English; Norwegian for reading<', '>Strange Fruit, Ikebana, Pet Cemetery, Glitch the System, Ausgang, 100 Objects<'),
     ('>Now<', '>Join<'), ('>Finishing ferry ticketing for Øresundslinjen. Open to new members.<', '>Bring your time and your skills. Pick a project.<'),
     ('href=#/cv', 'href="/"'), ('Curriculum vitae', 'See the projects'),
     ('Not rules: the questions I keep asking until a design answers them.', 'Not rules. These are the questions we ask about each thing we build.'),
@@ -88,9 +88,10 @@ ABOUT = [
     ('>MA in Interaction Design. Thesis on interfaces for public machines.<', '>Make propaganda posters.<'),
     ('Tell me what it is and who it is for. I reply within two working days, usually with questions.', 'Pick a project and tell us what you can do.'),
     ('url(/tpl/f0f63d00c430.png)', 'url(/tpl/tree-dither.png)'),
+    ('>Make propaganda posters.</span></ol>', '>Make propaganda posters.</span>' + '<li class="grid gap-x-[var(--s3)] gap-y-[var(--s-h)] border-b-[length:var(--bw)] border-[var(--line)] border-solid py-[var(--s2)] @[720px]:grid-cols-[calc(var(--u)*16)_minmax(0,1fr)_minmax(0,1fr)] @[720px]:items-baseline"><span class="t-caption text-[color:var(--ink-2)]">To add (Mal)</span><span class=t-heading>Ausgang</span><span class="t-body text-[color:var(--ink-2)]">Talk to Buddha and get advice on your day.</span>' + '<li class="grid gap-x-[var(--s3)] gap-y-[var(--s-h)] border-b-[length:var(--bw)] border-[var(--line)] border-solid py-[var(--s2)] @[720px]:grid-cols-[calc(var(--u)*16)_minmax(0,1fr)_minmax(0,1fr)] @[720px]:items-baseline"><span class="t-caption text-[color:var(--ink-2)]">To add (Mal)</span><span class=t-heading>100 Objects</span><span class="t-body text-[color:var(--ink-2)]">Track the things that you own.</span>' + '</ol>'),
 ]
 ABOUT_SPLIT = [('I make complicated things feel calm.', 'We build calm, quiet things.'),
-               ('Twelve years, briefly', 'Four projects, briefly'),
+               ('Twelve years, briefly', 'Six projects, briefly'),
                ('Have something that should feel like an instrument?', 'Do you want to build quiet things with us?')]
 
 CASE = [('I should have tested with eyes closed from the start.', 'we should have tested with eyes closed from the start.'),
