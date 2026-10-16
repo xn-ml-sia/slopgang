@@ -3,6 +3,18 @@ import { About } from './pages/About.tsx'
 import { Home } from './pages/Home.tsx'
 import { Specimen } from './pages/Specimen.tsx'
 import { findSpecimen } from './data/feed.ts'
+import { Projects } from './pages/Projects.tsx'
+import { Project } from './pages/Project.tsx'
+import { findProject } from './data/projects.ts'
+
+function cleanPath(pathname = window.location.pathname): string {
+  return pathname.replace(/\/+$/, '') || '/'
+}
+
+function projectSlugFromPath(): string | null {
+  const m = cleanPath().match(/^\/project\/([a-z0-9-]+)$/i)
+  return m ? m[1] : null
+}
 
 function isAboutPath(pathname = window.location.pathname): boolean {
   return pathname.replace(/\/+$/, '') === '/about'
@@ -18,6 +30,9 @@ export default function App() {
   const about = isAboutPath()
   const specimenSlug = specimenSlugFromPath()
   const specimen = specimenSlug ? findSpecimen(specimenSlug) : undefined
+  const strangeFruit = cleanPath() === '/strange-fruit'
+  const projectSlug = projectSlugFromPath()
+  const project = projectSlug ? findProject(projectSlug) : undefined
 
   useEffect(() => {
     if (about) {
@@ -30,8 +45,12 @@ export default function App() {
         : 'slopgang — specimen not found'
       return
     }
-    document.title = 'slopgang'
-  }, [about, specimenSlug, specimen])
+    if (projectSlug) {
+      document.title = project ? `slopgang — ${project.title}` : 'slopgang — project not found'
+      return
+    }
+    document.title = strangeFruit ? 'slopgang — Strange Fruit' : 'slopgang'
+  }, [about, specimenSlug, specimen, projectSlug, project, strangeFruit])
 
   if (about) {
     return (
@@ -55,12 +74,34 @@ export default function App() {
     )
   }
 
+  if (projectSlug) {
+    return (
+      <div className="site" id="top">
+        <a className="skip" href="#essay">
+          Skip to write-up
+        </a>
+        <Project slug={projectSlug} project={project} />
+      </div>
+    )
+  }
+
+  if (strangeFruit) {
+    return (
+      <div className="site" id="top">
+        <a className="skip" href="#feed">
+          Skip to feed
+        </a>
+        <Home />
+      </div>
+    )
+  }
+
   return (
     <div className="site" id="top">
-      <a className="skip" href="#feed">
-        Skip to feed
+      <a className="skip" href="#projects">
+        Skip to projects
       </a>
-      <Home />
+      <Projects />
     </div>
   )
 }

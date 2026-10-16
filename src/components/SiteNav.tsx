@@ -1,4 +1,4 @@
-type Page = 'home' | 'about' | 'specimen'
+type Page = 'home' | 'about' | 'specimen' | 'strange-fruit' | 'project'
 
 /** Spiral mark (public/logo-spiral.svg), drawn in currentColor without its tile. */
 function Mark() {
@@ -18,6 +18,11 @@ export function SiteNav({ current }: { current: Page }) {
         <span>slopgang</span>
       </a>
       <nav aria-label="Primary">
+        {current === 'specimen' || current === 'strange-fruit' ? (
+          <a href="/strange-fruit" aria-current={current === 'strange-fruit' ? 'page' : undefined}>
+            Strange Fruit
+          </a>
+        ) : null}
         <a href="/about" aria-current={current === 'about' ? 'page' : undefined}>
           About
         </a>
