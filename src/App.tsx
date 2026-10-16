@@ -1,107 +1,73 @@
-import { useEffect } from 'react'
-import { About } from './pages/About.tsx'
-import { Home } from './pages/Home.tsx'
-import { Specimen } from './pages/Specimen.tsx'
+import { lazy, Suspense, useEffect } from 'react'
 import { findSpecimen } from './data/feed.ts'
-import { Projects } from './pages/Projects.tsx'
-import { Project } from './pages/Project.tsx'
 import { findProject } from './data/projects.ts'
+
+const TplHome = lazy(() => import('./pages/TplHome.tsx'))
+const TplAbout = lazy(() => import('./pages/TplAbout.tsx'))
+const TplCaseIos = lazy(() => import('./pages/TplCaseIos.tsx'))
+const TplCaseWeb = lazy(() => import('./pages/TplCaseWeb.tsx'))
+const SFHome = lazy(() => import('./pages/Legacy.tsx').then((m) => ({ default: m.Home })))
+const SFAbout = lazy(() => import('./pages/Legacy.tsx').then((m) => ({ default: m.About })))
+const SFSpecimen = lazy(() => import('./pages/Legacy.tsx').then((m) => ({ default: m.Specimen })))
 
 function cleanPath(pathname = window.location.pathname): string {
   return pathname.replace(/\/+$/, '') || '/'
 }
 
-function projectSlugFromPath(): string | null {
-  const m = cleanPath().match(/^\/project\/([a-z0-9-]+)$/i)
-  return m ? m[1] : null
+// Old About anchors (Strange Fruit manifesto) moved to /strange-fruit/about.
+if (cleanPath() === '/about' && /^#(study|sources|src-\d+)$/.test(window.location.hash)) {
+  window.location.replace('/strange-fruit/about' + window.location.hash)
 }
 
-function isAboutPath(pathname = window.location.pathname): boolean {
-  return pathname.replace(/\/+$/, '') === '/about'
-}
-
-function specimenSlugFromPath(pathname = window.location.pathname): string | null {
-  const cleaned = pathname.replace(/\/+$/, '')
-  const match = cleaned.match(/^\/specimen\/([a-z0-9-]+)$/i)
-  return match ? match[1] : null
-}
-
-export default function App() {
-  const about = isAboutPath()
-  const specimenSlug = specimenSlugFromPath()
+function Route() {
+  const path = cleanPath()
+  const specimenSlug = path.match(/^\/specimen\/([a-z0-9-]+)$/i)?.[1] ?? null
+  const projectSlug = path.match(/^\/project\/([a-z0-9-]+)$/i)?.[1] ?? null
   const specimen = specimenSlug ? findSpecimen(specimenSlug) : undefined
-  const strangeFruit = cleanPath() === '/strange-fruit'
-  const projectSlug = projectSlugFromPath()
-  const project = projectSlug ? findProject(projectSlug) : undefined
 
   useEffect(() => {
-    if (about) {
-      document.title = 'slopgang — manifesto'
-      return
-    }
-    if (specimenSlug) {
+    if (path === '/strange-fruit/about') document.title = 'slopgang — manifesto'
+    else if (path === '/strange-fruit') document.title = 'slopgang — Strange Fruit'
+    else if (specimenSlug)
       document.title = specimen
         ? `slopgang — ${specimen.title.replace(/^Specimen\s+\d+\s+[—–-]\s*/i, '').trim()}`
         : 'slopgang — specimen not found'
-      return
-    }
-    if (projectSlug) {
-      document.title = project ? `slopgang — ${project.title}` : 'slopgang — project not found'
-      return
-    }
-    document.title = strangeFruit ? 'slopgang — Strange Fruit' : 'slopgang'
-  }, [about, specimenSlug, specimen, projectSlug, project, strangeFruit])
+  }, [path, specimenSlug, specimen])
 
-  if (about) {
+  if (path === '/strange-fruit/about')
     return (
       <div className="site" id="top">
-        <a className="skip" href="#study">
-          Skip to manifesto
-        </a>
-        <About />
+        <a className="skip" href="#study">Skip to manifesto</a>
+        <SFAbout />
       </div>
     )
-  }
-
-  if (specimenSlug) {
+  if (path === '/strange-fruit')
     return (
       <div className="site" id="top">
-        <a className="skip" href="#essay">
-          Skip to essay
-        </a>
-        <Specimen slug={specimenSlug} record={specimen} />
+        <a className="skip" href="#feed">Skip to feed</a>
+        <SFHome />
       </div>
     )
-  }
-
+  if (specimenSlug)
+    return (
+      <div className="site" id="top">
+        <a className="skip" href="#essay">Skip to essay</a>
+        <SFSpecimen slug={specimenSlug} record={specimen} />
+      </div>
+    )
+  if (path === '/about') return <TplAbout />
   if (projectSlug) {
-    return (
-      <div className="site" id="top">
-        <a className="skip" href="#essay">
-          Skip to write-up
-        </a>
-        <Project slug={projectSlug} project={project} />
-      </div>
-    )
+    const p = findProject(projectSlug)
+    if (p?.template === 'ios') return <TplCaseIos slug={p.slug as 'ikebana' | 'pet-cemetery'} />
+    if (p?.template === 'web') return <TplCaseWeb />
   }
+  return <TplHome />
+}
 
-  if (strangeFruit) {
-    return (
-      <div className="site" id="top">
-        <a className="skip" href="#feed">
-          Skip to feed
-        </a>
-        <Home />
-      </div>
-    )
-  }
-
+export default function App() {
   return (
-    <div className="site" id="top">
-      <a className="skip" href="#projects">
-        Skip to projects
-      </a>
-      <Projects />
-    </div>
+    <Suspense fallback={null}>
+      <Route />
+    </Suspense>
   )
 }
