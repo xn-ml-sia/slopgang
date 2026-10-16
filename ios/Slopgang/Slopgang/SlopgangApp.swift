@@ -3,12 +3,48 @@ import SwiftUI
 @main
 struct SlopgangApp: App {
     @StateObject private var store = ArchiveStore()
+
+    init() {
+        SFX.shared.prepare()   // audio session + players load off the main thread
+    }
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environmentObject(store)
                 .task { await store.load() }
         }
+    }
+}
+
+/// The brand in the header goes home, as the site logo links to "/". `back` pops one page.
+struct GoHome { var run: () -> Void = {}; var back: () -> Void = {} }
+private struct GoHomeKey: EnvironmentKey { static let defaultValue = GoHome() }
+extension EnvironmentValues {
+    var goHome: GoHome {
+        get { self[GoHomeKey.self] }
+        set { self[GoHomeKey.self] = newValue }
+    }
+}
+
+/// Header brand for paper pages: left side, after the back button, like the site header.
+struct HeaderBrand: ToolbarContent {
+    @Environment(\.goHome) private var goHome
+    var showBrand = true   // the detail page shows only the back button, no logo
+    var body: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            HStack(spacing: 4) {
+                // Custom back so going back runs the reverse glitch (the system back button cannot).
+                Button { goHome.back() } label: {
+                    Image(systemName: "chevron.left").font(.system(size: 15, weight: .semibold))
+                }
+                .buttonStyle(FilledNavButtonStyle())
+                .accessibilityLabel("Back")
+                if showBrand {
+                    Button { goHome.run() } label: { Brand(color: Theme.ink) }.buttonStyle(.plain)
+                }
+            }
+        }
+        .plainToolbarBackground()
     }
 }
 
@@ -20,22 +56,68 @@ enum Route: Hashable {
 struct RootView: View {
     @EnvironmentObject var store: ArchiveStore
     @State private var path = NavigationPath()
+    @StateObject private var fx = GlitchDirector()
     @Environment(\.scenePhase) private var phase
+
+    static func aspect(_ p: Plate) -> CGFloat {
+        guard let w = p.media?.width, let h = p.media?.height, w > 0 else { return 0.75 }
+        return CGFloat(h / w)
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
-            HomeView(open: { path.append(Route.plate($0.slugValue)) }, about: { path.append(Route.about) })
+            HomeView(open: { p, rect in fx.push(from: rect, mediaAspect: Self.aspect(p)) { path.append(Route.plate(p.slugValue)) } },
+                     about: { fx.push(from: nil) { path.append(Route.about) } })
                 .navigationDestination(for: Route.self) { r in
                     switch r {
                     case .plate(let slug):
-                        DetailView(slug: slug, open: { path.append(Route.plate($0.slugValue)) })
+                        DetailView(slug: slug, open: { p in fx.push(from: nil) { path.append(Route.plate(p.slugValue)) } })
                     case .about:
                         AboutView()
                     }
                 }
         }
+        .environment(\.goHome, GoHome(
+            run: { if !path.isEmpty { fx.pop { path = NavigationPath() } } },
+            back: { if !path.isEmpty { fx.pop { path.removeLast() } } }))
         .tint(.black)
         .onChange(of: phase) { _, p in if p == .active { Task { await store.load() } } }
+        #if DEBUG
+        // Headless repro: -autoOpen sg-123 runs the same push transition as a tap; -autoBack also goes back.
+        .task(id: store.plates.count) {
+            let args = ProcessInfo.processInfo.arguments
+            guard !store.plates.isEmpty, path.isEmpty, let i = args.firstIndex(of: "-autoOpen"), i + 1 < args.count,
+                  let p = store.plate(args[i + 1]) else { return }
+            try? await Task.sleep(for: .seconds(2))
+            print("[sg] autoOpen", p.slugValue)
+            fx.push(from: CGRect(x: 150, y: 400, width: 40, height: 40), mediaAspect: Self.aspect(p)) { path.append(Route.plate(p.slugValue)) }
+            if args.contains("-autoBack") {
+                try? await Task.sleep(for: .seconds(3))
+                print("[sg] autoBack")
+                fx.pop { path.removeLast() }
+            }
+        }
+        #endif
+        #if DEBUG
+        // -autoAbout: open About 2 s after launch (screenshots).
+        .task {
+            guard ProcessInfo.processInfo.arguments.contains("-autoAbout") else { return }
+            try? await Task.sleep(for: .seconds(2))
+            fx.push(from: nil) { path.append(Route.about) }
+        }
+        #endif
+        #if DEBUG
+        // -autoTapBack: after a tap opens a plate, go back 3 s later (times the reverse mosh).
+        .onChange(of: path.count) { old, new in
+            guard new == 1, old == 0, ProcessInfo.processInfo.arguments.contains("-autoTapBack") else { return }
+            let args = ProcessInfo.processInfo.arguments
+            let slow = args.firstIndex(of: "-moshSlow").flatMap { i in i + 1 < args.count ? Double(args[i + 1]) : nil } ?? 1
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3 + 1.4 * slow) {
+                SGTrace.mark("back tapped (autoTapBack)", reset: true)
+                fx.pop { path.removeLast() }
+            }
+        }
+        #endif
         .onOpenURL { url in
             // slopgang://specimen/sg-123 or https://slopgang.org/specimen/sg-123
             let parts = url.pathComponents.filter { $0 != "/" }
@@ -48,33 +130,38 @@ struct RootView: View {
 
 struct HomeView: View {
     @EnvironmentObject var store: ArchiveStore
-    var open: (Plate) -> Void
+    var open: (Plate, CGRect?) -> Void
     var about: () -> Void
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
 
     var body: some View {
         ZStack(alignment: .top) {
-            Color.black.ignoresSafeArea()
-            CloudView(plates: store.plates, onOpen: open)
+            Theme.homeBackground.ignoresSafeArea()
+            CloudView(plates: store.plates, onOpen: { p, r in open(p, r) },
+                      onRefresh: { done in Task { await store.load(); done() } })
                 .ignoresSafeArea()
                 .accessibilityHidden(true)
             HStack {
-                Brand(color: .white)
+                Brand(color: Theme.homeInk, wordmark: false)
                 Spacer()
-                Button("About", action: about).buttonStyle(TextButtonStyle(color: .white))
+                Button(action: about) {
+                    Image(systemName: "questionmark.circle").font(.system(size: 22, weight: .regular))
+                }
+                .buttonStyle(TextButtonStyle(color: Theme.homeInk))
+                .accessibilityLabel("About")
             }
-            .padding(.horizontal, Theme.pad).padding(.top, 8)
+            .padding(.horizontal, Theme.navPadding).padding(.top, 6)   // site mobile .feed-nav: 14px sides
             if store.plates.isEmpty {
-                VStack { Spacer(); Text(store.status ?? "Loading the archive.").foregroundStyle(.white).font(Theme.meta); Spacer() }
+                VStack { Spacer(); Text(store.status ?? "Loading the archive.").textStyle(.meta, color: Theme.homeInk); Spacer() }
             } else if let s = store.status {
-                VStack { Spacer(); Text(s).font(Theme.small).foregroundStyle(.white.opacity(0.7)).padding(.bottom, 12) }
+                VStack { Spacer(); Text(s).textStyle(.meta, color: Theme.homeInk.opacity(0.7)).padding(.bottom, 12) }
             }
         }
         .toolbar(.hidden, for: .navigationBar)
         .statusBarHidden(false)
         .preferredColorScheme(.dark)
         // VoiceOver users get a plain list over the cloud; the cloud is a visual.
-        .overlay { if voiceOver { AccessibleList(open: open) } }
+        .overlay { if voiceOver { AccessibleList(open: { open($0, nil) }) } }
     }
 }
 

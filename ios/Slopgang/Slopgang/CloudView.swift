@@ -6,20 +6,190 @@ import QuartzCore
 /// SwiftUI wrapper for the native HSL point cloud.
 struct CloudView: UIViewRepresentable {
     var plates: [Plate]
-    var onOpen: (Plate) -> Void
+    var onOpen: (Plate, CGRect) -> Void
+    /// Pull-to-refresh: reload, then call the completion when the data is in.
+    var onRefresh: ((@escaping () -> Void) -> Void)? = nil
 
-    func makeUIView(context: Context) -> CloudUIView {
-        let v = CloudUIView()
-        v.onOpen = onOpen
+    func makeUIView(context: Context) -> CloudHostView {
+        let v = CloudHostView()
+        v.cloud.onOpen = onOpen
         return v
     }
 
-    func updateUIView(_ v: CloudUIView, context: Context) {
-        v.onOpen = onOpen
-        v.setPlates(plates)
+    func updateUIView(_ v: CloudHostView, context: Context) {
+        v.cloud.onOpen = onOpen
+        v.onRefresh = onRefresh
+        v.cloud.setPlates(plates)
+        v.setNeedsLayout()
     }
 
-    static func dismantleUIView(_ v: CloudUIView, coordinator: ()) { v.stop() }
+    static func dismantleUIView(_ v: CloudHostView, coordinator: ()) { v.stop() }
+}
+
+/// The cloud plus a datamosh layer over it for the entrance: while the plates arc in, the live
+/// cloud is fed frame by frame into MoshView, so their own motion drags the previous frame's pixels.
+/// Reduce Motion gets a plain fade instead.
+final class CloudHostView: UIView {
+    let cloud = CloudUIView()
+    private let mosh = MoshView()
+    private var entranceDone = false
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .black
+        addSubview(cloud)
+        mosh.isUserInteractionEnabled = false   // touches go straight to the cloud
+        mosh.isHidden = true
+        addSubview(mosh)
+        cloud.onPullRefresh = { [weak self] in self?.startRefresh() }
+    }
+    required init?(coder: NSCoder) { fatalError() }
+
+    var onRefresh: ((@escaping () -> Void) -> Void)?
+    private var refreshing = false
+    private var autoRefreshArmed = false
+
+    private func snapshotCloud() -> UIImage {
+        let fmt = UIGraphicsImageRendererFormat()
+        fmt.scale = window?.screen.scale ?? 3; fmt.opaque = true; fmt.preferredRange = .standard
+        return UIGraphicsImageRenderer(bounds: bounds, format: fmt).image { _ in
+            _ = cloud.drawHierarchy(in: cloud.bounds, afterScreenUpdates: false)
+        }
+    }
+
+    /// Pull-to-refresh glitch: the cloud breaks into drifting blocks (a P-frame mosh with a random
+    /// per-block field) while the archive reloads, then block-heals into the new cloud when the
+    /// data is in. Reduce Motion: a plain dim and fade back.
+    private func startRefresh() {
+        guard !refreshing, let onRefresh else { return }
+        refreshing = true
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        let began = CACurrentMediaTime()
+        #if DEBUG
+        print("[sg] refresh started")
+        #endif
+        if UIAccessibility.isReduceMotionEnabled {
+            UIView.animate(withDuration: 0.2) { self.cloud.alpha = 0.4 }
+            onRefresh { [weak self] in
+                UIView.animate(withDuration: 0.3) { self?.cloud.alpha = 1 }
+                self?.refreshing = false
+            }
+            return
+        }
+        let snap = snapshotCloud()
+        let scale = window?.screen.scale ?? 3
+        mosh.drawableSize = CGSize(width: bounds.width * scale, height: bounds.height * scale)
+        var p = MoshParams()
+        p.duration = 10                 // open-ended: it heals out when the data arrives
+        p.shatter = true
+        p.pdupGain = 1
+        p.pdupGainFrom = 0.5
+        p.rampPower = 0.4
+        p.pdupReach = 0
+        p.diffusion = 0.05
+        p.blockSchedule = [(1, 2)]
+        p.healFrom = 1
+        let c = CGRect(x: bounds.midX - 40, y: bounds.midY - 40, width: 80, height: 80)
+        mosh.onFirstFrame = { [weak self] in self?.mosh.isHidden = false }
+        let ok = mosh.run(old: snap, new: snap, motion: .pdup(from: c, to: c, crop: c), params: p) { [weak self] in
+            guard let self else { return }
+            self.mosh.isHidden = true
+            self.mosh.cancel()
+            self.refreshing = false
+            #if DEBUG
+            print("[sg] refresh glitch healed")
+            #endif
+        }
+        guard ok else { refreshing = false; onRefresh {}; return }
+        onRefresh { [weak self] in
+            guard let self else { return }
+            // Hold the break at least 0.6 s, let the new cloud lay out, then heal into it.
+            let wait = max(0.1, 0.6 - (CACurrentMediaTime() - began))
+            DispatchQueue.main.asyncAfter(deadline: .now() + wait) {
+                self.mosh.updateNew(self.snapshotCloud())
+                self.mosh.healOut(over: 0.5)
+                #if DEBUG
+                print("[sg] refresh data in, healing")
+                #endif
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { self.mosh.updateNew(self.snapshotCloud()) }
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 12) { [weak self] in
+            guard let self, self.refreshing else { return }
+            self.mosh.cancel(); self.mosh.isHidden = true; self.refreshing = false
+        }
+    }
+
+    #if DEBUG
+    func debugRefresh() { startRefresh() }
+    #endif
+
+    func stop() { mosh.cancel(); mosh.isHidden = true; cloud.stop() }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        cloud.frame = bounds
+        mosh.frame = bounds
+        #if DEBUG
+        if !autoRefreshArmed, cloud.hasPlates, window != nil, ProcessInfo.processInfo.arguments.contains("-autoRefresh") {
+            autoRefreshArmed = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) { self.debugRefresh() }
+        }
+        #endif
+        if !entranceDone, cloud.hasPlates, window != nil, bounds.width > 0, bounds.height > 0 {
+            entranceDone = true
+            DispatchQueue.main.async { self.startEntrance() }
+        }
+    }
+
+    private func startEntrance() {
+        if UIAccessibility.isReduceMotionEnabled {
+            cloud.alpha = 0
+            UIView.animate(withDuration: 0.45, delay: 0, options: [.curveEaseOut, .allowUserInteraction]) { self.cloud.alpha = 1 }
+            return
+        }
+        let scale = window?.screen.scale ?? 3
+        mosh.drawableSize = CGSize(width: bounds.width * scale, height: bounds.height * scale)
+        // Live frames at 1x: the mosh is blocky anyway, and this keeps each capture cheap.
+        let fmt = UIGraphicsImageRendererFormat()
+        fmt.scale = 1
+        fmt.opaque = true
+        fmt.preferredRange = .standard
+        let renderer = UIGraphicsImageRenderer(bounds: bounds, format: fmt)
+        let source: () -> CGImage? = { [weak self] in
+            guard let self else { return nil }
+            return renderer.image { _ in _ = self.cloud.drawHierarchy(in: self.cloud.bounds, afterScreenUpdates: false) }.cgImage
+        }
+        var p = MoshParams()
+        p.duration = 1.4
+        p.smear = 2.6
+        p.rampFrom = 0.5
+        p.intensity = 0.9            // trails over the live plates, not a full freeze
+        p.intensityFrom = 0.6
+        p.rampPower = 1.2
+        p.melt = 0.55
+        p.healStart = 0.02
+        p.healFrom = 0.75
+        p.healEnd = 0.45
+        p.diffusion = 0.2
+        p.blockSchedule = [(0.3, 2), (0.6, 1.5), (1, 1)]
+        mosh.onFirstFrame = { [weak self] in self?.mosh.isHidden = false }
+        let ok = mosh.runLive(source: source, params: p) { [weak self] in
+            self?.mosh.isHidden = true
+            self?.mosh.cancel()
+            #if DEBUG
+            print("[sg] entrance mosh finished")
+            #endif
+        }
+        #if DEBUG
+        print("[sg] entrance mosh started:", ok)
+        #endif
+        // Safety: never leave the layer up.
+        DispatchQueue.main.asyncAfter(deadline: .now() + p.duration + 0.5) { [weak self] in
+            guard let self, !self.mosh.isHidden else { return }
+            self.mosh.cancel(); self.mosh.isHidden = true
+        }
+    }
 }
 
 /// Port of src/components/FeedWall.tsx to UIKit + Core Animation.
@@ -27,7 +197,10 @@ struct CloudView: UIViewRepresentable {
 /// hue = angle, chroma = radius, lightness = height. A CADisplayLink projects the
 /// points through a perspective orbit camera every frame.
 final class CloudUIView: UIView, UIGestureRecognizerDelegate {
-    var onOpen: ((Plate) -> Void)?
+    var onOpen: ((Plate, CGRect) -> Void)?
+    /// Pull-to-refresh: a downward drag that starts near the top of the screen.
+    var onPullRefresh: (() -> Void)?
+    private var pullStart: CGPoint?
 
     // Same constants as the site.
     private let R: Double = 230
@@ -94,10 +267,51 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
 
     required init?(coder: NSCoder) { fatalError() }
 
+    #if DEBUG
+    /// -autoTap: after the cloud settles, drive the real tap handler at the centre of the frontmost plate.
+    private var autoTapArmed = false
+    private var autoHoldArmed = false
+    /// -autoHold: press-and-hold the frontmost plate for 3.5 s (preview, glitch loading, hold mosh).
+    private func armAutoHold() {
+        guard !autoHoldArmed, window != nil, ProcessInfo.processInfo.arguments.contains("-autoHold") else { return }
+        autoHoldArmed = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+            guard let self else { return }
+            let front = self.blocks.filter { $0.placed && $0.layer.contents != nil && $0.layer.bounds.width > 24
+                && self.bounds.insetBy(dx: 20, dy: 80).contains($0.layer.position) }
+                .max { $0.layer.zPosition < $1.layer.zPosition }
+            guard let b = front else { return }
+            print("[sg] autoHold", b.plate.slugValue)
+            self.setActive(b)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) { self.clearActive(); print("[sg] autoHold released") }
+        }
+    }
+
+    private func armAutoTap() {
+        armAutoHold()
+        guard !autoTapArmed, window != nil, ProcessInfo.processInfo.arguments.contains("-autoTap") else { return }
+        autoTapArmed = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+            guard let self, self.window != nil else { return }
+            // Frontmost plate that has its image and is big enough to see.
+            let front = self.blocks.filter { $0.placed && $0.layer.contents != nil && $0.layer.bounds.width > 24
+                && self.bounds.insetBy(dx: 20, dy: 80).contains($0.layer.position) }
+                .max { $0.layer.zPosition < $1.layer.zPosition }
+            guard let b = front else { print("[sg] autoTap: no plate"); return }
+            let f = (b.layer.presentation() ?? b.layer).frame
+            SGTrace.mark("tap received (autoTap) \(b.plate.slugValue) \(self.convert(f, to: nil).integral)", reset: true)
+            self.handleTap(CGPoint(x: f.midX, y: f.midY))
+        }
+    }
+    #endif
+
     func gestureRecognizer(_ g: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith o: UIGestureRecognizer) -> Bool { true }
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        #if DEBUG
+        armAutoTap()
+        #endif
         CATransaction.begin(); CATransaction.setDisableActions(true)
         background.frame = bounds
         bgPlayerLayer.frame = bounds
@@ -125,6 +339,8 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
     }
 
     // MARK: Data
+
+    var hasPlates: Bool { !blocks.isEmpty }
 
     func setPlates(_ plates: [Plate]) {
         let newIds = plates.map(\.id)
@@ -210,7 +426,17 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
         let w = Double(bounds.width), h = Double(bounds.height)
         guard w > 0, h > 0 else { return }
         let fpx = h / 2 / tan(FOV / 2)
-        let fit = min(1, w / h / 1.2) * 1.15   // phones are tall; site scales the same way
+        let fit = min(1, w / h / 1.2) * 1.15   // horizontal fit, same rule as the site
+        // Vertical: stretch so the cloud spans the safe-area height on tall phones, not only the width.
+        let safeTop = Double(safeAreaInsets.top) + 44, safeBottom = Double(safeAreaInsets.bottom) + 12
+        let safeH = max(100, h - safeTop - safeBottom)
+        let cyScreen = safeTop + safeH / 2
+        // Half-height that real plates reach: the lightness axis (LY / 2 = 130). The bicone narrows at
+        // its tips, so plates rarely go past that. Map it to 0.56 x safe height from centre
+        // (112% of the half height), so the lightest and darkest plates reach the top bar and the bottom
+        // edge, and some run a bit past.
+        let extent = LY / 2
+        let yFit = (safeH * 0.56) / (extent * fpx / DIST)
         let cyw = cos(yaw), syw = sin(yaw), cp = cos(pitch), sp = sin(pitch)
 
         CATransaction.begin(); CATransaction.setDisableActions(true)
@@ -234,7 +460,7 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
             let depth = DIST - z2
             let k = (fpx / depth) * fit
             let sx = w / 2 + x1 * k
-            let sy = h / 2 - y2 * k
+            let sy = cyScreen - y2 * (fpx / depth) * max(fit, yFit)
             let sz = max(1, b.size * k)
             let fog = min(1, max(0.25, 1 - (depth - DIST + 60) / 260))
             b.layer.bounds = CGRect(x: 0, y: 0, width: sz, height: sz)
@@ -249,6 +475,11 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
 
     // MARK: Gestures
 
+    /// The block's frame in window points, the focus point of the datamosh smear.
+    private func screenRect(_ b: Block) -> CGRect {
+        convert((b.layer.presentation() ?? b.layer).frame, to: nil)
+    }
+
     private func hit(_ pt: CGPoint) -> Block? {
         let pad: CGFloat = 6   // small blocks are hard to hit with a finger
         return blocks
@@ -258,12 +489,29 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
     }
 
     @objc private func onTap(_ g: UITapGestureRecognizer) {
-        guard let b = hit(g.location(in: self)) else { return }
-        onOpen?(b.plate)
+        SGTrace.mark("tap received", reset: true)
+        handleTap(g.location(in: self))
+    }
+
+    private func handleTap(_ pt: CGPoint) {
+        guard let b = hit(pt) else { return }
+        onOpen?(b.plate, screenRect(b))
     }
 
     @objc private func onPan(_ g: UIPanGestureRecognizer) {
         guard active == nil else { return }
+        // Pull-to-refresh: drags that start in the top band and go down refresh instead of orbiting.
+        if g.state == .began {
+            let p = g.location(in: self), v = g.velocity(in: self)
+            pullStart = (p.y < safeAreaInsets.top + 140 && v.y > abs(v.x)) ? p : nil
+        }
+        if pullStart != nil {
+            if g.state == .ended || g.state == .cancelled {
+                if g.state == .ended, g.translation(in: self).y > 110 { onPullRefresh?() }
+                pullStart = nil
+            }
+            return
+        }
         switch g.state {
         case .began: dragStart = (yaw, pitch)
         case .changed:
@@ -300,6 +548,12 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
         case .began, .changed:
             let b = hit(g.location(in: self))
             if b !== active { setActive(b) }
+        case .ended:
+            SGTrace.mark("long-press release", reset: true)
+            // Release over a plate opens it; release over empty space just closes the preview.
+            let target = hit(g.location(in: self))
+            clearActive()
+            if let t = target { onOpen?(t.plate, screenRect(t)) }
         default:
             clearActive()
         }
@@ -311,11 +565,20 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
         guard let b else { clearActive(); return }
         active = b
         haptic.selectionChanged()
-        // Background switches at once, with no fade: thumbnail now, full media when it lands.
+        // Background switches at once: the thumbnail as coarse macroblocks now, then the full image
+        // sharpens in block by block when it lands (Reduce Motion: plain thumbnail, then a fade).
         CATransaction.begin(); CATransaction.setDisableActions(true)
-        background.contents = b.layer.contents
+        background.sublayers?.filter { $0.name == "mbReveal" }.forEach { $0.removeFromSuperlayer() }
+        if !reduceMotion, let c = b.layer.contents, let coarse = Macroblock.coarse(UIImage(cgImage: c as! CGImage)) {
+            background.contents = coarse.cgImage
+            background.magnificationFilter = .nearest
+        } else {
+            background.contents = b.layer.contents
+            background.magnificationFilter = .linear
+        }
         background.isHidden = false
         CATransaction.commit()
+        startHoldMosh(for: b)
         stopVideo()
         let plate = b.plate
         if plate.isVideo, !reduceMotion, let url = ArchiveStore.resolve(plate.media?.url) {
@@ -331,9 +594,7 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
         }
         Task {
             if let full = await ImageLoader.shared.image(ArchiveStore.resolve(plate.stillPath)), self.active === b {
-                CATransaction.begin(); CATransaction.setDisableActions(true)
-                self.background.contents = full.cgImage
-                CATransaction.commit()
+                if let cg = full.cgImage { Macroblock.reveal(cg, on: self.background) }
                 self.tip.setImage(full)
             }
         }
@@ -351,12 +612,65 @@ final class CloudUIView: UIView, UIGestureRecognizerDelegate {
     }
 
     private func clearActive() {
+        stopHoldMosh()
+        background.sublayers?.filter { $0.name == "mbReveal" }.forEach { $0.removeFromSuperlayer() }
         active = nil
         stopVideo()
         CATransaction.begin(); CATransaction.setDisableActions(true)
         background.contents = nil
         CATransaction.commit()
         tip.isHidden = true
+    }
+
+    // MARK: Mosh while you hold
+
+    private let holdMosh = MoshView()
+    private var holdToken = 0
+
+    /// After a short hold, the full-screen preview background starts a P-frame drag (one frozen
+    /// field, reapplied every frame) that grows the longer the finger stays down. The plates and
+    /// the preview card stay live above it. Reduce Motion: no drag.
+    private func startHoldMosh(for b: Block) {
+        stopHoldMosh()
+        guard !reduceMotion else { return }
+        holdToken += 1
+        let my = holdToken
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            guard let self, self.holdToken == my, self.active === b, self.bounds.width > 0 else { return }
+            if self.holdMosh.superview == nil {
+                self.addSubview(self.holdMosh)
+                self.holdMosh.isUserInteractionEnabled = false
+                // Between the preview background and the plates.
+                self.layer.insertSublayer(self.holdMosh.layer, above: self.bgPlayerLayer)
+            }
+            let fmt = UIGraphicsImageRendererFormat()
+            fmt.scale = 2; fmt.opaque = true; fmt.preferredRange = .standard
+            let img = UIGraphicsImageRenderer(bounds: self.bounds, format: fmt).image { ctx in
+                UIColor.black.setFill(); ctx.fill(self.bounds)
+                self.background.render(in: ctx.cgContext)
+            }
+            self.holdMosh.frame = self.bounds
+            self.holdMosh.drawableSize = CGSize(width: self.bounds.width * 2, height: self.bounds.height * 2)
+            var p = MoshParams()
+            p.duration = 8
+            p.pdupGain = 1
+            p.pdupGainFrom = 0           // grows from nothing...
+            p.rampPower = 1.2            // ...the longer you hold
+            p.pdupReach = 14
+            p.diffusion = 0.1
+            p.blockSchedule = [(1, 1.5)]
+            p.healFrom = 1
+            let from = self.bounds.insetBy(dx: self.bounds.width * 0.2, dy: self.bounds.height * 0.25)
+            self.holdMosh.onFirstFrame = { [weak self] in if self?.holdToken == my { self?.holdMosh.isHidden = false } }
+            _ = self.holdMosh.run(old: img, new: img, motion: .pdup(from: from, to: from.offsetBy(dx: 0, dy: 400), crop: from),
+                                  params: p) { [weak self] in self?.holdMosh.isHidden = true }
+        }
+    }
+
+    private func stopHoldMosh() {
+        holdToken += 1
+        holdMosh.cancel()
+        holdMosh.isHidden = true
     }
 
     private func stopVideo() {
@@ -392,7 +706,7 @@ final class TipView: UIView {
     private let playerLayer = AVPlayerLayer()
     private let title = UILabel()
     private let caption = UILabel()
-    private let width: CGFloat = 200
+    private let width: CGFloat = 220   // .cloud-tip width 220px
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -401,9 +715,9 @@ final class TipView: UIView {
         imageView.clipsToBounds = true
         playerLayer.videoGravity = .resizeAspectFill
         imageView.layer.addSublayer(playerLayer)
-        title.font = .systemFont(ofSize: 14, weight: .semibold)
+        title.font = UIFont(name: "Inter-SemiBold", size: Theme.tMinus1) ?? .systemFont(ofSize: Theme.tMinus1, weight: .semibold)
         title.textColor = .black
-        caption.font = .systemFont(ofSize: 13)
+        caption.font = UIFont(name: "Inter-Regular", size: Theme.tMinus1) ?? .systemFont(ofSize: Theme.tMinus1)
         caption.textColor = .black
         caption.numberOfLines = 2
         [imageView, title, caption].forEach(addSubview)
@@ -418,8 +732,9 @@ final class TipView: UIView {
     func setPlayer(_ p: AVPlayer?) { playerLayer.player = p; playerLayer.isHidden = p == nil }
 
     override func sizeThatFits(_ size: CGSize) -> CGSize {
-        let ch = caption.sizeThatFits(CGSize(width: width - 20, height: 100)).height
-        return CGSize(width: width, height: width + 8 + 18 + 2 + ch + 10)
+        let ch = caption.sizeThatFits(CGSize(width: width - 19.2, height: 100)).height
+        let th = ceil(Theme.tMinus1 * Theme.tipLineHeight)
+        return CGSize(width: width, height: width + 6.4 + th + 1.6 + ch + 8)   // label padding 0.4rem 0.6rem 0.5rem, gap 0.1rem
     }
 
     override func layoutSubviews() {
@@ -428,8 +743,9 @@ final class TipView: UIView {
         CATransaction.begin(); CATransaction.setDisableActions(true)
         playerLayer.frame = imageView.bounds
         CATransaction.commit()
-        title.frame = CGRect(x: 10, y: width + 8, width: width - 20, height: 18)
-        let ch = caption.sizeThatFits(CGSize(width: width - 20, height: 100)).height
-        caption.frame = CGRect(x: 10, y: width + 28, width: width - 20, height: ch)
+        let th = ceil(Theme.tMinus1 * Theme.tipLineHeight)
+        title.frame = CGRect(x: 9.6, y: width + 6.4, width: width - 19.2, height: th)
+        let ch = caption.sizeThatFits(CGSize(width: width - 19.2, height: 100)).height
+        caption.frame = CGRect(x: 9.6, y: width + 6.4 + th + 1.6, width: width - 19.2, height: ch)
     }
 }
