@@ -1,0 +1,548 @@
+/* PLACEHOLDER-KIT: motion and micro-interaction CSS ported from the reference kit's index.css (Mal's source).
+   Durations are kit tokens; with prefers-reduced-motion they collapse to 0 so every state is instant. */
+.kit-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  margin: 0;
+}
+.kit-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 40px;
+  background: transparent;
+  border: 0;
+}
+.kit-range::-moz-range-thumb {
+  width: 24px;
+  height: 40px;
+  background: transparent;
+  border: 0;
+}
+
+/* Native dialog. ::backdrop inherits custom properties from the dialog in current browsers. */
+.kit-dialog::backdrop {
+  background: var(--overlay, rgb(244 244 243 / 0.72));
+}
+.kit-dialog[open] {
+  animation: kit-rise var(--dur-slow) var(--ease) both;
+}
+.kit-dialog[open]::backdrop {
+  animation: kit-fade var(--dur-slow) var(--ease) both;
+}
+
+
+@keyframes kit-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes kit-blink {
+  0%,
+  49.9% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0.15;
+  }
+}
+@keyframes kit-dot {
+  0%,
+  24.9% {
+    opacity: 0;
+  }
+  25%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes kit-scan {
+  0% {
+    background-color: var(--tick-on, var(--ink));
+  }
+  18%,
+  100% {
+    background-color: var(--tick-off, var(--track));
+  }
+}
+@keyframes kit-type {
+  from {
+    width: 0;
+  }
+  to {
+    width: 3ch;
+  }
+}
+@keyframes kit-hatch {
+  to {
+    background-position: 17px 0;
+  }
+}
+@keyframes kit-rise {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+@keyframes kit-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes kit-drain {
+  from {
+    scale: 1 1;
+  }
+  to {
+    scale: 0 1;
+  }
+}
+
+/* ---- Loaders (src/components/Loaders.tsx). Colours are currentColor and --ld-off (16% of it). ---- */
+@keyframes kit-comet {
+  0% {
+    stroke: currentColor;
+    stroke-width: var(--w1);
+    stroke-dasharray: var(--l1) 200;
+  }
+  40%,
+  100% {
+    stroke: var(--ld-off);
+    stroke-width: var(--w0);
+    stroke-dasharray: var(--l0) 200;
+  }
+}
+@keyframes kit-trace {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+@keyframes kit-cell {
+  0% {
+    opacity: 1;
+  }
+  45%,
+  100% {
+    opacity: 0.14;
+  }
+}
+@keyframes kit-eq {
+  0%,
+  100% {
+    scale: 1 0.2;
+  }
+  50% {
+    scale: 1 1;
+  }
+}
+@keyframes kit-scanx {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: var(--travel) 0;
+  }
+}
+@keyframes kit-dot3 {
+  0%,
+  32% {
+    opacity: 1;
+  }
+  34%,
+  100% {
+    opacity: 0.14;
+  }
+}
+
+/* ---- Scrollbars. Every scrolling box in the kit: square, 10 px, an Ink 3 thumb on a hairline track,
+   darker on hover and while dragged. Chromium + Safari use the ::-webkit pseudo-elements (which they ignore once
+   the standard properties are set), so the standard properties are only applied where those are unsupported. ---- */
+@supports not selector(::-webkit-scrollbar) {
+  .kit-root,
+  .kit-root * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ink-3) transparent;
+  }
+}
+.kit-root ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.kit-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.kit-root ::-webkit-scrollbar-track:vertical {
+  border-inline-start: 1px solid var(--line);
+}
+.kit-root ::-webkit-scrollbar-track:horizontal {
+  border-top: 1px solid var(--line);
+}
+.kit-root ::-webkit-scrollbar-thumb {
+  background-color: var(--ink-3);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+  border-radius: 0;
+}
+.kit-root ::-webkit-scrollbar-thumb:hover {
+  background-color: var(--ink-2);
+}
+.kit-root ::-webkit-scrollbar-thumb:active {
+  background-color: var(--ink);
+}
+.kit-root ::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ScrollArea hides the native bar and draws its own. */
+.kit-noscroll {
+  scrollbar-width: none;
+}
+.kit-noscroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---- Micro-interactions (src/components/Micro.tsx). Every duration is a kit token, 0 ms when the Motion switch is
+   off or reduced motion is asked for, so each becomes an instant change of state. Hovers answer a fine pointer only;
+   [data-force="hover"] shows the hovered state on the states sheet. .kit-cta is a call-to-action button, .kit-hover
+   any other element whose hover drives the parts inside it. ---- */
+
+/* Split-flap label: each character is a column of two copies in a one-line window. */
+.kit-flap {
+  display: inline-flex;
+  align-items: flex-start;
+  height: 1lh;
+  overflow: hidden;
+  vertical-align: top;
+}
+.kit-flap > [aria-hidden] {
+  display: flex;
+  flex-direction: column;
+  transition: translate var(--dur-slow) var(--ease);
+  transition-delay: calc((var(--n) - 1 - var(--i)) * var(--step, calc(var(--stagger) * 1.5)));
+}
+
+/* Slide-through icon: two copies in one cell; the second waits behind the first. */
+.kit-slide {
+  display: inline-grid;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.kit-slide > * {
+  grid-area: 1 / 1;
+  transition: translate var(--dur-slow) var(--ease);
+}
+.kit-slide > :last-child {
+  translate: -110% 0;
+}
+.kit-slide[data-dir="ne"] > :last-child {
+  translate: -110% 110%;
+}
+[dir="rtl"] .kit-slide > :last-child {
+  translate: 110% 0;
+}
+[dir="rtl"] .kit-slide[data-dir="ne"] > :last-child {
+  translate: 110% 110%;
+}
+
+/* Border trace: four hairlines over the border, drawn in clockwise order and taken back in reverse. */
+.kit-trace {
+  position: absolute;
+  inset: calc(var(--bw) * -1);
+  pointer-events: none;
+}
+.kit-trace > i {
+  position: absolute;
+  background: var(--ink);
+  transition: scale var(--dur) var(--ease);
+}
+.kit-trace > i:nth-child(1) {
+  inset: 0 0 auto 0;
+  height: var(--bw);
+  scale: 0 1;
+  transform-origin: left;
+  transition-delay: calc(var(--dur) * 1.2);
+}
+.kit-trace > i:nth-child(2) {
+  inset: 0 0 0 auto;
+  width: var(--bw);
+  scale: 1 0;
+  transform-origin: top;
+  transition-delay: calc(var(--dur) * 0.8);
+}
+.kit-trace > i:nth-child(3) {
+  inset: auto 0 0 0;
+  height: var(--bw);
+  scale: 0 1;
+  transform-origin: right;
+  transition-delay: calc(var(--dur) * 0.4);
+}
+.kit-trace > i:nth-child(4) {
+  inset: 0 auto 0 0;
+  width: var(--bw);
+  scale: 1 0;
+  transform-origin: bottom;
+}
+
+/* Underline draw: a hairline in the text colour, in from the start edge, out by the far edge. */
+.kit-draw {
+  background: linear-gradient(currentColor, currentColor) no-repeat 100% 100% / 0% var(--bw);
+  /* A title that wraps draws a line under every line it breaks onto. */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition:
+    background-size var(--dur-slow) var(--ease),
+    color var(--dur) var(--ease);
+}
+[dir="rtl"] .kit-draw {
+  background-position: 0% 100%;
+}
+
+/* The brand mark's three bars, and the theme toggle's two icons. */
+.kit-bars > * {
+  transform-origin: center;
+}
+.kit-swap {
+  display: inline-grid;
+}
+.kit-swap > * {
+  grid-area: 1 / 1;
+  transition:
+    rotate var(--dur-slow) var(--ease),
+    scale var(--dur-slow) var(--ease),
+    opacity var(--dur) var(--ease);
+}
+.kit-swap > [data-on="false"] {
+  opacity: 0;
+  scale: 0.5;
+}
+.kit-swap > [data-on="false"]:first-child {
+  rotate: -90deg;
+}
+.kit-swap > [data-on="false"]:last-child {
+  rotate: 90deg;
+}
+@keyframes kit-pulse {
+  0%,
+  100% {
+    scale: 1 1;
+  }
+  40% {
+    scale: 1 0.3;
+  }
+  72% {
+    scale: 1 1.25;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(.kit-cta:is(:enabled, a[href]), .kit-hover):hover .kit-flap > [aria-hidden] {
+    translate: 0 -50%;
+    transition-delay: calc(var(--i) * var(--step, calc(var(--stagger) * 1.5)));
+  }
+  :is(.kit-cta:is(:enabled, a[href]), .kit-hover):hover .kit-slide > :first-child {
+    translate: 110% 0;
+  }
+  :is(.kit-cta:is(:enabled, a[href]), .kit-hover):hover .kit-slide[data-dir="ne"] > :first-child {
+    translate: 110% -110%;
+  }
+  [dir="rtl"] :is(.kit-cta:is(:enabled, a[href]), .kit-hover):hover .kit-slide > :first-child {
+    translate: -110% 0;
+  }
+  [dir="rtl"] :is(.kit-cta:is(:enabled, a[href]), .kit-hover):hover .kit-slide[data-dir="ne"] > :first-child {
+    translate: -110% -110%;
+  }
+  :is(.kit-cta:is(:enabled, a[href]), .kit-hover):hover .kit-slide > :last-child {
+    translate: 0 0;
+    transition-delay: calc(var(--dur) * 0.35);
+  }
+  .kit-cta:is(:enabled, a[href]):hover .kit-trace > i {
+    scale: 1 1;
+  }
+  .kit-cta:is(:enabled, a[href]):hover .kit-trace > i:nth-child(1) {
+    transition-delay: 0ms;
+  }
+  .kit-cta:is(:enabled, a[href]):hover .kit-trace > i:nth-child(2) {
+    transition-delay: calc(var(--dur) * 0.4);
+  }
+  .kit-cta:is(:enabled, a[href]):hover .kit-trace > i:nth-child(3) {
+    transition-delay: calc(var(--dur) * 0.8);
+  }
+  .kit-cta:is(:enabled, a[href]):hover .kit-trace > i:nth-child(4) {
+    transition-delay: calc(var(--dur) * 1.2);
+  }
+  .kit-draw:hover,
+  .kit-hover:hover .kit-draw,
+  .kit-cta:is(:enabled, a[href]):hover .kit-draw {
+    background-size: 100% var(--bw);
+    background-position: 0% 100%;
+  }
+  [dir="rtl"] .kit-draw:hover,
+  [dir="rtl"] .kit-hover:hover .kit-draw,
+  [dir="rtl"] .kit-cta:is(:enabled, a[href]):hover .kit-draw {
+    background-position: 100% 100%;
+  }
+  .kit-hover:hover .kit-bars > * {
+    animation: kit-pulse calc(var(--dur-slow) * 2) var(--ease) both;
+    animation-delay: calc(var(--i) * var(--dur) * 0.35);
+  }
+}
+:is(.kit-cta, .kit-hover)[data-force="hover"] .kit-flap > [aria-hidden] {
+  translate: 0 -50%;
+}
+:is(.kit-cta, .kit-hover)[data-force="hover"] .kit-slide > :first-child {
+  translate: 110% 0;
+}
+:is(.kit-cta, .kit-hover)[data-force="hover"] .kit-slide > :last-child {
+  translate: 0 0;
+}
+.kit-cta[data-force="hover"] .kit-trace > i {
+  scale: 1 1;
+}
+
+/* A page arriving in the site: it rises a little and fades in, on the kit's slow duration (instant with Motion off). */
+.kit-page {
+  animation: kit-rise var(--dur-slow) var(--ease); /* no fill: once it ends, nothing is left that would trap fixed or sticky children */
+}
+
+/* ---- Immersive pages (src/components/portfolio). Every duration is a kit token, so with the Motion switch off or
+   reduced motion asked for, each of these is simply in its final state. ---- */
+
+/* RiseText: each word rises out of its own line box. The clip is padded so descenders are never cut. */
+.kit-rise-w {
+  display: inline-block;
+  overflow: clip;
+  padding-block-end: 0.12em;
+  margin-block-end: -0.12em;
+  vertical-align: top;
+}
+.kit-rise-w > span {
+  display: inline-block;
+  transition: translate calc(var(--dur-slow) * 3) var(--ease);
+  transition-delay: calc(var(--d, 0ms) + var(--i) * var(--stagger) * 8);
+}
+.kit-rise[data-in="false"] .kit-rise-w > span {
+  translate: 0 115%;
+}
+
+/* Reveal: a block settles up into place. */
+.kit-reveal {
+  transition:
+    opacity calc(var(--dur-slow) * 3) var(--ease),
+    translate calc(var(--dur-slow) * 3) var(--ease);
+  transition-delay: var(--d, 0ms);
+}
+.kit-reveal[data-in="false"] {
+  opacity: 0;
+  translate: 0 var(--s3);
+}
+
+/* ScrubText: --p (0..1, written by the page) inks the words in reading order. */
+.kit-scrub > [aria-hidden] {
+  color: color-mix(in srgb, var(--ink) calc(clamp(0, var(--p, 1) * var(--n) - var(--i), 1) * 100%), var(--ink-3));
+}
+
+/* A page arriving: it prints in from the top under a travelling hairline, the way the illustrations do. */
+.kit-print {
+  animation: kit-print calc(var(--dur-slow) * 2.6) var(--ease);
+}
+@keyframes kit-print {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 calc(100% - 100vh) 0);
+  }
+}
+.kit-printline {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 40;
+  height: var(--bw);
+  background: var(--ink);
+  pointer-events: none;
+  opacity: 0;
+  animation: kit-printline calc(var(--dur-slow) * 2.6) var(--ease);
+}
+@keyframes kit-printline {
+  from {
+    opacity: 1;
+    translate: 0 0;
+  }
+  92% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    translate: 0 100vh;
+  }
+}
+
+/* Marquee: the row is laid out twice and slides by half its length; pauses under the pointer. */
+.kit-marquee > * {
+  animation: kit-marquee var(--marquee, 48s) linear infinite;
+  animation-play-state: var(--play);
+}
+.kit-marquee:hover > * {
+  animation-play-state: paused;
+}
+@keyframes kit-marquee {
+  to {
+    translate: -50% 0;
+  }
+}
+[dir="rtl"] .kit-marquee > * {
+  animation-direction: reverse;
+}
+
+/* A small surface printing in from the top (a hover preview, a figure changing step). */
+.kit-print-in {
+  animation: kit-print-in calc(var(--dur-slow) * 1.6) var(--ease);
+}
+@keyframes kit-print-in {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+}
+
+/* A scroll cue: a short ink segment dropping through a hairline. */
+@keyframes kit-cue {
+  from {
+    translate: 0 -100%;
+  }
+  to {
+    translate: 0 200%;
+  }
+}
+.kit-cue {
+  animation: kit-cue 1.8s var(--ease) infinite;
+  animation-play-state: var(--play);
+}
+
+/* The easing studio's runner. */
+@keyframes kit-run {
+  from {
+    left: 0;
+  }
+  to {
+    left: calc(100% - 12px);
+  }
+}
+
+/* A ticket printing out of a slot. */
+.kit-ticket {
+  animation: kit-ticket calc(var(--dur-slow) * 6) var(--ease) both;
+}
+@keyframes kit-ticket {
+  from {
+    translate: 0 -100%;
+  }
+}
+
+/* Ink hatch: 1 px diagonals at 4 px, for a filled mark that stays a drawing (bars, progress), never a slab. */
+@media (prefers-reduced-motion: reduce) {
+  .kit-root { --dur: 0ms; --dur-slow: 0ms; --stagger: 0ms; }
+  .kit-print, .kit-printline, .kit-print-in, .kit-page, .kit-cue, .kit-marquee > * { animation: none !important; }
+  .kit-rise[data-in="false"] .kit-rise-w > span, .kit-reveal[data-in="false"] { translate: none; opacity: 1; }
+}
