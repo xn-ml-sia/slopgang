@@ -1,4 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import motionCss from '../templates/motion.css?raw'
+import { Motion } from '../demos/Motion.tsx'
+import { Pacer, SleepTimer, Compare } from '../demos/Murmur.tsx'
+import { TimeMachine } from '../demos/Atlas.tsx'
+import { Words } from '../demos/Words.tsx'
 
 export type PageValues = Record<string, string>
 
@@ -17,15 +22,30 @@ export function TemplatePage({ html, css, values, title }: { html: string; css: 
   useEffect(() => {
     document.title = title
   }, [title])
-  const all: PageValues = { brand: 'slopgang', join_href: JOIN_HREF, ...values }
-  const out = html.replace(/\{\{(\w+)\}\}/g, (_, k: string) => {
-    const v = all[k] ?? ''
-    return k.endsWith('_visual') ? v : esc(v)
-  })
+  const out = useMemo(() => {
+    const all: PageValues = { brand: 'slopgang', join_href: JOIN_HREF, ...values }
+    return html.replace(/\{\{(\w+)\}\}/g, (_, k: string) => {
+      const v = all[k] ?? ''
+      return k.endsWith('_visual') ? v : esc(v)
+    })
+  }, [html, values])
+  const ref = useRef<HTMLDivElement>(null)
+  const [root, setRoot] = useState<HTMLElement | null>(null)
+  useEffect(() => setRoot(ref.current), [out])
   return (
     <>
-      <style>{css}</style>
-      <div className="tpl-page" dangerouslySetInnerHTML={{ __html: out }} />
+      <style>{css + motionCss}</style>
+      <div ref={ref} className="tpl-page" dangerouslySetInnerHTML={{ __html: out }} />
+      {root && (
+        <>
+          <Motion root={root} />
+          <Pacer root={root} />
+          <SleepTimer root={root} />
+          <Compare root={root} />
+          <TimeMachine root={root} />
+          <Words root={root} />
+        </>
+      )}
     </>
   )
 }

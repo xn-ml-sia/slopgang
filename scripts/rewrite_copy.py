@@ -108,8 +108,29 @@ def header(body, page):
     h = h[:c] + about + h[d:]
     return body[:h0] + h + body[h1:]
 
+def drop_div(body, start_marker):
+    a = body.find(start_marker)
+    if a < 0:
+        return body, 0
+    i, depth = a, 0
+    for m in re.finditer(r'<(/?)div\b', body[a:]):
+        depth += -1 if m.group(1) else 1
+        if depth == 0:
+            end = body.find('>', a + m.start()) + 1
+            return body[:a] + body[end:], 1
+    return body, 0
+
+def cleanup(body):
+    # the saved page hid the native scrollbar for its custom rail; we keep the normal scrollbar
+    body = re.sub(r'<style class=sf-hidden>html,body\{scrollbar-width:none\}.*?</style>', '', body, flags=re.S)
+    body, _ = drop_div(body, '<div aria-hidden=true class="fixed inset-y-0 end-0 z-50 w-[var(--s2)]')
+    # no Inspect feature
+    body = re.sub(r'<span class="hidden @\[720px\]:inline">Press <kbd[^>]*>I</kbd> to inspect any page</span>', '', body)
+    return body
+
 def rewrite(body, page, log):
     miss = []
+    body = cleanup(body)
     body = header(body, page)
     # logo
     j = body.find('{{brand}}</span>')

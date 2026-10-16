@@ -94,6 +94,8 @@ def build(src, name, fn):
     body = rewrite(fn(common(body)).replace('<div id=root>', '<div class=tpl-root>', 1), name, print)
     head = '<!-- PLACEHOLDER: template content from Mal\'s reference page. {{tokens}} come from src/data/pages. -->\n'
     (OUT_T / f'{name}.html').write_text(head + body)
+    # keep the normal page scrollbar (the reference hid it for its own scroll rail)
+    css = css.replace('html,body{scrollbar-width:none}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}', '')
     (OUT_T / f'{name}.css').write_text('/* PLACEHOLDER: template styles from Mal\'s reference page. */\n' + css)
     print(name, len(body), 'tokens', sorted(set(re.findall(r'\{\{(\w+)\}\}', body))))
 
