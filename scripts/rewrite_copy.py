@@ -29,7 +29,7 @@ def set_flap(body, old, new):
 def link(href, label, arrow, external=False):
     ext = ' target=_blank rel=noreferrer' if external else ''
     return (f'<li><a href="{href}"{ext} class="kit-hover inline-flex items-center gap-[var(--s-h)] whitespace-nowrap t-body outline-none s-focus:ring-focus">'
-            f'<span class=kit-draw>{label}</span><span class="inline-flex text-[color:var(--ink-2)]">{arrow}</span></a>')
+            f'<span class=kit-draw>{label}</span>' + (f'<span class="inline-flex text-[color:var(--ink-2)]">{arrow}</span>' if arrow else '') + '</a>')
 
 def col(title, items, arrow):
     lis = ''.join(link(h, l, arrow, h.startswith('http')) for h, l in items)
@@ -46,16 +46,11 @@ def footer(body):
     left = ('<div class="flex max-w-[40ch] flex-col gap-[var(--s3)]">'
             f'<p class="t-lead text-[color:var(--ink-2)]">{FOOTER_BIO}</p>'
             '<div class="flex flex-col gap-[var(--s1)] t-body">'
-            '<a href="{{join_href}}" class="kit-hover inline-flex items-center gap-[var(--s1)] outline-none s-focus:ring-focus"><span class=kit-draw>Join a project</span></a>'
             f'<span class=text-[color:var(--ink-2)]>Contact: {TODO}</span>'
-            '<span class="tabular-nums text-[color:var(--ink-2)]">Berlin</span></div>'
-            '<ul aria-label=Elsewhere class="flex flex-wrap gap-x-[var(--s3)] gap-y-[var(--s1)] t-caption text-[color:var(--ink-2)]">'
-            '<li><a href="https://x.com/slopgang2020" target=_blank rel=noreferrer><span class=text-[color:var(--ink)]>X</span> @slopgang2020</a></ul></div>')
-    nav = ('<nav aria-label=Site class="grid grid-cols-2 gap-[var(--s4)] @[640px]:grid-cols-4">'
-           + col('Site', [('/', 'Projects'), ('/about', 'About'), ('{{join_href}}', 'Join')], arrow)
-           + col('Projects', [('/strange-fruit', 'Strange Fruit'), ('/project/ikebana', 'Ikebana'), ('/project/pet-cemetery', 'Pet Cemetery'), ('/project/glitch-the-system', 'Glitch the System')], arrow)
-           + col('Strange Fruit', [('/strange-fruit', 'Archive'), ('/strange-fruit/about', 'About')], arrow)
-           + col('Elsewhere', [('https://x.com/slopgang2020', 'X @slopgang2020')], arrow)
+            '<span class="tabular-nums text-[color:var(--ink-2)]">Berlin</span></div></div>')
+    nav = ('<nav aria-label=Site class="grid grid-cols-2 gap-[var(--s4)]">'
+           + col('Projects', [('/strange-fruit', 'Strange Fruit'), ('/project/ikebana', 'Ikebana'), ('/project/pet-cemetery', 'Pet Cemetery'), ('/project/glitch-the-system', 'Glitch the System')], '')
+           + col('More', [('/about', 'About'), ('/strange-fruit/about', 'Strange Fruit About'), ('https://x.com/slopgang2020', 'X @slopgang2020'), ('{{join_href}}', 'Join')], '')
            + '</nav>')
     body = body[:a] + left + nav + body[b:]
     body, n = re.subn(r'© 2026 Noa Lindgren · CVR 41 22 80 19 · Set in Geist Mono on an 8 px grid · <a href=#/colophon[^>]*>Colophon</a>',
@@ -133,6 +128,7 @@ def rewrite(body, page, log):
         body, n = set_flap(body, 'Start a project', 'Join a project'); n or miss.append('flap')
         body = body.replace('studio@noalindgren.dk', 'Contact: ' + TODO)
     if page.startswith('case'):
+        body = re.sub(r'<section id=next aria-label="Next project".*?</section>', '', body, count=1, flags=re.S)
         body = re.sub(r'href=#/work/(northbound|kiln)', 'href="{{next_href}}"', body)
         body = body.replace('>All work<', '>All projects<')
         for a, b in CASE:
