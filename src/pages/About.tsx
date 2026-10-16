@@ -55,7 +55,7 @@ function Hero() {
             <Rich text={about.lead} />
           </p>
           <div className="hero-cta">
-            <a className="btn btn-solid" href="/">
+            <a className="btn btn-solid" href="/strange-fruit">
               Browse the feed
             </a>
           </div>

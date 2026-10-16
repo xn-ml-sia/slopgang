@@ -4,7 +4,7 @@ import { SiteNav } from '../components/SiteNav.tsx'
 export function Home() {
   return (
     <div className="feed">
-      <SiteNav current="home" />
+      <SiteNav current="strange-fruit" />
       <main>
         <FeedWall />
       </main>
