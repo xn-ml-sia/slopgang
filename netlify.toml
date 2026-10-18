@@ -36,6 +36,12 @@
   force = true
 
 # History API / SPA fallback. Not forced, so hashed /assets/* files in dist still win.
+# sg-22 used to be an SVG wrapper around a corrupt base64 webp; old links go to the real webp
+[[redirects]]
+  from = "/archive/sg-22.svg"
+  to = "/archive/sg-22.webp"
+  status = 301
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
